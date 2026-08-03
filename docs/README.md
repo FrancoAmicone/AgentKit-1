@@ -1,30 +1,28 @@
-# Docs — Human-backed onchain agent
+# Docs — agentes onchain
 
-Documentación de la idea, el stack y cómo arrancar.
+Material para pensar la idea juntos y tener a mano qué ofrece cada herramienta.
+
+**Importante:** World, 0G y Coinbase AgentKit son **opciones**. No hay que usar las tres. Elegimos stack según el problema.
 
 ## Índice
 
 | Doc | Contenido |
 | --- | --- |
-| [01-idea.md](./01-idea.md) | Problema, idea propuesta, por qué sirve |
-| [02-stack.md](./02-stack.md) | Stack sugerido y rol de cada pieza |
-| [03-world-agentkit.md](./03-world-agentkit.md) | World AgentKit: verificar humano detrás del agente |
-| [04-0g.md](./04-0g.md) | Qué usar de 0G (Chain, Storage, Compute, Agentic ID) |
-| [05-coinbase-agentkit.md](./05-coinbase-agentkit.md) | Coinbase AgentKit: transacciones onchain en Base |
-| [06-caminos.md](./06-caminos.md) | Posibilidades / caminos de implementación |
-| [07-checklist.md](./07-checklist.md) | Qué tenés que hacer vos (cuentas, keys, pasos) |
+| [01-ideas.md](./01-ideas.md) | Ideas en debate (sin idea final todavía) |
+| [02-world-agentkit.md](./02-world-agentkit.md) | Resumen: World AgentKit |
+| [03-0g.md](./03-0g.md) | Resumen: 0G |
+| [04-coinbase-agentkit.md](./04-coinbase-agentkit.md) | Resumen: Coinbase AgentKit (Base/CDP) |
+| [05-como-combinar.md](./05-como-combinar.md) | Cuándo tiene sentido usar 1, 2 o 3 |
+| [06-checklist.md](./06-checklist.md) | Cuentas / setup (cuando definamos idea) |
 
-## Lectura rápida
+## Cómo usar esto
 
-1. Empezá por **01-idea** para alinear el problema.
-2. Revisá **02-stack** para entender qué pieza hace qué.
-3. Elegí un camino en **06-caminos** (MVP mínimo vs completo).
-4. Seguí **07-checklist** para setup.
+1. Leer los resúmenes `02`–`04` para saber qué arma cada cosa.
+2. Mirar `01-ideas` y seguir debatiendo.
+3. Cuando cerremos idea → elegir piezas en `05` y armar checklist.
 
 ## Enlaces oficiales
 
-- World AgentKit: https://docs.world.org/agents/agent-kit/integrate
-- World AgentKit repo: https://github.com/worldcoin/agentkit
-- 0G docs: https://docs.0g.ai/
-- 0G Agentic ID: https://docs.0g.ai/developer-hub/building-on-0g/agentic-id/overview
+- World AgentKit: https://docs.world.org/agents/agent-kit/integrate · [repo](https://github.com/worldcoin/agentkit)
+- 0G: https://docs.0g.ai/
 - Coinbase AgentKit: https://docs.cdp.coinbase.com/agent-kit/welcome
