@@ -1,28 +1,26 @@
-# Docs — agentes onchain
+# Docs
 
-Material para pensar la idea juntos y tener a mano qué ofrece cada herramienta.
+## Idea actual
 
-**Importante:** World, 0G y Coinbase AgentKit son **opciones**. No hay que usar las tres. Elegimos stack según el problema.
+**[StayAgent](./07-stay-agent.md)** — agente de estadías con pago onchain (x402 + CDP).  
+Fase 1 en código; World ID y 0G más adelante.
 
-## Índice
+## Referencia de herramientas (opcionales según fase)
 
 | Doc | Contenido |
 | --- | --- |
-| [01-ideas.md](./01-ideas.md) | Ideas en debate (sin idea final todavía) |
-| [02-world-agentkit.md](./02-world-agentkit.md) | Resumen: World AgentKit |
-| [03-0g.md](./03-0g.md) | Resumen: 0G |
-| [04-coinbase-agentkit.md](./04-coinbase-agentkit.md) | Resumen: Coinbase AgentKit (Base/CDP) |
-| [05-como-combinar.md](./05-como-combinar.md) | Cuándo tiene sentido usar 1, 2 o 3 |
-| [06-checklist.md](./06-checklist.md) | Cuentas / setup (cuando definamos idea) |
+| [01-ideas.md](./01-ideas.md) | Tablero de ideas previas |
+| [02-world-agentkit.md](./02-world-agentkit.md) | Resumen World AgentKit (Fase 2) |
+| [03-0g.md](./03-0g.md) | Resumen 0G (Fase 3) |
+| [04-coinbase-agentkit.md](./04-coinbase-agentkit.md) | Resumen Coinbase / CDP |
+| [05-como-combinar.md](./05-como-combinar.md) | Cuándo usar 1, 2 o 3 piezas |
+| [06-checklist.md](./06-checklist.md) | Checklist de cuentas |
+| [07-stay-agent.md](./07-stay-agent.md) | Spec + roadmap StayAgent |
 
-## Cómo usar esto
+## Enlaces
 
-1. Leer los resúmenes `02`–`04` para saber qué arma cada cosa.
-2. Mirar `01-ideas` y seguir debatiendo.
-3. Cuando cerremos idea → elegir piezas en `05` y armar checklist.
-
-## Enlaces oficiales
-
-- World AgentKit: https://docs.world.org/agents/agent-kit/integrate · [repo](https://github.com/worldcoin/agentkit)
+- World AgentKit: https://docs.world.org/agents/agent-kit/integrate
 - 0G: https://docs.0g.ai/
-- Coinbase AgentKit: https://docs.cdp.coinbase.com/agent-kit/welcome
+- Coinbase AgentKit / CDP: https://docs.cdp.coinbase.com/agent-kit/welcome
+- x402 buyers: https://docs.cdp.coinbase.com/x402/quickstart-for-buyers
+- x402 sellers: https://docs.cdp.coinbase.com/x402/quickstart-for-sellers

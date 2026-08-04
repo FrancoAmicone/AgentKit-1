@@ -1,8 +1,8 @@
-# Ideas en debate
+# Ideas (histórico + contexto)
 
-Todavía **no hay idea final**. Esto es el tablero para elegir juntos.
+**Idea elegida:** [StayAgent](./07-stay-agent.md) (estadías + pago x402).
 
-HumanSplit (repartir pagos 70/20/10) quedó descartada.
+Lo de abajo quedó como tablero previo. HumanSplit quedó descartada.
 
 ## Criterios suaves
 
