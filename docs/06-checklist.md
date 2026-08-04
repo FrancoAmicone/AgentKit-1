@@ -42,10 +42,10 @@ Ver [08-phase2-agentbook.md](./08-phase2-agentbook.md).
 
 - [x] Código: gate en `/api/agent/purchase` + `/api/agent/status` + UI badge
 - [x] Marketplace/receiver **sin** verificación (by design)
-- [ ] World App en el teléfono
-- [ ] `npx @worldcoin/agentkit-cli register <AGENT_WALLET_ADDRESS>`
+- [ ] World App en el teléfono (World ID Orb)
+- [ ] UI → **Registrar con World App** (QR en desktop / deep link en mobile)
 - [ ] UI badge → Human-backed ✓
-- [ ] `REQUIRE_HUMAN_BACKED_AGENT=true` en Vercel + redeploy
+- [ ] Redeploy Vercel si hace falta
 - [ ] Probar: sin registro → 403; con registro → paga
 
 ## Fase 2B — Auto-pay limit (dueño del agente)

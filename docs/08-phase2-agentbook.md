@@ -21,27 +21,36 @@ The seller/marketplace address is just where funds settle — it doesn’t need 
 
 ## What you must do (one-time)
 
-1. Install World App and complete World ID.  
-2. Register the **agent** address (same as `AGENT_WALLET_ADDRESS` / CDP `stay-agent-payer`):
+1. Install World App and complete World ID (Orb).  
+2. In StayAgent UI → **Registrar con World App**  
+   - **Mobile:** opens World App via deep link  
+   - **Desktop:** shows a QR to scan with World App  
+3. After verification, the app submits AgentBook registration (hosted relay) and the badge flips to **Human-backed ✓**.  
+4. Then **Reservar y pagar** works again.
+
+### CLI fallback (optional)
 
 ```bash
 npx @worldcoin/agentkit-cli register 0xYourAgentAddress
-```
-
-3. Confirm:
-
-```bash
 npx @worldcoin/agentkit-cli status 0xYourAgentAddress
 ```
 
-4. In the app UI → “Ya lo registré — refrescar status” → badge **Human-backed ✓**  
-5. Then **Reservar y pagar** works again.
+### One shared agent wallet (current demo)
+
+Today every visitor uses the same CDP payer wallet (`stay-agent-payer`).  
+Registration links **that** address to **your** World ID.
+
+Creating a *different* agent per person is possible later (new wallet → fund → register that address → pay with it), but StayAgent does not create per-user wallets yet.
 
 ## Code touchpoints
 
 | File | Role |
 | --- | --- |
 | `lib/agentbook.ts` | `lookupHuman` via `createAgentBookVerifier` |
+| `lib/agentbook-register.ts` | nonce + proof normalize + relay submit |
+| `app/api/agent/register/prepare/route.ts` | nonce + World ID app/action for UI |
+| `app/api/agent/register/complete/route.ts` | POST proof → AgentBook relay |
+| `components/AgentRegisterPanel.tsx` | Button + QR / deep link + poll |
 | `app/api/agent/status/route.ts` | GET status for UI |
 | `app/api/agent/purchase/route.ts` | Gate before x402 pay |
 | `app/page.tsx` | Badge + disable buy if not registered |
