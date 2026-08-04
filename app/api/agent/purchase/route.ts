@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getListing } from "@/lib/listings";
 import { getAgentWalletAddress, getPaidFetch, readPaymentResponse } from "@/lib/agent-payer";
+import { assertAgentIsHumanBacked } from "@/lib/agentbook";
+import { canAutoPay, getAutoPayLimit } from "@/lib/agent-limits";
 
 export const runtime = "nodejs";
 
 /**
  * Agent pays the x402-protected buy endpoint with its CDP wallet.
+ *
+ * Phase 2 gates (payer only; marketplace not verified):
+ * 1) AgentBook human-backed
+ * 2) Amount <= owner auto-pay limit (else needs human approval — Step C)
  */
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as { listingId?: string };
@@ -25,6 +31,46 @@ export async function POST(request: NextRequest) {
 
   try {
     const agentAddress = await getAgentWalletAddress();
+
+    // Gate only the payer (agent). Receiver/marketplace needs no World check.
+    let agentBook;
+    try {
+      agentBook = await assertAgentIsHumanBacked(agentAddress);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Agent not human-backed";
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "AGENT_NOT_HUMAN_BACKED",
+          error: message,
+          agentAddress,
+          registerHint: `npx @worldcoin/agentkit-cli register ${agentAddress}`,
+          hint: "Register the AGENT wallet with World App, then retry. Marketplace receiver is not verified.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const limits = await getAutoPayLimit(agentAddress);
+    if (!canAutoPay(listing.pricePerNight, limits.autoPayLimitUsdc)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "NEEDS_HUMAN_APPROVAL",
+          error: `Amount $${listing.pricePerNight} USDC exceeds auto-pay limit $${limits.autoPayLimitUsdc} USDC.`,
+          agentAddress,
+          limits,
+          listing: {
+            id: listing.id,
+            title: listing.title,
+            amountUsdc: listing.pricePerNight,
+          },
+          hint: "Raise the auto-pay limit in the UI, or wait for Step C (World human-in-the-loop approval).",
+        },
+        { status: 403 },
+      );
+    }
+
     const origin = request.nextUrl.origin;
     const buyUrl = `${origin}/api/listings/${listingId}/buy`;
 
@@ -42,6 +88,7 @@ export async function POST(request: NextRequest) {
           error: payload.error || "Purchase failed",
           details: payload,
           agentAddress,
+          agentBook,
           paymentMeta,
         },
         { status: response.status },
@@ -53,6 +100,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       agentAddress,
+      agentBook: {
+        registered: agentBook.registered,
+        humanId: agentBook.humanId,
+      },
+      limits,
       listing: {
         id: listing.id,
         title: listing.title,

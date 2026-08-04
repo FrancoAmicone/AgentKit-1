@@ -36,14 +36,31 @@
 
 ---
 
-## Fase 2 — World ID (siguiente si querés identidad humana)
+## Fase 2A — AgentBook gate (solo agente que compra)
 
+Ver [08-phase2-agentbook.md](./08-phase2-agentbook.md).
+
+- [x] Código: gate en `/api/agent/purchase` + `/api/agent/status` + UI badge
+- [x] Marketplace/receiver **sin** verificación (by design)
 - [ ] World App en el teléfono
-- [ ] `npm install @worldcoin/agentkit`
 - [ ] `npx @worldcoin/agentkit-cli register <AGENT_WALLET_ADDRESS>`
-- [ ] `status` → registered
-- [ ] Regla: si pago > umbral → pedir re-verificación World ID
-- [ ] (Opcional) Human-in-the-loop antes de confirmar
+- [ ] UI badge → Human-backed ✓
+- [ ] `REQUIRE_HUMAN_BACKED_AGENT=true` en Vercel + redeploy
+- [ ] Probar: sin registro → 403; con registro → paga
+
+## Fase 2B — Auto-pay limit (dueño del agente)
+
+Ver [09-phase2b-autopay-limit.md](./09-phase2b-autopay-limit.md).
+
+- [x] Código: `GET/POST /api/agent/limits` + gate en purchase + UI
+- [x] Mínimo configurable: **$0.01 USDC**; default hardcodeado **$0.1**
+- [ ] Registrar agente (2A)
+- [ ] Probar listing barato ($0.05) → paga con default 0.1
+- [ ] Probar Mendoza ($2) → `NEEDS_HUMAN_APPROVAL` (o subir tope en UI)
+
+## Fase 2C — después
+
+- [ ] Human-in-the-loop cuando supera el tope
 
 Ver [02-world-agentkit.md](./02-world-agentkit.md).
 
