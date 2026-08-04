@@ -57,7 +57,8 @@ export async function POST(request: NextRequest) {
           ok: false,
           code: "AGENT_NOT_HUMAN_BACKED",
           error: "Register the agent in AgentBook before setting spend limits.",
-          registerHint: `npx @worldcoin/agentkit-cli register ${address}`,
+          registerHint:
+            "Use the Register with World App button in the UI (QR on desktop / deep link on mobile).",
         },
         { status: 403 },
       );

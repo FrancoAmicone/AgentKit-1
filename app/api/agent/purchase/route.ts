@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
           code: "AGENT_NOT_HUMAN_BACKED",
           error: message,
           agentAddress,
-          registerHint: `npx @worldcoin/agentkit-cli register ${agentAddress}`,
+          registerHint: "Use the Register with World App button in the UI (QR on desktop / deep link on mobile).",
           hint: "Register the AGENT wallet with World App, then retry. Marketplace receiver is not verified.",
         },
         { status: 403 },

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { AgentRegisterPanel } from "@/components/AgentRegisterPanel";
 
 type ListingResult = {
   id: string;
@@ -201,7 +202,7 @@ export default function HomePage() {
     (!agentStatus.required || agentStatus.registered === true);
 
   const autoLimit = limitsInfo?.limits?.autoPayLimitUsdc;
-  const minLimit = limitsInfo?.minAutoPayLimitUsdc ?? 1;
+  const minLimit = limitsInfo?.minAutoPayLimitUsdc ?? 0.01;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-5 py-10 sm:px-8">
@@ -234,24 +235,12 @@ export default function HomePage() {
         </div>
 
         {agentStatus?.required && !agentStatus.registered && (
-          <div className="mt-3 rounded-xl bg-[var(--sand)]/60 px-3 py-2 text-sm text-[var(--ink)]">
-            <p className="font-medium">Falta registrar el agente en AgentBook</p>
-            <p className="mt-1 text-[var(--muted)]">En tu máquina (con World App):</p>
-            <code className="mt-2 block overflow-x-auto rounded-lg bg-black/5 px-2 py-1.5 text-xs">
-              {agentStatus.registerHint ||
-                "npx @worldcoin/agentkit-cli register <AGENT_WALLET_ADDRESS>"}
-            </code>
-            <button
-              type="button"
-              onClick={() => {
-                void refreshAgentStatus();
-                void refreshLimits();
-              }}
-              className="mt-3 text-sm font-semibold text-[var(--pine)] underline"
-            >
-              Ya lo registré — refrescar status
-            </button>
-          </div>
+          <AgentRegisterPanel
+            onRegistered={() => {
+              void refreshAgentStatus();
+              void refreshLimits();
+            }}
+          />
         )}
 
         <form
