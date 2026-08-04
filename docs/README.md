@@ -28,7 +28,7 @@ Documentación del proyecto **StayAgent**: un agente que busca alojamientos y pa
 | --- | --- | --- |
 | 1 | Catálogo mock + NLP + pago x402 (Base Sepolia) | **Hecha** |
 | 2A | AgentBook gate en purchase (solo agente payer) | [08-phase2-agentbook.md](./08-phase2-agentbook.md) |
-| 2B | Auto-pay limit configurable por el dueño (min $1) | **En curso** — [09-phase2b-autopay-limit.md](./09-phase2b-autopay-limit.md) |
+| 2B | Auto-pay limit configurable (min $0.01, default $0.1) | [09-phase2b-autopay-limit.md](./09-phase2b-autopay-limit.md) |
 | 2C | HITL si supera el tope | Pendiente |
 | 3 | Recibos en 0G Storage | Pendiente |
 | 4 | Discovery Bazaar / fuentes externas | Opcional |

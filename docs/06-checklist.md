@@ -53,10 +53,10 @@ Ver [08-phase2-agentbook.md](./08-phase2-agentbook.md).
 Ver [09-phase2b-autopay-limit.md](./09-phase2b-autopay-limit.md).
 
 - [x] Código: `GET/POST /api/agent/limits` + gate en purchase + UI
-- [x] Mínimo configurable: **$1 USDC**
-- [ ] Registrar agente (2A) y setear tope en la UI
-- [ ] Probar listing barato ($0.2) → paga
-- [ ] Probar Mendoza ($2) con tope $1 → `NEEDS_HUMAN_APPROVAL`
+- [x] Mínimo configurable: **$0.01 USDC**; default hardcodeado **$0.1**
+- [ ] Registrar agente (2A)
+- [ ] Probar listing barato ($0.05) → paga con default 0.1
+- [ ] Probar Mendoza ($2) → `NEEDS_HUMAN_APPROVAL` (o subir tope en UI)
 
 ## Fase 2C — después
 

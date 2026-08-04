@@ -75,7 +75,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
   const [limitsInfo, setLimitsInfo] = useState<LimitsResponse | null>(null);
-  const [limitInput, setLimitInput] = useState("1");
+  const [limitInput, setLimitInput] = useState("0.1");
   const [savingLimit, setSavingLimit] = useState(false);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
 
@@ -217,8 +217,8 @@ export default function HomePage() {
         </h1>
         <p className="mt-4 text-base leading-relaxed text-[var(--muted)]">
           Buscá libremente. Para pagar, el agente debe ser human-backed y el
-          monto debe estar dentro del tope de pago automático que vos configures
-          (mínimo ${minLimit} USDC).
+          monto ≤ tope de pago automático (default $0.1 USDC; mínimo editable $
+          {minLimit}).
         </p>
       </header>
 
@@ -262,8 +262,9 @@ export default function HomePage() {
             Tope de pago automático
           </p>
           <p className="mt-1 text-xs text-[var(--muted)]">
-            El agente paga solo si el listing cuesta ≤ este monto (mín. ${minLimit}{" "}
-            USDC). Arriba de eso se bloquea hasta Step C (aprobación humana).
+            El agente paga solo si el listing cuesta ≤ este monto (mín. editable $
+            {minLimit}; default $0.1). Arriba de eso se bloquea hasta Step C
+            (aprobación humana).
           </p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2">
@@ -448,15 +449,15 @@ export default function HomePage() {
 
       {!search && (
         <p className="mt-6 text-sm text-[var(--muted)]">
-          Tip: registrá el agente, seteá el tope (≥ ${minLimit} USDC), fondeá
-          USDC testnet, y después buscá / reservá. Probá Mendoza ($2) para ver el
+          Tip: registrá el agente, fondeá USDC testnet y reservá un listing de
+          $0.05 (entra en el default $0.1). Probá Mendoza ($2) para ver el
           bloqueo por tope.
         </p>
       )}
 
       <footer className="mt-auto pt-16 text-xs text-[var(--muted)]">
-        Fase 2B · AgentBook + auto-pay limit (min ${minLimit}) · marketplace sin
-        verificación · Base Sepolia + x402 + CDP
+        Fase 2B · AgentBook + auto-pay limit (default $0.1, min ${minLimit}) ·
+        marketplace sin verificación · Base Sepolia + x402 + CDP
       </footer>
     </main>
   );

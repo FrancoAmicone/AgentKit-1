@@ -11,8 +11,8 @@ After AgentBook (2A), the **owner of the agent** sets a max USDC amount the agen
 
 Constraints:
 
-- **Minimum configurable limit:** `$1` USDC  
-- **Default** if owner never saved: `DEFAULT_AUTO_PAY_LIMIT_USDC` or `$1`  
+- **Minimum configurable limit:** `$0.01` USDC  
+- **Default** if owner never saved: hardcoded **`$0.1`** (optional env `DEFAULT_AUTO_PAY_LIMIT_USDC` later)  
 - Only editable when the agent is human-backed (or gate is off)  
 - Still **payer-only** — marketplace not involved  
 
@@ -21,11 +21,13 @@ Constraints:
 In the agent panel:
 
 1. Register agent (2A) → Human-backed ✓  
-2. Set “Tope de pago automático” (≥ 1) → Guardar  
+2. (Optional) Set “Tope de pago automático” (≥ 0.01) → Guardar  
 3. Bookings at/under the tope pay; above are blocked until HITL  
 
-Demo listing: **Mendoza · $2** (over the $1 floor) to test the block.  
-Cheap listings stay at **$0.2** and auto-pay when limit is ≥ 1.
+Demo listings:
+
+- Cheap stays at **$0.05** → auto-pay under default `$0.1`  
+- **Mendoza · $2** → over default; raise tope or wait for Step C
 
 ## APIs
 
@@ -41,8 +43,10 @@ Requires AgentBook registration when the gate is on.
 - Local: `data/agent-limits.json`  
 - Vercel: `/tmp/stay-agent-limits.json` (ephemeral across instances — OK for demo; use KV/DB later)
 
-## Env
+## Env (optional)
+
+Hardcoded default is already `0.1`. Later you can override:
 
 ```bash
-DEFAULT_AUTO_PAY_LIMIT_USDC=1
+DEFAULT_AUTO_PAY_LIMIT_USDC=0.1
 ```

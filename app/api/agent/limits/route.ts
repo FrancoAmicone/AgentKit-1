@@ -3,6 +3,7 @@ import { getAgentWalletAddress } from "@/lib/agent-payer";
 import { getAgentBookStatus } from "@/lib/agentbook";
 import {
   getAutoPayLimit,
+  HARDCODED_DEFAULT_AUTO_PAY_LIMIT_USDC,
   MIN_AUTO_PAY_LIMIT_USDC,
   MAX_AUTO_PAY_LIMIT_USDC,
   setAutoPayLimit,
@@ -26,6 +27,7 @@ export async function GET() {
       ok: true,
       role: "agent-payer",
       minAutoPayLimitUsdc: MIN_AUTO_PAY_LIMIT_USDC,
+      defaultAutoPayLimitUsdc: HARDCODED_DEFAULT_AUTO_PAY_LIMIT_USDC,
       maxAutoPayLimitUsdc: MAX_AUTO_PAY_LIMIT_USDC,
       agentBook: {
         registered: book.registered,

@@ -2,7 +2,13 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
 /** Floor for the owner-configurable auto-pay threshold (USDC). */
-export const MIN_AUTO_PAY_LIMIT_USDC = 1;
+export const MIN_AUTO_PAY_LIMIT_USDC = 0.01;
+
+/**
+ * Hardcoded default when the owner hasn't saved a limit yet.
+ * Optional override later via DEFAULT_AUTO_PAY_LIMIT_USDC.
+ */
+export const HARDCODED_DEFAULT_AUTO_PAY_LIMIT_USDC = 0.1;
 
 /** Safety cap so the UI can't set an absurd limit. */
 export const MAX_AUTO_PAY_LIMIT_USDC = 10_000;
@@ -24,9 +30,10 @@ function normalizeAddress(address: string): string {
 }
 
 function defaultLimit(): number {
+  // Prefer env when present; otherwise use hardcoded 0.1 for easy testnet demos.
   const raw = process.env.DEFAULT_AUTO_PAY_LIMIT_USDC;
-  const n = raw ? Number(raw) : MIN_AUTO_PAY_LIMIT_USDC;
-  if (!Number.isFinite(n)) return MIN_AUTO_PAY_LIMIT_USDC;
+  const n = raw ? Number(raw) : HARDCODED_DEFAULT_AUTO_PAY_LIMIT_USDC;
+  if (!Number.isFinite(n)) return HARDCODED_DEFAULT_AUTO_PAY_LIMIT_USDC;
   return clampLimit(n);
 }
 
