@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 
 type ListingResult = {
   id: string;
@@ -24,6 +24,8 @@ type PurchaseResponse = {
   ok: boolean;
   error?: string;
   hint?: string;
+  registerHint?: string;
+  code?: string;
   agentAddress?: string;
   txHash?: string;
   explorerUrl?: string;
@@ -38,6 +40,17 @@ type PurchaseResponse = {
   };
 };
 
+type AgentStatus = {
+  ok: boolean;
+  address?: string;
+  registered?: boolean;
+  humanId?: string | null;
+  required?: boolean;
+  registerHint?: string;
+  note?: string;
+  error?: string;
+};
+
 export default function HomePage() {
   const [query, setQuery] = useState(
     "Casa en Bariloche con pileta, menos de 150 USD por día",
@@ -47,6 +60,21 @@ export default function HomePage() {
   const [search, setSearch] = useState<SearchResponse | null>(null);
   const [purchase, setPurchase] = useState<PurchaseResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
+
+  const refreshAgentStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/agent/status");
+      const data = (await res.json()) as AgentStatus;
+      setAgentStatus(data);
+    } catch {
+      setAgentStatus({ ok: false, error: "No se pudo leer el status del agente" });
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshAgentStatus();
+  }, [refreshAgentStatus]);
 
   async function onSearch(e: FormEvent) {
     e.preventDefault();
@@ -81,10 +109,11 @@ export default function HomePage() {
       });
       const data = (await res.json()) as PurchaseResponse;
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || data.hint || "No se pudo completar el pago");
+        const parts = [data.error, data.hint, data.registerHint].filter(Boolean);
+        throw new Error(parts.join(" — ") || "No se pudo completar el pago");
       }
       setPurchase(data);
-      // refresh search so reserved listing disappears
+      void refreshAgentStatus();
       const refresh = await fetch("/api/agent/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -93,16 +122,21 @@ export default function HomePage() {
       if (refresh.ok) setSearch((await refresh.json()) as SearchResponse);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error de compra");
+      void refreshAgentStatus();
     } finally {
       setBuyingId(null);
     }
   }
 
+  const canPurchase =
+    agentStatus?.ok &&
+    (!agentStatus.required || agentStatus.registered === true);
+
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-5 py-10 sm:px-8">
       <header className="mb-10 max-w-2xl">
         <p className="mb-3 text-sm font-medium tracking-wide text-[var(--pine)]">
-          StayAgent · Fase 1
+          StayAgent · Fase 2 · AgentBook gate
         </p>
         <h1
           className="text-4xl leading-tight text-[var(--ink)] sm:text-5xl"
@@ -111,10 +145,45 @@ export default function HomePage() {
           Pedí un lugar. El agente lo reserva y paga onchain.
         </h1>
         <p className="mt-4 text-base leading-relaxed text-[var(--muted)]">
-          Búsqueda en lenguaje natural sobre un catálogo propio. La reserva se
-          cobra en USDC (Base Sepolia) con la wallet del agente vía x402 + CDP.
+          La búsqueda es libre. La compra solo la hace un agente human-backed
+          (World AgentBook). Quien recibe el USDC (marketplace) no se verifica.
         </p>
       </header>
+
+      <section className="mb-6 rounded-2xl border border-[var(--line)] bg-white/70 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-[var(--ink)]">Agente (payer)</p>
+            <p className="mt-1 break-all text-xs text-[var(--muted)]">
+              {agentStatus?.address || "cargando…"}
+            </p>
+          </div>
+          <StatusBadge status={agentStatus} />
+        </div>
+        {agentStatus?.required && !agentStatus.registered && (
+          <div className="mt-3 rounded-xl bg-[var(--sand)]/60 px-3 py-2 text-sm text-[var(--ink)]">
+            <p className="font-medium">Falta registrar el agente en AgentBook</p>
+            <p className="mt-1 text-[var(--muted)]">
+              En tu máquina (con World App):
+            </p>
+            <code className="mt-2 block overflow-x-auto rounded-lg bg-black/5 px-2 py-1.5 text-xs">
+              {agentStatus.registerHint ||
+                "npx @worldcoin/agentkit-cli register <AGENT_WALLET_ADDRESS>"}
+            </code>
+            <button
+              type="button"
+              onClick={() => void refreshAgentStatus()}
+              className="mt-3 text-sm font-semibold text-[var(--pine)] underline"
+            >
+              Ya lo registré — refrescar status
+            </button>
+          </div>
+        )}
+        <p className="mt-3 text-xs text-[var(--muted)]">
+          {agentStatus?.note ||
+            "Solo se verifica el agente que compra. El receiver/marketplace no."}
+        </p>
+      </section>
 
       <form
         onSubmit={onSearch}
@@ -138,7 +207,9 @@ export default function HomePage() {
       {search && (
         <p className="mb-6 text-sm text-[var(--muted)]">
           {search.explanation}{" "}
-          <span className="text-[var(--ink)]/50">({search.parser} · {search.count} resultados)</span>
+          <span className="text-[var(--ink)]/50">
+            ({search.parser} · {search.count} resultados)
+          </span>
         </p>
       )}
 
@@ -224,10 +295,14 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={() => onBuy(listing.id)}
-                disabled={buyingId === listing.id}
+                disabled={buyingId === listing.id || !canPurchase}
                 className="mt-4 w-full rounded-xl bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-[var(--paper)] transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
               >
-                {buyingId === listing.id ? "Pagando con el agente…" : "Reservar y pagar"}
+                {buyingId === listing.id
+                  ? "Pagando con el agente…"
+                  : !canPurchase
+                    ? "Registrá el agente para pagar"
+                    : "Reservar y pagar"}
               </button>
             </div>
           </article>
@@ -236,14 +311,51 @@ export default function HomePage() {
 
       {!search && (
         <p className="mt-6 text-sm text-[var(--muted)]">
-          Tip: corré <code className="rounded bg-black/5 px-1.5 py-0.5">npm run setup:wallets</code>{" "}
-          y fondeá USDC testnet antes de pagar.
+          Tip: registrá el agente con World App, fondeá USDC testnet, y después
+          buscá / reservá.
         </p>
       )}
 
       <footer className="mt-auto pt-16 text-xs text-[var(--muted)]">
-        Fase 1 · sin World ID · sin 0G · Base Sepolia + x402 + CDP Server Wallet
+        Fase 2A · AgentBook gate en purchase · marketplace sin verificación ·
+        Base Sepolia + x402 + CDP
       </footer>
     </main>
+  );
+}
+
+function StatusBadge({ status }: { status: AgentStatus | null }) {
+  if (!status) {
+    return (
+      <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-semibold text-[var(--muted)]">
+        Checando AgentBook…
+      </span>
+    );
+  }
+  if (!status.ok) {
+    return (
+      <span className="rounded-full bg-[var(--danger)]/10 px-3 py-1 text-xs font-semibold text-[var(--danger)]">
+        Status error
+      </span>
+    );
+  }
+  if (!status.required) {
+    return (
+      <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-semibold text-[var(--muted)]">
+        Gate off (dev)
+      </span>
+    );
+  }
+  if (status.registered) {
+    return (
+      <span className="rounded-full bg-[var(--pine)]/15 px-3 py-1 text-xs font-semibold text-[var(--pine-deep)]">
+        Human-backed ✓
+      </span>
+    );
+  }
+  return (
+    <span className="rounded-full bg-[var(--clay)]/15 px-3 py-1 text-xs font-semibold text-[var(--clay)]">
+      Not registered
+    </span>
   );
 }

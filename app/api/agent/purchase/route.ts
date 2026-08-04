@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getListing } from "@/lib/listings";
 import { getAgentWalletAddress, getPaidFetch, readPaymentResponse } from "@/lib/agent-payer";
+import { assertAgentIsHumanBacked } from "@/lib/agentbook";
 
 export const runtime = "nodejs";
 
 /**
  * Agent pays the x402-protected buy endpoint with its CDP wallet.
+ *
+ * Phase 2 gate: only the purchasing agent must be human-backed (AgentBook).
+ * The marketplace receiver is NOT verified.
  */
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as { listingId?: string };
@@ -25,6 +29,26 @@ export async function POST(request: NextRequest) {
 
   try {
     const agentAddress = await getAgentWalletAddress();
+
+    // Gate only the payer (agent). Receiver/marketplace needs no World check.
+    let agentBook;
+    try {
+      agentBook = await assertAgentIsHumanBacked(agentAddress);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Agent not human-backed";
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "AGENT_NOT_HUMAN_BACKED",
+          error: message,
+          agentAddress,
+          registerHint: `npx @worldcoin/agentkit-cli register ${agentAddress}`,
+          hint: "Register the AGENT wallet with World App, then retry. Marketplace receiver is not verified.",
+        },
+        { status: 403 },
+      );
+    }
+
     const origin = request.nextUrl.origin;
     const buyUrl = `${origin}/api/listings/${listingId}/buy`;
 
@@ -42,6 +66,7 @@ export async function POST(request: NextRequest) {
           error: payload.error || "Purchase failed",
           details: payload,
           agentAddress,
+          agentBook,
           paymentMeta,
         },
         { status: response.status },
@@ -53,6 +78,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       agentAddress,
+      agentBook: {
+        registered: agentBook.registered,
+        humanId: agentBook.humanId,
+      },
       listing: {
         id: listing.id,
         title: listing.title,
