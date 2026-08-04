@@ -13,6 +13,7 @@ Documentación del proyecto **StayAgent**: un agente que busca alojamientos y pa
 | Doc | Contenido |
 | --- | --- |
 | [07-stay-agent.md](./07-stay-agent.md) | Spec implementada + fases 2–4 |
+| [08-phase2-agentbook.md](./08-phase2-agentbook.md) | Phase 2A: gate AgentBook (payer only) |
 | [06-checklist.md](./06-checklist.md) | Checklist de cuentas y comandos |
 | [04-coinbase-agentkit.md](./04-coinbase-agentkit.md) | CDP / AgentKit / x402 (Fase 1) |
 | [02-world-agentkit.md](./02-world-agentkit.md) | World AgentKit (Fase 2) |
@@ -24,8 +25,9 @@ Documentación del proyecto **StayAgent**: un agente que busca alojamientos y pa
 
 | Fase | Descripción | Estado |
 | --- | --- | --- |
-| 1 | Catálogo mock + NLP + pago x402 (Base Sepolia) | **Implementada** |
-| 2 | World ID (límites / verificación dueño) | Pendiente |
+| 1 | Catálogo mock + NLP + pago x402 (Base Sepolia) | **Hecha** |
+| 2A | AgentBook gate en purchase (solo agente payer) | **En curso** — [08-phase2-agentbook.md](./08-phase2-agentbook.md) |
+| 2B/C | Threshold + HITL | Pendiente |
 | 3 | Recibos en 0G Storage | Pendiente |
 | 4 | Discovery Bazaar / fuentes externas | Opcional |
 
