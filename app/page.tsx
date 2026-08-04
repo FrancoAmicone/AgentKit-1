@@ -1,7 +1,12 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { AgentRegisterPanel } from "@/components/AgentRegisterPanel";
+import {
+  AgentSetupModal,
+  StatusBadge,
+  type AgentStatus,
+  type LimitsResponse,
+} from "@/components/AgentSetupModal";
 
 type ListingResult = {
   id: string;
@@ -41,30 +46,6 @@ type PurchaseResponse = {
   };
 };
 
-type AgentStatus = {
-  ok: boolean;
-  address?: string;
-  registered?: boolean;
-  humanId?: string | null;
-  required?: boolean;
-  registerHint?: string;
-  note?: string;
-  error?: string;
-};
-
-type LimitsResponse = {
-  ok: boolean;
-  canEdit?: boolean;
-  minAutoPayLimitUsdc?: number;
-  maxAutoPayLimitUsdc?: number;
-  limits?: {
-    autoPayLimitUsdc: number;
-    source: "default" | "owner";
-    updatedAt: string;
-  };
-  error?: string;
-};
-
 export default function HomePage() {
   const [query, setQuery] = useState(
     "Casa en Bariloche con pileta, menos de 150 USD por día",
@@ -79,6 +60,8 @@ export default function HomePage() {
   const [limitInput, setLimitInput] = useState("0.1");
   const [savingLimit, setSavingLimit] = useState(false);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [autoOpenedSetup, setAutoOpenedSetup] = useState(false);
 
   const refreshAgentStatus = useCallback(async () => {
     try {
@@ -103,10 +86,23 @@ export default function HomePage() {
     }
   }, []);
 
-  useEffect(() => {
+  const refreshAll = useCallback(() => {
     void refreshAgentStatus();
     void refreshLimits();
   }, [refreshAgentStatus, refreshLimits]);
+
+  useEffect(() => {
+    refreshAll();
+  }, [refreshAll]);
+
+  // Prompt setup when human-backed gate is on and agent is not registered yet.
+  useEffect(() => {
+    if (autoOpenedSetup || !agentStatus?.ok) return;
+    if (agentStatus.required && agentStatus.registered !== true) {
+      setSetupOpen(true);
+      setAutoOpenedSetup(true);
+    }
+  }, [agentStatus, autoOpenedSetup]);
 
   async function onSaveLimit(e: FormEvent) {
     e.preventDefault();
@@ -137,7 +133,7 @@ export default function HomePage() {
         `Límite guardado: pago automático hasta $${data.limits?.autoPayLimitUsdc} USDC`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al guardar límite");
+      setLimitMessage(err instanceof Error ? err.message : "Error al guardar límite");
     } finally {
       setSavingLimit(false);
     }
@@ -176,12 +172,17 @@ export default function HomePage() {
       });
       const data = (await res.json()) as PurchaseResponse;
       if (!res.ok || !data.ok) {
+        if (data.code === "AGENT_NOT_HUMAN_BACKED") {
+          setSetupOpen(true);
+        }
+        if (data.code === "NEEDS_HUMAN_APPROVAL") {
+          setSetupOpen(true);
+        }
         const parts = [data.error, data.hint, data.registerHint].filter(Boolean);
         throw new Error(parts.join(" — ") || "No se pudo completar el pago");
       }
       setPurchase(data);
-      void refreshAgentStatus();
-      void refreshLimits();
+      refreshAll();
       const refresh = await fetch("/api/agent/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -190,8 +191,7 @@ export default function HomePage() {
       if (refresh.ok) setSearch((await refresh.json()) as SearchResponse);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error de compra");
-      void refreshAgentStatus();
-      void refreshLimits();
+      refreshAll();
     } finally {
       setBuyingId(null);
     }
@@ -206,10 +206,22 @@ export default function HomePage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-5 py-10 sm:px-8">
-      <header className="mb-10 max-w-2xl">
-        <p className="mb-3 text-sm font-medium tracking-wide text-[var(--pine)]">
-          StayAgent · Fase 2B · Auto-pay limit
-        </p>
+      <header className="mb-8 max-w-2xl">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-medium tracking-wide text-[var(--pine)]">
+            StayAgent
+          </p>
+          <button
+            type="button"
+            onClick={() => setSetupOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-white/70 px-3 py-1.5 text-left transition hover:border-[var(--pine)]/40"
+          >
+            <StatusBadge status={agentStatus} />
+            <span className="text-xs font-semibold text-[var(--pine)]">
+              Configurar
+            </span>
+          </button>
+        </div>
         <h1
           className="text-4xl leading-tight text-[var(--ink)] sm:text-5xl"
           style={{ fontFamily: "var(--font-display)" }}
@@ -217,86 +229,10 @@ export default function HomePage() {
           Pedí un lugar. El agente lo reserva y paga onchain.
         </h1>
         <p className="mt-4 text-base leading-relaxed text-[var(--muted)]">
-          Buscá libremente. Para pagar, el agente debe ser human-backed y el
-          monto ≤ tope de pago automático (default $0.1 USDC; mínimo editable $
-          {minLimit}).
+          Buscá libremente. Para pagar hace falta verificación humana del
+          agente y que el monto entre en tu tope (default $0.1 USDC).
         </p>
       </header>
-
-      <section className="mb-6 rounded-2xl border border-[var(--line)] bg-white/70 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-[var(--ink)]">Agente (payer)</p>
-            <p className="mt-1 break-all text-xs text-[var(--muted)]">
-              {agentStatus?.address || "cargando…"}
-            </p>
-          </div>
-          <StatusBadge status={agentStatus} />
-        </div>
-
-        {agentStatus?.required && !agentStatus.registered && (
-          <AgentRegisterPanel
-            onRegistered={() => {
-              void refreshAgentStatus();
-              void refreshLimits();
-            }}
-          />
-        )}
-
-        <form
-          onSubmit={onSaveLimit}
-          className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--paper)]/70 p-3"
-        >
-          <p className="text-sm font-semibold text-[var(--ink)]">
-            Tope de pago automático
-          </p>
-          <p className="mt-1 text-xs text-[var(--muted)]">
-            El agente paga solo si el listing cuesta ≤ este monto (mín. editable $
-            {minLimit}; default $0.1). Arriba de eso se bloquea hasta Step C
-            (aprobación humana).
-          </p>
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-[var(--muted)]">$</span>
-              <input
-                type="number"
-                min={minLimit}
-                step="0.01"
-                value={limitInput}
-                onChange={(e) => setLimitInput(e.target.value)}
-                disabled={!limitsInfo?.canEdit}
-                className="w-32 rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-sm outline-none ring-[var(--pine)] focus:ring-2 disabled:opacity-50"
-              />
-              <span className="text-sm text-[var(--muted)]">USDC</span>
-            </div>
-            <button
-              type="submit"
-              disabled={savingLimit || !limitsInfo?.canEdit}
-              className="rounded-xl bg-[var(--pine)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--pine-deep)] disabled:opacity-60"
-            >
-              {savingLimit ? "Guardando…" : "Guardar tope"}
-            </button>
-          </div>
-          <p className="mt-2 text-xs text-[var(--muted)]">
-            Actual:{" "}
-            {autoLimit != null
-              ? `$${autoLimit} USDC (${limitsInfo?.limits?.source})`
-              : "cargando…"}
-            {!limitsInfo?.canEdit &&
-              " · Registrá el agente para poder editar el tope."}
-          </p>
-          {limitMessage && (
-            <p className="mt-2 text-xs font-medium text-[var(--pine-deep)]">
-              {limitMessage}
-            </p>
-          )}
-        </form>
-
-        <p className="mt-3 text-xs text-[var(--muted)]">
-          {agentStatus?.note ||
-            "Solo se verifica el agente que compra. El receiver/marketplace no."}
-        </p>
-      </section>
 
       <form
         onSubmit={onSearch}
@@ -328,7 +264,18 @@ export default function HomePage() {
 
       {error && (
         <div className="mb-6 rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/8 px-4 py-3 text-sm text-[var(--danger)]">
-          {error}
+          {error}{" "}
+          {(error.includes("aprobación") ||
+            error.includes("Register") ||
+            error.includes("human")) && (
+            <button
+              type="button"
+              onClick={() => setSetupOpen(true)}
+              className="font-semibold underline"
+            >
+              Abrir configuración
+            </button>
+          )}
         </div>
       )}
 
@@ -418,16 +365,22 @@ export default function HomePage() {
                 )}
                 <button
                   type="button"
-                  onClick={() => onBuy(listing.id)}
-                  disabled={buyingId === listing.id || !canPurchase}
+                  onClick={() => {
+                    if (!canPurchase) {
+                      setSetupOpen(true);
+                      return;
+                    }
+                    void onBuy(listing.id);
+                  }}
+                  disabled={buyingId === listing.id}
                   className="mt-4 w-full rounded-xl bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-[var(--paper)] transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
                 >
                   {buyingId === listing.id
                     ? "Pagando con el agente…"
                     : !canPurchase
-                      ? "Registrá el agente para pagar"
+                      ? "Verificar agente para pagar"
                       : overLimit
-                        ? "Intentar pago (puede pedir aprobación)"
+                        ? "Intentar pago (pide aprobación)"
                         : "Reservar y pagar"}
                 </button>
               </div>
@@ -438,52 +391,28 @@ export default function HomePage() {
 
       {!search && (
         <p className="mt-6 text-sm text-[var(--muted)]">
-          Tip: registrá el agente, fondeá USDC testnet y reservá un listing de
-          $0.05 (entra en el default $0.1). Probá Mendoza ($2) para ver el
-          bloqueo por tope.
+          Tip: tope default $0.1 → $0.05 paga solo; buscá “Casa frente al lago”
+          ($0.2) o Mendoza ($2) para ver el bloqueo por tope.
         </p>
       )}
 
       <footer className="mt-auto pt-16 text-xs text-[var(--muted)]">
-        Fase 2B · AgentBook + auto-pay limit (default $0.1, min ${minLimit}) ·
-        marketplace sin verificación · Base Sepolia + x402 + CDP
+        AgentBook + auto-pay (default $0.1, min ${minLimit}) · marketplace sin
+        verificación · Base Sepolia + x402 + CDP
       </footer>
-    </main>
-  );
-}
 
-function StatusBadge({ status }: { status: AgentStatus | null }) {
-  if (!status) {
-    return (
-      <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-semibold text-[var(--muted)]">
-        Checando AgentBook…
-      </span>
-    );
-  }
-  if (!status.ok) {
-    return (
-      <span className="rounded-full bg-[var(--danger)]/10 px-3 py-1 text-xs font-semibold text-[var(--danger)]">
-        Status error
-      </span>
-    );
-  }
-  if (!status.required) {
-    return (
-      <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-semibold text-[var(--muted)]">
-        Gate off (dev)
-      </span>
-    );
-  }
-  if (status.registered) {
-    return (
-      <span className="rounded-full bg-[var(--pine)]/15 px-3 py-1 text-xs font-semibold text-[var(--pine-deep)]">
-        Human-backed ✓
-      </span>
-    );
-  }
-  return (
-    <span className="rounded-full bg-[var(--clay)]/15 px-3 py-1 text-xs font-semibold text-[var(--clay)]">
-      Not registered
-    </span>
+      <AgentSetupModal
+        open={setupOpen}
+        onClose={() => setSetupOpen(false)}
+        agentStatus={agentStatus}
+        limitsInfo={limitsInfo}
+        limitInput={limitInput}
+        onLimitInputChange={setLimitInput}
+        savingLimit={savingLimit}
+        limitMessage={limitMessage}
+        onSaveLimit={onSaveLimit}
+        onRefresh={refreshAll}
+      />
+    </main>
   );
 }

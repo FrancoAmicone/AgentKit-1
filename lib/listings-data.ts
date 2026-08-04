@@ -28,10 +28,22 @@ export const LISTINGS_SEED: Listing[] = [
     ownerWalletAddress: "0x0000000000000000000000000000000000000001",
   },
   {
+    id: "bariloche-lakehouse",
+    title: "Casa frente al lago",
+    location: "Bariloche, Río Negro",
+    // $0.2 > default auto-pay tope $0.1 — demo NEEDS_HUMAN_APPROVAL
+    pricePerNight: 0.2,
+    amenities: ["wifi", "pileta", "lago", "cochera"],
+    rating: 4.6,
+    imageUrl: "https://images.unsplash.com/photo-1449844908441-8829872d2607?w=800&q=80",
+    available: true,
+    ownerWalletAddress: "0x0000000000000000000000000000000000000001",
+  },
+  {
     id: "mendoza-vineyard",
     title: "Casa entre viñedos",
     location: "Mendoza, Mendoza",
-    // Above the $1 minimum auto-pay floor — useful to test NEEDS_HUMAN_APPROVAL
+    // Well above default tope — useful to test NEEDS_HUMAN_APPROVAL
     pricePerNight: 2,
     amenities: ["wifi", "estacionamiento", "desayuno"],
     rating: 4.8,
