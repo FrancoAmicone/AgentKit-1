@@ -1,52 +1,203 @@
-# StayAgent — idea elegida
+# StayAgent
 
 ## Pitch
 
-Un agente busca alojamientos por lenguaje natural, el usuario elige, y el agente **paga USDC onchain** con su wallet para reservar.  
-Fase 1 usa catálogo propio + x402 + CDP en Base Sepolia.
+Un agente de IA busca alojamientos según un pedido en lenguaje natural, muestra opciones, el usuario elige, y el agente **ejecuta el pago real (USDC testnet)** con su propia wallet cripto para reservar el lugar.
 
-## Por qué esta idea
+- **Búsqueda:** catálogo propio + parser NLP (rules; LLM opcional)  
+- **Pago:** protocolo **x402** + wallet CDP (`CdpX402Client`)  
+- **Red:** Base Sepolia  
+- **Después:** World ID (identidad) y 0G Storage (auditoría)
 
-- Simple de entender: buscar → elegir → pagar.
-- El agente actúa solo en el paso que importa (el pago).
-- Sirve para aprender x402 + wallets CDP con un flujo real.
-- World ID y 0G se suman después, sin bloquear el MVP.
+## Flujo end-to-end (Fase 1)
 
-## Fases
+```
+Usuario: "Casa en Bariloche con pileta, menos de 150 USD"
+        │
+        ▼
+POST /api/agent/search
+  → parsea query → filtra listings → devuelve tarjetas
+        │
+        ▼
+Usuario elige → "Reservar y pagar"
+        │
+        ▼
+POST /api/agent/purchase { listingId }
+  → wallet del agente llama POST /api/listings/[id]/buy
+  → si no hay pago: HTTP 402 + precio en USDC
+  → x402-fetch paga con CDP wallet y reintenta
+  → listing queda reserved + confirmación (+ tx si el facilitator la expone)
+```
 
-| Fase | Qué | Estado |
+## Arquitectura
+
+```
+┌─────────────┐     search / purchase      ┌──────────────────────┐
+│  UI (Next)  │ ─────────────────────────► │  API routes (Node)   │
+└─────────────┘                            └──────────┬───────────┘
+                                                      │
+                    ┌─────────────────────────────────┼─────────────────────┐
+                    ▼                                 ▼                     ▼
+             lib/nlp.ts                      lib/agent-payer.ts     lib/x402-server.ts
+             (rules / LLM)                   CdpX402Client          facilitator CDP
+                                             + x402-fetch           + withX402
+                    │                                 │                     │
+                    ▼                                 ▼                     ▼
+             lib/listings*.ts                  Base Sepolia USDC      endpoint /buy
+             catálogo mock                     (wallet agente)        (cobra pricePerNight)
+```
+
+### Roles de las wallets
+
+| Wallet | Nombre CDP | Rol |
 | --- | --- | --- |
-| **1** | Catálogo mock + wallet agente + pago x402 testnet | En código |
-| **2** | World ID antes de pagos grandes / subir límite | Pendiente |
-| **3** | Recibo JSON a 0G Storage (hash en UI) | Pendiente |
-| **4** | Discovery Bazaar / fuentes externas (stretch) | Opcional |
+| Agente (payer) | `stay-agent-payer` | Paga las reservas |
+| Marketplace (receiver) | `stay-marketplace-receiver` | Recibe el USDC del `/buy` |
+
+Ambas se crean con `npm run setup:wallets`.
 
 ## Stack Fase 1
 
-- Next.js App Router
-- `@coinbase/cdp-sdk` — `CdpX402Client` (payer) + facilitator CDP
-- `@x402/next` (`withX402`) + `@x402/fetch`
-- Base Sepolia USDC
+| Pieza | Paquete / tech | Uso |
+| --- | --- | --- |
+| App | Next.js 16 App Router + TS | UI + APIs |
+| Payer | `@coinbase/cdp-sdk` → `CdpX402Client` | Firma pagos x402 |
+| Seller gate | `@x402/next` → `withX402` | Protege `/buy` |
+| HTTP paid client | `@x402/fetch` → `wrapFetchWithPayment` | Ciclo 402 → pay → retry |
+| Facilitator | CDP hosted (`createCdpFacilitatorClient`) | Verify/settle |
+| Catálogo | `lib/listings-data.ts` | 8 lugares mock AR |
+| NLP | `lib/nlp.ts` | Rules; OpenAI/Anthropic opcionales |
 
-World AgentKit y 0G **no** se usan en Fase 1 (a propósito).
+**No usado en Fase 1:** World AgentKit, 0G, mainnet, APIs de hoteles reales.
+
+## APIs
+
+### `GET /api/listings`
+
+Catálogo filtrable (público, sin pago).
+
+Query params opcionales:
+
+- `destino` — texto (ej. `Bariloche`)
+- `precioMax` — número USDC/noche
+- `amenities` — lista separada por comas (`pileta,wifi`)
+
+### `POST /api/agent/search`
+
+Body:
+
+```json
+{ "query": "casa en Bariloche con pileta, menos de 150 USD por día" }
+```
+
+Respuesta: `filters`, `explanation`, `parser` (`rules` \| `llm`), `results[]` con `matchReason`.
+
+### `POST /api/listings/[id]/buy` (vendedor x402)
+
+- Sin header de pago → **402** con precio `$${pricePerNight}` en Base Sepolia.  
+- Con pago válido → marca `available: false` y devuelve la reserva.  
+- `payTo` = `MARKETPLACE_WALLET_ADDRESS`.
+
+### `POST /api/agent/purchase`
+
+Body:
+
+```json
+{ "listingId": "bariloche-cabin" }
+```
+
+El agente paga el `/buy` con su wallet. Devuelve reserva, `agentAddress`, `paymentMeta`, y `txHash` / `explorerUrl` si están disponibles.
 
 ## Archivos clave
 
 ```
-app/page.tsx                         UI
+app/page.tsx                         UI buscador + tarjetas + confirmación
 app/api/listings/route.ts            GET catálogo
 app/api/listings/[id]/buy/route.ts  POST x402 (vendedor)
-app/api/agent/search/route.ts        NLP → filtros
+app/api/agent/search/route.ts        NLP → filtros → resultados
 app/api/agent/purchase/route.ts      agente paga
-lib/listings-data.ts                 mock
-lib/agent-payer.ts                   CdpX402Client
-lib/x402-server.ts                   resource server
-scripts/create-wallet.ts             setup wallets + faucet
+lib/listings-data.ts                 seed del catálogo
+lib/listings.ts                      filtros + reserva in-memory
+lib/nlp.ts                           parser lenguaje natural
+lib/agent-payer.ts                   CdpX402Client + paid fetch
+lib/x402-server.ts                   resource server + payTo
+scripts/create-wallet.ts             wallets + faucet
+.env.example                         variables
 ```
 
-## Qué tenés que configurar vos
+## Variables de entorno
 
-1. CDP API keys + wallet secret
-2. `npm run setup:wallets`
-3. Pegar addresses en `.env.local`
-4. `npm run dev` y probar una reserva
+Ver `.env.example`:
+
+| Variable | Obligatoria Fase 1 | Notas |
+| --- | --- | --- |
+| `CDP_API_KEY_ID` | Sí | Portal CDP |
+| `CDP_API_KEY_SECRET` | Sí | Portal CDP |
+| `CDP_WALLET_SECRET` | Sí | Portal CDP |
+| `AGENT_WALLET_ADDRESS` | Sí (después del script) | Informativa / checks |
+| `MARKETPLACE_WALLET_ADDRESS` | Sí | `payTo` del `/buy` |
+| `CDP_X402_CLIENT_ENVIRONMENT` | Recomendada `development` | Base Sepolia |
+| `OPENAI_API_KEY` | No | Mejora el NLP |
+| `ANTHROPIC_API_KEY` | No | Alternativa NLP |
+
+Nunca exponer keys CDP en `NEXT_PUBLIC_*`.
+
+## Setup rápido
+
+```bash
+cp .env.example .env.local
+# completar las 3 keys CDP
+
+npm install
+npm run setup:wallets
+# pegar AGENT_WALLET_ADDRESS y MARKETPLACE_WALLET_ADDRESS en .env.local
+
+npm run dev
+# http://localhost:3000
+```
+
+Checklist detallado: [06-checklist.md](./06-checklist.md).
+
+## Modelo de listing
+
+```ts
+type Listing = {
+  id: string;
+  title: string;
+  location: string;
+  pricePerNight: number; // USDC
+  amenities: string[];
+  rating: number;
+  imageUrl: string;
+  available: boolean;
+  ownerWalletAddress: string; // en runtime = MARKETPLACE_WALLET_ADDRESS
+};
+```
+
+La disponibilidad se guarda **in-memory** (se resetea al reiniciar el server). Suficiente para Fase 1.
+
+## Fases siguientes
+
+### Fase 2 — World ID
+
+- Verificar al dueño del agente (World ID Kit / AgentBook).  
+- Regla: si el pago supera un umbral (ej. > 100 USDC), pedir re-verificación.  
+- Docs: [02-world-agentkit.md](./02-world-agentkit.md)
+
+### Fase 3 — 0G Storage
+
+- Por cada pago exitoso, subir JSON recibo:  
+  `{ timestamp, listingId, monto, txHash, nullifierHash? }`  
+- Mostrar content hash en la UI.  
+- Docs: [03-0g.md](./03-0g.md)
+
+### Fase 4 — Discovery (stretch)
+
+- Probar Bazaar / agentic.market para fuentes externas.  
+- No depende de que exista un servicio de hoteles real.
+
+## Qué no hacer todavía
+
+- Mainnet / plata real  
+- Scraping de Airbnb/Booking  
+- World ID u 0G antes de que el pago testnet funcione de punta a punta  

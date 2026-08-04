@@ -1,75 +1,44 @@
-# Resumen — Coinbase AgentKit
+# Resumen — Coinbase CDP / AgentKit / x402
 
-**Links:** [Welcome](https://docs.cdp.coinbase.com/agent-kit/welcome) · [Quickstart](https://docs.cdp.coinbase.com/agent-kit/getting-started/quickstart) · [GitHub](https://github.com/coinbase/agentkit) · [CDP Portal](https://portal.cdp.coinbase.com)
+**Links:** [AgentKit](https://docs.cdp.coinbase.com/agent-kit/welcome) · [x402 buyers](https://docs.cdp.coinbase.com/x402/quickstart-for-buyers) · [x402 sellers](https://docs.cdp.coinbase.com/x402/quickstart-for-sellers) · [Portal](https://portal.cdp.coinbase.com) · [GitHub AgentKit](https://github.com/coinbase/agentkit)
 
 ## En una frase
 
-Toolkit de Coinbase Developer Platform para que un agente tenga **wallet** y pueda hacer **acciones onchain** (transfers, swaps, contratos, etc.).
+Infra de Coinbase para que un agente tenga **wallet** y pueda **pagar / cobrar onchain**, en este proyecto vía **x402** en Base Sepolia.
 
-## Importante: no es el World AgentKit
+## Cómo lo usa StayAgent (Fase 1)
 
-Mismo nombre genérico (“AgentKit”), productos distintos:
-
-| | World AgentKit | Coinbase AgentKit |
-| --- | --- | --- |
-| Foco | Humano detrás del agente | Ejecutar txs / wallet |
-| Pieza clave | AgentBook + x402 | CDP SDK + action providers |
-
-## Qué te brinda
-
-| Capacidad | Detalle |
+| Componente | Uso concreto |
 | --- | --- |
-| Wallet providers | CDP non-custodial, Viem/local key, Privy, etc. |
-| Action providers | Transfer, swap, deploy, NFT, custom actions |
-| Frameworks | LangChain, Vercel AI SDK, Eliza, OpenAI Agents, MCP |
-| Redes | EVM (Base, etc.) y Solana |
-| DX | CLI `npm create onchain-agent@latest` |
+| `CdpClient` | `npm run setup:wallets` crea payer + receiver |
+| `CdpX402Client` | Wallet del agente firma pagos x402 (`lib/agent-payer.ts`) |
+| `createCdpFacilitatorClient` | Facilitator autenticado CDP (`lib/x402-server.ts`) |
+| `@x402/next` `withX402` | Protege `POST /api/listings/[id]/buy` |
+| `@x402/fetch` | El agente hace el ciclo 402 → pagar → reintentar |
+| `@coinbase/agentkit` | Instalado; el flujo de pago actual usa CDP x402 directo (más simple para este caso) |
 
-También en el ecosistema CDP (relacionado, no obligatorio):
+## AgentKit vs CDP x402 (importante)
 
-- **x402** — pagos HTTP para agentes/APIs
-- **Agentic Wallet / Coinbase for Agents** — conectar flujos agenticos a Coinbase
-- **Paymaster** — sponsorear gas
+| | Coinbase AgentKit | CDP x402 (`CdpX402Client`) |
+| --- | --- | --- |
+| Foco | Tools onchain para LLMs (transfer, swap, …) | Pagar endpoints HTTP 402 |
+| StayAgent Fase 1 | Disponible / futuro | **Sí — path principal del pago** |
 
-## Cómo funciona (alto nivel)
+No confundir con **World** AgentKit (humano detrás del agente).
 
-1. Creás proyecto con el CLI (o instalás `@coinbase/agentkit`).
-2. Configurás API keys CDP (+ LLM si usás chat agent).
-3. El LLM elige tools → el wallet provider firma → la tx va a la red (ej. Base Sepolia).
+## Red
 
-## Arranque
+- Testnet: **Base Sepolia** (`eip155:84532`)  
+- Env: `CDP_X402_CLIENT_ENVIRONMENT=development`  
+- Asset: USDC testnet (faucet CDP)
 
-```bash
-# TypeScript
-npm create onchain-agent@latest
+## Qué tenés que crear en CDP
 
-# Python
-pipx run create-onchain-agent
-```
+1. Cuenta en el portal  
+2. API Key ID + Secret  
+3. Wallet Secret  
+4. Correr `npm run setup:wallets` en este repo  
 
-Elegís framework, red (**Base Sepolia** para aprender) y wallet provider (**CDP** recomendado).
+## Cuándo ampliar con AgentKit “clásico”
 
-## Qué no hace solo
-
-- No verifica “humano único” (World).
-- No te da storage descentralizado de AI (0G).
-- Sin **policy** (límites, allowlists), un agente con fondos es riesgoso.
-
-## Cuándo tiene sentido
-
-- Querés **txs reales** con buena DX en Base.
-- Querés un chatbot/agente que mueva tokens sin armar todo de viem a mano.
-- Querés extender actions (Aave, split custom, etc.).
-
-## Cuándo no hace falta
-
-- Solo estás haciendo verificación World / x402 sin mover fondos.
-- Preferís firmar vos con una wallet manual y el “agente” solo decide offchain.
-- Todo vive 100% en otra chain y ya tenés otro SDK cómodo.
-
-## Setup mínimo (si lo elegimos)
-
-1. Cuenta en https://portal.cdp.coinbase.com
-2. Secret API Key
-3. API key de LLM (si hay chat)
-4. `NETWORK_ID=base-sepolia` y primer transfer de prueba
+Si más adelante el agente necesita tools tipo “transferí residual”, “swapeá ETH→USDC”, o un loop LangChain más rico, sumás action providers de `@coinbase/agentkit` encima de la misma cuenta CDP.

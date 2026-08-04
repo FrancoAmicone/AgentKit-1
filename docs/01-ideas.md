@@ -1,8 +1,8 @@
-# Ideas (histórico + contexto)
+# Ideas (histórico)
 
-**Idea elegida:** [StayAgent](./07-stay-agent.md) (estadías + pago x402).
+**Idea elegida e implementada (Fase 1):** [StayAgent](./07-stay-agent.md).
 
-Lo de abajo quedó como tablero previo. HumanSplit quedó descartada.
+Este archivo solo guarda el tablero previo. HumanSplit y los pivotes de “3ra edad / impacto social amplio” quedaron descartados a favor de un MVP simple: buscar estadía → pagar onchain.
 
 ## Criterios suaves
 

@@ -45,16 +45,26 @@ Docs: https://docs.world.org/agents/human-in-the-loop/integrate
 - No reemplaza wallets/transfers tipo Coinbase AgentKit.
 - No es storage ni compute (eso sería 0G u otro).
 
+## Rol en StayAgent
+
+**Fase 2 (pendiente).** No se usa en Fase 1.
+
+Uso previsto:
+
+- Verificar al dueño del agente (AgentBook / World ID).  
+- Pedir re-verificación si el pago de una reserva supera un umbral.  
+- (Opcional) HITL antes de confirmar reservas caras.
+
 ## Cuándo tiene sentido usarlo
 
-- Claims, rifas, bounties, APIs: **1 humano = 1 derecho**.
-- Querés monetizar agentes (x402) sin regalar todo a bots.
-- Querés accountability mínima sobre quién opera el agente.
+- Querés accountability sobre quién opera el agente de reservas.
+- Querés anti-spam si exponés APIs públicas del agente.
+- Querés un freno humano en gastos altos.
 
 ## Cuándo no hace falta
 
-- Script personal solo tuyo, sin audiencia ni abuso posible.
-- Solo estás aprendiendo a firmar una tx y no hay superficie pública.
+- Fase 1: aprender el pago x402 end-to-end en testnet (caso actual).
+- Script personal sin superficie pública.
 
 ## Setup mínimo (si lo elegimos)
 
