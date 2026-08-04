@@ -16,7 +16,8 @@ Pedís algo como *“casa en Bariloche con pileta, menos de 150 USD”* → el a
 | Endpoint vendedor x402 | Mainnet / plata real |
 | Compra end-to-end en Base Sepolia | |
 
-Fases 2–4: ver [docs/07-stay-agent.md](./docs/07-stay-agent.md).
+Fase 2A (AgentBook gate, payer only): [docs/08-phase2-agentbook.md](./docs/08-phase2-agentbook.md).  
+Fases 2B–4: [docs/07-stay-agent.md](./docs/07-stay-agent.md).
 
 ## Setup
 

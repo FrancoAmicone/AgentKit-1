@@ -38,14 +38,22 @@
 
 ---
 
-## Fase 2 — World (cuando Fase 1 ande)
+## Fase 2A — AgentBook gate (solo agente que compra)
 
+Ver [08-phase2-agentbook.md](./08-phase2-agentbook.md).
+
+- [x] Código: gate en `/api/agent/purchase` + `/api/agent/status` + UI badge
+- [x] Marketplace/receiver **sin** verificación (by design)
 - [ ] World App en el teléfono
-- [ ] `npm install @worldcoin/agentkit`
 - [ ] `npx @worldcoin/agentkit-cli register <AGENT_WALLET_ADDRESS>`
-- [ ] `status` → registered
-- [ ] Regla de umbral / re-verify antes de pagos grandes
-- [ ] (Opcional HITL) app en https://developer.world.org
+- [ ] UI badge → Human-backed ✓
+- [ ] `REQUIRE_HUMAN_BACKED_AGENT=true` en Vercel + redeploy
+- [ ] Probar: sin registro → 403; con registro → paga
+
+## Fase 2B/C — después
+
+- [ ] Threshold de monto
+- [ ] Human-in-the-loop para montos altos
 
 Ver [02-world-agentkit.md](./02-world-agentkit.md).
 
