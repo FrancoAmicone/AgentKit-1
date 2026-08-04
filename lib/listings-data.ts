@@ -31,7 +31,8 @@ export const LISTINGS_SEED: Listing[] = [
     id: "mendoza-vineyard",
     title: "Casa entre viñedos",
     location: "Mendoza, Mendoza",
-    pricePerNight: 0.2,
+    // Above the $1 minimum auto-pay floor — useful to test NEEDS_HUMAN_APPROVAL
+    pricePerNight: 2,
     amenities: ["wifi", "estacionamiento", "desayuno"],
     rating: 4.8,
     imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",

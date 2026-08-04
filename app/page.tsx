@@ -51,6 +51,19 @@ type AgentStatus = {
   error?: string;
 };
 
+type LimitsResponse = {
+  ok: boolean;
+  canEdit?: boolean;
+  minAutoPayLimitUsdc?: number;
+  maxAutoPayLimitUsdc?: number;
+  limits?: {
+    autoPayLimitUsdc: number;
+    source: "default" | "owner";
+    updatedAt: string;
+  };
+  error?: string;
+};
+
 export default function HomePage() {
   const [query, setQuery] = useState(
     "Casa en Bariloche con pileta, menos de 150 USD por día",
@@ -61,6 +74,10 @@ export default function HomePage() {
   const [purchase, setPurchase] = useState<PurchaseResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
+  const [limitsInfo, setLimitsInfo] = useState<LimitsResponse | null>(null);
+  const [limitInput, setLimitInput] = useState("1");
+  const [savingLimit, setSavingLimit] = useState(false);
+  const [limitMessage, setLimitMessage] = useState<string | null>(null);
 
   const refreshAgentStatus = useCallback(async () => {
     try {
@@ -72,9 +89,58 @@ export default function HomePage() {
     }
   }, []);
 
+  const refreshLimits = useCallback(async () => {
+    try {
+      const res = await fetch("/api/agent/limits");
+      const data = (await res.json()) as LimitsResponse;
+      setLimitsInfo(data);
+      if (data.limits?.autoPayLimitUsdc != null) {
+        setLimitInput(String(data.limits.autoPayLimitUsdc));
+      }
+    } catch {
+      setLimitsInfo({ ok: false, error: "No se pudieron cargar los límites" });
+    }
+  }, []);
+
   useEffect(() => {
     void refreshAgentStatus();
-  }, [refreshAgentStatus]);
+    void refreshLimits();
+  }, [refreshAgentStatus, refreshLimits]);
+
+  async function onSaveLimit(e: FormEvent) {
+    e.preventDefault();
+    setSavingLimit(true);
+    setLimitMessage(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/agent/limits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autoPayLimitUsdc: Number(limitInput) }),
+      });
+      const data = (await res.json()) as LimitsResponse & {
+        registerHint?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.ok) {
+        throw new Error(
+          [data.error, data.registerHint].filter(Boolean).join(" — ") ||
+            "No se pudo guardar el límite",
+        );
+      }
+      setLimitsInfo(data);
+      if (data.limits?.autoPayLimitUsdc != null) {
+        setLimitInput(String(data.limits.autoPayLimitUsdc));
+      }
+      setLimitMessage(
+        `Límite guardado: pago automático hasta $${data.limits?.autoPayLimitUsdc} USDC`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al guardar límite");
+    } finally {
+      setSavingLimit(false);
+    }
+  }
 
   async function onSearch(e: FormEvent) {
     e.preventDefault();
@@ -114,6 +180,7 @@ export default function HomePage() {
       }
       setPurchase(data);
       void refreshAgentStatus();
+      void refreshLimits();
       const refresh = await fetch("/api/agent/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -123,6 +190,7 @@ export default function HomePage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error de compra");
       void refreshAgentStatus();
+      void refreshLimits();
     } finally {
       setBuyingId(null);
     }
@@ -132,11 +200,14 @@ export default function HomePage() {
     agentStatus?.ok &&
     (!agentStatus.required || agentStatus.registered === true);
 
+  const autoLimit = limitsInfo?.limits?.autoPayLimitUsdc;
+  const minLimit = limitsInfo?.minAutoPayLimitUsdc ?? 1;
+
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-5 py-10 sm:px-8">
       <header className="mb-10 max-w-2xl">
         <p className="mb-3 text-sm font-medium tracking-wide text-[var(--pine)]">
-          StayAgent · Fase 2 · AgentBook gate
+          StayAgent · Fase 2B · Auto-pay limit
         </p>
         <h1
           className="text-4xl leading-tight text-[var(--ink)] sm:text-5xl"
@@ -145,8 +216,9 @@ export default function HomePage() {
           Pedí un lugar. El agente lo reserva y paga onchain.
         </h1>
         <p className="mt-4 text-base leading-relaxed text-[var(--muted)]">
-          La búsqueda es libre. La compra solo la hace un agente human-backed
-          (World AgentBook). Quien recibe el USDC (marketplace) no se verifica.
+          Buscá libremente. Para pagar, el agente debe ser human-backed y el
+          monto debe estar dentro del tope de pago automático que vos configures
+          (mínimo ${minLimit} USDC).
         </p>
       </header>
 
@@ -160,25 +232,76 @@ export default function HomePage() {
           </div>
           <StatusBadge status={agentStatus} />
         </div>
+
         {agentStatus?.required && !agentStatus.registered && (
           <div className="mt-3 rounded-xl bg-[var(--sand)]/60 px-3 py-2 text-sm text-[var(--ink)]">
             <p className="font-medium">Falta registrar el agente en AgentBook</p>
-            <p className="mt-1 text-[var(--muted)]">
-              En tu máquina (con World App):
-            </p>
+            <p className="mt-1 text-[var(--muted)]">En tu máquina (con World App):</p>
             <code className="mt-2 block overflow-x-auto rounded-lg bg-black/5 px-2 py-1.5 text-xs">
               {agentStatus.registerHint ||
                 "npx @worldcoin/agentkit-cli register <AGENT_WALLET_ADDRESS>"}
             </code>
             <button
               type="button"
-              onClick={() => void refreshAgentStatus()}
+              onClick={() => {
+                void refreshAgentStatus();
+                void refreshLimits();
+              }}
               className="mt-3 text-sm font-semibold text-[var(--pine)] underline"
             >
               Ya lo registré — refrescar status
             </button>
           </div>
         )}
+
+        <form
+          onSubmit={onSaveLimit}
+          className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--paper)]/70 p-3"
+        >
+          <p className="text-sm font-semibold text-[var(--ink)]">
+            Tope de pago automático
+          </p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            El agente paga solo si el listing cuesta ≤ este monto (mín. ${minLimit}{" "}
+            USDC). Arriba de eso se bloquea hasta Step C (aprobación humana).
+          </p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-[var(--muted)]">$</span>
+              <input
+                type="number"
+                min={minLimit}
+                step="0.01"
+                value={limitInput}
+                onChange={(e) => setLimitInput(e.target.value)}
+                disabled={!limitsInfo?.canEdit}
+                className="w-32 rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-sm outline-none ring-[var(--pine)] focus:ring-2 disabled:opacity-50"
+              />
+              <span className="text-sm text-[var(--muted)]">USDC</span>
+            </div>
+            <button
+              type="submit"
+              disabled={savingLimit || !limitsInfo?.canEdit}
+              className="rounded-xl bg-[var(--pine)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--pine-deep)] disabled:opacity-60"
+            >
+              {savingLimit ? "Guardando…" : "Guardar tope"}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-[var(--muted)]">
+            Actual:{" "}
+            {autoLimit != null
+              ? `$${autoLimit} USDC (${limitsInfo?.limits?.source})`
+              : "cargando…"}
+            {!limitsInfo?.canEdit &&
+              " · Registrá el agente para poder editar el tope."}
+          </p>
+          {limitMessage && (
+            <p className="mt-2 text-xs font-medium text-[var(--pine-deep)]">
+              {limitMessage}
+            </p>
+          )}
+        </form>
+
         <p className="mt-3 text-xs text-[var(--muted)]">
           {agentStatus?.note ||
             "Solo se verifica el agente que compra. El receiver/marketplace no."}
@@ -261,64 +384,79 @@ export default function HomePage() {
       )}
 
       <section className="grid gap-5 sm:grid-cols-2">
-        {search?.results.map((listing) => (
-          <article
-            key={listing.id}
-            className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white/80 shadow-[0_12px_40px_rgba(26,36,33,0.05)]"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={listing.imageUrl}
-              alt={listing.title}
-              className="h-44 w-full object-cover"
-            />
-            <div className="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <h3
-                  className="text-xl leading-snug"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {listing.title}
-                </h3>
-                <p className="shrink-0 text-sm font-semibold text-[var(--clay)]">
-                  ${listing.pricePerNight}
-                  <span className="font-normal text-[var(--muted)]">/noche</span>
+        {search?.results.map((listing) => {
+          const overLimit =
+            autoLimit != null && listing.pricePerNight > autoLimit;
+          return (
+            <article
+              key={listing.id}
+              className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white/80 shadow-[0_12px_40px_rgba(26,36,33,0.05)]"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={listing.imageUrl}
+                alt={listing.title}
+                className="h-44 w-full object-cover"
+              />
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <h3
+                    className="text-xl leading-snug"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {listing.title}
+                  </h3>
+                  <p className="shrink-0 text-sm font-semibold text-[var(--clay)]">
+                    ${listing.pricePerNight}
+                    <span className="font-normal text-[var(--muted)]">/noche</span>
+                  </p>
+                </div>
+                <p className="mt-1 text-sm text-[var(--muted)]">{listing.location}</p>
+                <p className="mt-2 text-xs text-[var(--muted)]">
+                  ★ {listing.rating} · {listing.amenities.join(" · ")}
                 </p>
+                {listing.matchReason && (
+                  <p className="mt-3 text-sm text-[var(--pine-deep)]">
+                    {listing.matchReason}
+                  </p>
+                )}
+                {overLimit && (
+                  <p className="mt-2 text-xs font-medium text-[var(--clay)]">
+                    Supera tu tope automático (${autoLimit} USDC) — requiere
+                    aprobación humana (Step C) o subir el tope.
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onBuy(listing.id)}
+                  disabled={buyingId === listing.id || !canPurchase}
+                  className="mt-4 w-full rounded-xl bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-[var(--paper)] transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
+                >
+                  {buyingId === listing.id
+                    ? "Pagando con el agente…"
+                    : !canPurchase
+                      ? "Registrá el agente para pagar"
+                      : overLimit
+                        ? "Intentar pago (puede pedir aprobación)"
+                        : "Reservar y pagar"}
+                </button>
               </div>
-              <p className="mt-1 text-sm text-[var(--muted)]">{listing.location}</p>
-              <p className="mt-2 text-xs text-[var(--muted)]">
-                ★ {listing.rating} · {listing.amenities.join(" · ")}
-              </p>
-              {listing.matchReason && (
-                <p className="mt-3 text-sm text-[var(--pine-deep)]">{listing.matchReason}</p>
-              )}
-              <button
-                type="button"
-                onClick={() => onBuy(listing.id)}
-                disabled={buyingId === listing.id || !canPurchase}
-                className="mt-4 w-full rounded-xl bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-[var(--paper)] transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
-              >
-                {buyingId === listing.id
-                  ? "Pagando con el agente…"
-                  : !canPurchase
-                    ? "Registrá el agente para pagar"
-                    : "Reservar y pagar"}
-              </button>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </section>
 
       {!search && (
         <p className="mt-6 text-sm text-[var(--muted)]">
-          Tip: registrá el agente con World App, fondeá USDC testnet, y después
-          buscá / reservá.
+          Tip: registrá el agente, seteá el tope (≥ ${minLimit} USDC), fondeá
+          USDC testnet, y después buscá / reservá. Probá Mendoza ($2) para ver el
+          bloqueo por tope.
         </p>
       )}
 
       <footer className="mt-auto pt-16 text-xs text-[var(--muted)]">
-        Fase 2A · AgentBook gate en purchase · marketplace sin verificación ·
-        Base Sepolia + x402 + CDP
+        Fase 2B · AgentBook + auto-pay limit (min ${minLimit}) · marketplace sin
+        verificación · Base Sepolia + x402 + CDP
       </footer>
     </main>
   );

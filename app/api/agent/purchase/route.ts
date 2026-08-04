@@ -2,14 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { getListing } from "@/lib/listings";
 import { getAgentWalletAddress, getPaidFetch, readPaymentResponse } from "@/lib/agent-payer";
 import { assertAgentIsHumanBacked } from "@/lib/agentbook";
+import { canAutoPay, getAutoPayLimit } from "@/lib/agent-limits";
 
 export const runtime = "nodejs";
 
 /**
  * Agent pays the x402-protected buy endpoint with its CDP wallet.
  *
- * Phase 2 gate: only the purchasing agent must be human-backed (AgentBook).
- * The marketplace receiver is NOT verified.
+ * Phase 2 gates (payer only; marketplace not verified):
+ * 1) AgentBook human-backed
+ * 2) Amount <= owner auto-pay limit (else needs human approval — Step C)
  */
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as { listingId?: string };
@@ -49,6 +51,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const limits = await getAutoPayLimit(agentAddress);
+    if (!canAutoPay(listing.pricePerNight, limits.autoPayLimitUsdc)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "NEEDS_HUMAN_APPROVAL",
+          error: `Amount $${listing.pricePerNight} USDC exceeds auto-pay limit $${limits.autoPayLimitUsdc} USDC.`,
+          agentAddress,
+          limits,
+          listing: {
+            id: listing.id,
+            title: listing.title,
+            amountUsdc: listing.pricePerNight,
+          },
+          hint: "Raise the auto-pay limit in the UI, or wait for Step C (World human-in-the-loop approval).",
+        },
+        { status: 403 },
+      );
+    }
+
     const origin = request.nextUrl.origin;
     const buyUrl = `${origin}/api/listings/${listingId}/buy`;
 
@@ -82,6 +104,7 @@ export async function POST(request: NextRequest) {
         registered: agentBook.registered,
         humanId: agentBook.humanId,
       },
+      limits,
       listing: {
         id: listing.id,
         title: listing.title,

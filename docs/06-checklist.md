@@ -48,10 +48,19 @@ Ver [08-phase2-agentbook.md](./08-phase2-agentbook.md).
 - [ ] `REQUIRE_HUMAN_BACKED_AGENT=true` en Vercel + redeploy
 - [ ] Probar: sin registro → 403; con registro → paga
 
-## Fase 2B/C — después
+## Fase 2B — Auto-pay limit (dueño del agente)
 
-- [ ] Threshold de monto
-- [ ] Human-in-the-loop para montos altos
+Ver [09-phase2b-autopay-limit.md](./09-phase2b-autopay-limit.md).
+
+- [x] Código: `GET/POST /api/agent/limits` + gate en purchase + UI
+- [x] Mínimo configurable: **$1 USDC**
+- [ ] Registrar agente (2A) y setear tope en la UI
+- [ ] Probar listing barato ($0.2) → paga
+- [ ] Probar Mendoza ($2) con tope $1 → `NEEDS_HUMAN_APPROVAL`
+
+## Fase 2C — después
+
+- [ ] Human-in-the-loop cuando supera el tope
 
 Ver [02-world-agentkit.md](./02-world-agentkit.md).
 
