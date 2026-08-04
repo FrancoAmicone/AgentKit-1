@@ -62,5 +62,6 @@ Abrí [http://localhost:3000](http://localhost:3000).
 
 ## Docs
 
-- [Idea StayAgent + roadmap](./docs/07-stay-agent.md)
-- Resúmenes de World / 0G / Coinbase en [`docs/`](./docs/README.md)
+- [StayAgent — spec, APIs, env, fases](./docs/07-stay-agent.md)
+- [Checklist de setup](./docs/06-checklist.md)
+- Índice: [`docs/README.md`](./docs/README.md)
