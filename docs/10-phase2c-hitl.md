@@ -8,12 +8,13 @@ When a booking price exceeds the owner auto-pay tope (2B), the user must approve
 
 ```
 User taps $0.2 listing (tope $0.1)
-  → UI opens “Aprobación humana”
-  → POST /api/agent/approve/prepare
-  → World App QR / deep link (action bound to listing + nonce)
+  → Popup: “¿Aprobás este gasto?” → Sí / No
+  → Si Sí: POST /api/agent/approve/prepare
+  → World App QR / deep link
   → POST /api/agent/approve/complete → one-time approvalToken
   → POST /api/agent/purchase { listingId, approvalToken }
-  → x402 pay as Phase 1
+  → x402 pay
+  → Si No: se cierra el popup (no paga)
 ```
 
 Under-limit purchases skip HITL entirely.

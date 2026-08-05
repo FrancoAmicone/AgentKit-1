@@ -31,7 +31,7 @@ type CompleteResponse = {
 };
 
 type Phase =
-  | "idle"
+  | "ask"
   | "preparing"
   | "waiting"
   | "submitting"
@@ -47,6 +47,8 @@ function isMobileDevice() {
 type Props = {
   open: boolean;
   listing: ListingInfo | null;
+  /** Current auto-pay tope, for the Yes/No copy */
+  autoPayLimitUsdc?: number;
   onClose: () => void;
   onApprovedPurchase: (result: unknown) => void;
 };
@@ -54,10 +56,11 @@ type Props = {
 export function PurchaseApprovalModal({
   open,
   listing,
+  autoPayLimitUsdc,
   onClose,
   onApprovedPurchase,
 }: Props) {
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [phase, setPhase] = useState<Phase>("ask");
   const [message, setMessage] = useState<string | null>(null);
   const [connectorURI, setConnectorURI] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -67,20 +70,25 @@ export function PurchaseApprovalModal({
   useEffect(() => {
     if (!open) {
       cancelRef.current = true;
-      setPhase("idle");
+      setPhase("ask");
       setMessage(null);
       setConnectorURI(null);
       setQrDataUrl(null);
       return;
     }
+    cancelRef.current = false;
+    setPhase("ask");
+    setMessage(null);
+    setConnectorURI(null);
+    setQrDataUrl(null);
     setIsMobile(isMobileDevice());
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [open]);
+  }, [open, listing?.id]);
 
-  const start = useCallback(async () => {
+  const startWorldApproval = useCallback(async () => {
     if (!listing) return;
     cancelRef.current = false;
     setPhase("preparing");
@@ -100,7 +108,6 @@ export function PurchaseApprovalModal({
       }
 
       if (!prep.approvalNeeded) {
-        // Within limit — just purchase
         setPhase("purchasing");
         const buyRes = await fetch("/api/agent/purchase", {
           method: "POST",
@@ -163,7 +170,7 @@ export function PurchaseApprovalModal({
         if (errorCode) throw new Error(`World ID: ${errorCode}`);
         if (result) {
           setPhase("submitting");
-          setMessage("World ID OK — emitiendo token de aprobación…");
+          setMessage("Confirmado en World App — pagando…");
 
           const completeRes = await fetch("/api/agent/approve/complete", {
             method: "POST",
@@ -176,7 +183,6 @@ export function PurchaseApprovalModal({
           }
 
           setPhase("purchasing");
-          setMessage("Aprobado — pagando con el agente…");
           const buyRes = await fetch("/api/agent/purchase", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -190,7 +196,7 @@ export function PurchaseApprovalModal({
             throw new Error(buy.error || "Purchase failed after approval");
           }
           setPhase("done");
-          setMessage("Reserva pagada con aprobación humana.");
+          setMessage("Reserva pagada con tu aprobación.");
           onApprovedPurchase(buy);
           return;
         }
@@ -206,6 +212,9 @@ export function PurchaseApprovalModal({
 
   if (!open || !listing) return null;
 
+  const limitLabel =
+    autoPayLimitUsdc != null ? `$${autoPayLimitUsdc}` : "tu tope";
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <button
@@ -220,115 +229,163 @@ export function PurchaseApprovalModal({
       <div
         role="dialog"
         aria-modal="true"
+        aria-labelledby="hitl-title"
         className="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-[var(--line)] bg-[var(--paper)] p-5 shadow-[0_24px_80px_rgba(26,36,33,0.25)] sm:rounded-2xl sm:p-6"
       >
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
+        {phase === "ask" && (
+          <>
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--clay)]">
-              Aprobación humana
+              Tope automático
             </p>
             <h2
+              id="hitl-title"
               className="mt-1 text-2xl text-[var(--ink)]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Supera el tope automático
+              ¿Aprobás este gasto?
             </h2>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              {listing.title} · <strong>${listing.amountUsdc} USDC</strong>
-              {listing.location ? ` · ${listing.location}` : ""}
+            <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
+              <strong className="text-[var(--ink)]">{listing.title}</strong> cuesta{" "}
+              <strong className="text-[var(--ink)]">${listing.amountUsdc} USDC</strong>
+              {listing.location ? ` · ${listing.location}` : ""}.
             </p>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              Confirmá este gasto en World App (QR en escritorio / deep link en
-              el teléfono). Después el agente paga una sola vez.
+            <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+              Eso supera tu tope de pago automático ({limitLabel} USDC). El
+              agente no puede pagarlo solo.
             </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              cancelRef.current = true;
-              onClose();
-            }}
-            className="shrink-0 rounded-lg px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-black/5"
-          >
-            Cerrar
-          </button>
-        </div>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+              Si decís <strong>Sí</strong>, te pedimos confirmar en World App y
+              después el agente paga una sola vez. Si decís <strong>No</strong>,
+              cancelamos.
+            </p>
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => void start()}
-            disabled={
-              phase === "preparing" ||
-              phase === "waiting" ||
-              phase === "submitting" ||
-              phase === "purchasing" ||
-              phase === "done"
-            }
-            className="rounded-xl bg-[var(--pine)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {phase === "preparing"
-              ? "Preparando…"
-              : phase === "waiting"
-                ? isMobile
-                  ? "Esperando World App…"
-                  : "Escaneá el QR…"
-                : phase === "submitting"
-                  ? "Confirmando…"
-                  : phase === "purchasing"
-                    ? "Pagando…"
-                    : phase === "done"
-                      ? "Listo ✓"
-                      : "Aprobar con World App"}
-          </button>
-        </div>
-
-        {phase === "waiting" && !isMobile && qrDataUrl && (
-          <div className="mt-4">
-            <img
-              src={qrDataUrl}
-              alt="QR aprobación World App"
-              className="rounded-lg border border-[var(--line)] bg-white p-2"
-              width={220}
-              height={220}
-            />
-          </div>
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => void startWorldApproval()}
+                className="flex-1 rounded-xl bg-[var(--pine)] px-4 py-3 text-sm font-semibold text-white"
+              >
+                Sí, aprobar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  cancelRef.current = true;
+                  onClose();
+                }}
+                className="flex-1 rounded-xl border border-[var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[var(--ink)]"
+              >
+                No, cancelar
+              </button>
+            </div>
+          </>
         )}
 
-        {phase === "waiting" && connectorURI && (
-          <p className="mt-3 break-all text-xs text-[var(--muted)]">
-            {isMobile ? (
-              <>
-                Si no se abrió World App,{" "}
-                <a href={connectorURI} className="text-[var(--pine)] underline">
-                  tocá acá
-                </a>
-                .
-              </>
-            ) : (
-              <>
-                Link:{" "}
-                <a
-                  href={connectorURI}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[var(--pine)] underline"
+        {phase !== "ask" && (
+          <>
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--clay)]">
+                  Aprobación humana
+                </p>
+                <h2
+                  className="mt-1 text-2xl text-[var(--ink)]"
+                  style={{ fontFamily: "var(--font-display)" }}
                 >
-                  abrir verificación
-                </a>
-              </>
-            )}
-          </p>
-        )}
+                  {phase === "done"
+                    ? "Listo"
+                    : phase === "error"
+                      ? "No se pudo aprobar"
+                      : "Confirmá en World App"}
+                </h2>
+                <p className="mt-2 text-sm text-[var(--muted)]">
+                  {listing.title} · ${listing.amountUsdc} USDC
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  cancelRef.current = true;
+                  onClose();
+                }}
+                className="shrink-0 rounded-lg px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-black/5"
+              >
+                Cerrar
+              </button>
+            </div>
 
-        {message && (
-          <p
-            className={`mt-3 text-sm ${
-              phase === "error" ? "text-red-700" : "text-[var(--muted)]"
-            }`}
-          >
-            {message}
-          </p>
+            <p className="text-sm text-[var(--muted)]">
+              {phase === "preparing" && "Preparando verificación…"}
+              {phase === "waiting" &&
+                (isMobile
+                  ? "Abrí World App y confirmá el gasto…"
+                  : "Escaneá el QR con World App…")}
+              {phase === "submitting" && "World ID OK — emitiendo permiso…"}
+              {phase === "purchasing" && "Pagando con el agente…"}
+              {phase === "done" && "Reserva pagada con tu aprobación."}
+            </p>
+
+            {phase === "waiting" && !isMobile && qrDataUrl && (
+              <div className="mt-4">
+                <img
+                  src={qrDataUrl}
+                  alt="QR aprobación World App"
+                  className="rounded-lg border border-[var(--line)] bg-white p-2"
+                  width={220}
+                  height={220}
+                />
+              </div>
+            )}
+
+            {phase === "waiting" && connectorURI && (
+              <p className="mt-3 break-all text-xs text-[var(--muted)]">
+                {isMobile ? (
+                  <>
+                    Si no se abrió World App,{" "}
+                    <a href={connectorURI} className="text-[var(--pine)] underline">
+                      tocá acá
+                    </a>
+                    .
+                  </>
+                ) : (
+                  <>
+                    Link:{" "}
+                    <a
+                      href={connectorURI}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[var(--pine)] underline"
+                    >
+                      abrir verificación
+                    </a>
+                  </>
+                )}
+              </p>
+            )}
+
+            {message && (
+              <p
+                className={`mt-3 text-sm ${
+                  phase === "error" ? "text-red-700" : "text-[var(--muted)]"
+                }`}
+              >
+                {message}
+              </p>
+            )}
+
+            {phase === "error" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPhase("ask");
+                  setMessage(null);
+                }}
+                className="mt-4 rounded-xl bg-[var(--pine)] px-4 py-2.5 text-sm font-semibold text-white"
+              >
+                Volver a intentar
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

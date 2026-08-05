@@ -396,8 +396,8 @@ export default function HomePage() {
                 )}
                 {overLimit && (
                   <p className="mt-2 text-xs font-medium text-[var(--clay)]">
-                    Supera tu tope automático (${autoLimit} USDC) — requiere
-                    aprobación humana (Step C) o subir el tope.
+                    Supera tu tope (${autoLimit} USDC). Al tocar pagar te
+                    preguntamos si lo aprobás.
                   </p>
                 )}
                 <button
@@ -417,7 +417,7 @@ export default function HomePage() {
                     : !canPurchase
                       ? "Verificar agente para pagar"
                       : overLimit
-                        ? "Aprobar y pagar (HITL)"
+                        ? "Reservar (pide aprobación)"
                         : "Reservar y pagar"}
                 </button>
               </div>
@@ -454,6 +454,7 @@ export default function HomePage() {
       <PurchaseApprovalModal
         open={Boolean(approvalListing)}
         listing={approvalListing}
+        autoPayLimitUsdc={autoLimit}
         onClose={() => setApprovalListing(null)}
         onApprovedPurchase={(result) => {
           setPurchase(result as PurchaseResponse);
