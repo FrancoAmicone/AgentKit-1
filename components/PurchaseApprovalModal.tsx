@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createWorldBridgeStore } from "@worldcoin/idkit-core";
 import { solidityEncode } from "@worldcoin/idkit-core/hashing";
 import QRCode from "qrcode";
+import { isMobileDevice, openWorldAppLink } from "@/lib/world-app-link";
 
 type ListingInfo = {
   id: string;
@@ -38,11 +39,6 @@ type Phase =
   | "purchasing"
   | "done"
   | "error";
-
-function isMobileDevice() {
-  if (typeof navigator === "undefined") return false;
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-}
 
 type Props = {
   open: boolean;
@@ -150,16 +146,18 @@ export function PurchaseApprovalModal({
       setPhase("waiting");
       const mobile = isMobileDevice();
       setIsMobile(mobile);
+
+      // Always show QR so the page can keep polling. On mobile, open World App
+      // in a new context (never location.href — that kills the SPA / hits store).
+      const dataUrl = await QRCode.toDataURL(uri, {
+        width: 220,
+        margin: 2,
+        color: { dark: "#1a2e24", light: "#ffffff" },
+      });
+      if (cancelRef.current) return;
+      setQrDataUrl(dataUrl);
       if (mobile) {
-        window.location.href = uri;
-      } else {
-        const dataUrl = await QRCode.toDataURL(uri, {
-          width: 220,
-          margin: 2,
-          color: { dark: "#1a2e24", light: "#ffffff" },
-        });
-        if (cancelRef.current) return;
-        setQrDataUrl(dataUrl);
+        openWorldAppLink(uri);
       }
 
       const deadline = Date.now() + 300_000;
@@ -206,7 +204,12 @@ export function PurchaseApprovalModal({
     } catch (err) {
       if (cancelRef.current) return;
       setPhase("error");
-      setMessage(err instanceof Error ? err.message : "Error de aprobación");
+      const raw = err instanceof Error ? err.message : "Error de aprobación";
+      const friendly =
+        raw === "Load failed" || /failed to fetch|networkerror/i.test(raw)
+          ? "No se pudo conectar con World (Load failed). Quedate en StayAgent, tocá “Abrir World App” o escaneá el QR desde la app instalada — no uses el link de la tienda."
+          : raw;
+      setMessage(friendly);
     }
   }, [listing, onApprovedPurchase]);
 
@@ -318,14 +321,24 @@ export function PurchaseApprovalModal({
               {phase === "preparing" && "Preparando verificación…"}
               {phase === "waiting" &&
                 (isMobile
-                  ? "Abrí World App y confirmá el gasto…"
+                  ? "Esta página se queda abierta. Abrí World App con el botón o escaneá el QR desde la app."
                   : "Escaneá el QR con World App…")}
               {phase === "submitting" && "World ID OK — emitiendo permiso…"}
               {phase === "purchasing" && "Pagando con el agente…"}
               {phase === "done" && "Reserva pagada con tu aprobación."}
             </p>
 
-            {phase === "waiting" && !isMobile && qrDataUrl && (
+            {phase === "waiting" && connectorURI && (
+              <button
+                type="button"
+                onClick={() => openWorldAppLink(connectorURI)}
+                className="mt-4 w-full rounded-xl bg-[var(--pine)] px-4 py-3 text-sm font-semibold text-white"
+              >
+                Abrir World App
+              </button>
+            )}
+
+            {phase === "waiting" && qrDataUrl && (
               <div className="mt-4">
                 <img
                   src={qrDataUrl}
@@ -334,33 +347,11 @@ export function PurchaseApprovalModal({
                   width={220}
                   height={220}
                 />
+                <p className="mt-2 text-xs text-[var(--muted)]">
+                  Si el link te manda a la tienda: abrí <strong>World App</strong>{" "}
+                  (ya instalada) → escanear QR.
+                </p>
               </div>
-            )}
-
-            {phase === "waiting" && connectorURI && (
-              <p className="mt-3 break-all text-xs text-[var(--muted)]">
-                {isMobile ? (
-                  <>
-                    Si no se abrió World App,{" "}
-                    <a href={connectorURI} className="text-[var(--pine)] underline">
-                      tocá acá
-                    </a>
-                    .
-                  </>
-                ) : (
-                  <>
-                    Link:{" "}
-                    <a
-                      href={connectorURI}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[var(--pine)] underline"
-                    >
-                      abrir verificación
-                    </a>
-                  </>
-                )}
-              </p>
             )}
 
             {message && (
