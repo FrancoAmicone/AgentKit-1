@@ -47,13 +47,17 @@ Docs: https://docs.world.org/agents/human-in-the-loop/integrate
 
 ## Rol en StayAgent
 
-**Fase 2 (pendiente).** No se usa en Fase 1.
+| Pieza | Estado |
+| --- | --- |
+| AgentBook gate + registro in-app (2A) | **Hecho** |
+| Auto-pay tope (2B) | **Hecho** |
+| Human-in-the-loop si supera tope (2C) | **Pendiente** |
 
-Uso previsto:
+Uso:
 
 - Verificar al dueño del agente (AgentBook / World ID).  
-- Pedir re-verificación si el pago de una reserva supera un umbral.  
-- (Opcional) HITL antes de confirmar reservas caras.
+- Tope de pago automático configurable por el dueño.  
+- (Pendiente) HITL antes de confirmar reservas caras.
 
 ## Cuándo tiene sentido usarlo
 
@@ -66,12 +70,16 @@ Uso previsto:
 - Fase 1: aprender el pago x402 end-to-end en testnet (caso actual).
 - Script personal sin superficie pública.
 
-## Setup mínimo (si lo elegimos)
+## Setup / registro
+
+Preferido: UI StayAgent → **Configurar** → **Registrar con World App** (QR / deep link).
+
+CLI fallback:
 
 ```bash
-npm install @worldcoin/agentkit
 npx @worldcoin/agentkit-cli register <agent-address>
 npx @worldcoin/agentkit-cli status <agent-address>
 ```
 
-Necesitás **World App** en el teléfono para completar el register.
+Necesitás **World App** en el teléfono para completar el register.  
+Detalle: [08-phase2-agentbook.md](./08-phase2-agentbook.md).

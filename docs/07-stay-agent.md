@@ -176,20 +176,37 @@ type Listing = {
 
 La disponibilidad se guarda **in-memory** (se resetea al reiniciar el server). Suficiente para Fase 1.
 
-## Fases siguientes
+## Fases
 
-### Fase 2 — World ID
+### Fase 1 — MVP x402 — **DONE**
 
-- Verificar al dueño del agente (World ID Kit / AgentBook).  
-- Regla: si el pago supera un umbral (ej. > 100 USDC), pedir re-verificación.  
-- Docs: [02-world-agentkit.md](./02-world-agentkit.md)
+Catálogo mock + NLP + pago Base Sepolia. Ver checklist.
 
-### Fase 3 — 0G Storage
+### Fase 2A — AgentBook (payer only) — **DONE**
+
+Gate en purchase + registro in-app (QR / deep link) + modal Configurar.  
+Docs: [08-phase2-agentbook.md](./08-phase2-agentbook.md)
+
+### Fase 2B — Auto-pay limit — **DONE** (código)
+
+Tope owner (default $0.1, min $0.01); listings demo $0.05 / $0.2.  
+Docs: [09-phase2b-autopay-limit.md](./09-phase2b-autopay-limit.md)
+
+### Fase 2C — Human-in-the-loop — **pendiente**
+
+Si `price > tope`, pedir aprobación World antes de pagar (hoy solo bloquea).  
+Docs: [02-world-agentkit.md](./02-world-agentkit.md)
+
+### Fase 3 — 0G Storage — **pendiente**
 
 - Por cada pago exitoso, subir JSON recibo:  
   `{ timestamp, listingId, monto, txHash, nullifierHash? }`  
 - Mostrar content hash en la UI.  
 - Docs: [03-0g.md](./03-0g.md)
+
+### Multi-user agents — **pendiente**
+
+Crear + fondear + registrar wallet por persona (dejar de compartir el agente demo).
 
 ### Fase 4 — Discovery (stretch)
 
@@ -200,4 +217,3 @@ La disponibilidad se guarda **in-memory** (se resetea al reiniciar el server). S
 
 - Mainnet / plata real  
 - Scraping de Airbnb/Booking  
-- World ID u 0G antes de que el pago testnet funcione de punta a punta  
