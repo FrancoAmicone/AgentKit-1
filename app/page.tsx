@@ -7,6 +7,7 @@ import {
   type AgentStatus,
   type LimitsResponse,
 } from "@/components/AgentSetupModal";
+import { PurchaseApprovalModal } from "@/components/PurchaseApprovalModal";
 
 type ListingResult = {
   id: string;
@@ -44,6 +45,7 @@ type PurchaseResponse = {
   reservation?: {
     reservedAt: string;
   };
+  usedHumanApproval?: boolean;
 };
 
 export default function HomePage() {
@@ -62,6 +64,12 @@ export default function HomePage() {
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [setupOpen, setSetupOpen] = useState(false);
   const [autoOpenedSetup, setAutoOpenedSetup] = useState(false);
+  const [approvalListing, setApprovalListing] = useState<{
+    id: string;
+    title: string;
+    amountUsdc: number;
+    location?: string;
+  } | null>(null);
 
   const refreshAgentStatus = useCallback(async () => {
     try {
@@ -160,15 +168,41 @@ export default function HomePage() {
     }
   }
 
-  async function onBuy(listingId: string) {
-    setBuyingId(listingId);
+  async function refreshSearchResults() {
+    const refresh = await fetch("/api/agent/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+    });
+    if (refresh.ok) setSearch((await refresh.json()) as SearchResponse);
+  }
+
+  async function onBuy(listing: ListingResult) {
+    setBuyingId(listing.id);
     setError(null);
     setPurchase(null);
+
+    const autoLimit = limitsInfo?.limits?.autoPayLimitUsdc;
+    if (
+      canPurchase &&
+      autoLimit != null &&
+      listing.pricePerNight > autoLimit
+    ) {
+      setBuyingId(null);
+      setApprovalListing({
+        id: listing.id,
+        title: listing.title,
+        amountUsdc: listing.pricePerNight,
+        location: listing.location,
+      });
+      return;
+    }
+
     try {
       const res = await fetch("/api/agent/purchase", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listingId }),
+        body: JSON.stringify({ listingId: listing.id }),
       });
       const data = (await res.json()) as PurchaseResponse;
       if (!res.ok || !data.ok) {
@@ -176,19 +210,21 @@ export default function HomePage() {
           setSetupOpen(true);
         }
         if (data.code === "NEEDS_HUMAN_APPROVAL") {
-          setSetupOpen(true);
+          setApprovalListing({
+            id: listing.id,
+            title: listing.title,
+            amountUsdc: listing.pricePerNight,
+            location: listing.location,
+          });
+          setBuyingId(null);
+          return;
         }
         const parts = [data.error, data.hint, data.registerHint].filter(Boolean);
         throw new Error(parts.join(" — ") || "No se pudo completar el pago");
       }
       setPurchase(data);
       refreshAll();
-      const refresh = await fetch("/api/agent/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
-      });
-      if (refresh.ok) setSearch((await refresh.json()) as SearchResponse);
+      await refreshSearchResults();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error de compra");
       refreshAll();
@@ -289,6 +325,7 @@ export default function HomePage() {
           </h2>
           <p className="mt-2 text-[var(--ink)]">
             {purchase.listing?.title} · ${purchase.listing?.amountUsdc} USDC
+            {purchase.usedHumanApproval ? " · con aprobación humana" : ""}
           </p>
           <p className="mt-1 text-sm text-[var(--muted)]">
             {purchase.listing?.location}
@@ -359,8 +396,8 @@ export default function HomePage() {
                 )}
                 {overLimit && (
                   <p className="mt-2 text-xs font-medium text-[var(--clay)]">
-                    Supera tu tope automático (${autoLimit} USDC) — requiere
-                    aprobación humana (Step C) o subir el tope.
+                    Supera tu tope (${autoLimit} USDC). Al tocar pagar te
+                    preguntamos si lo aprobás.
                   </p>
                 )}
                 <button
@@ -370,7 +407,7 @@ export default function HomePage() {
                       setSetupOpen(true);
                       return;
                     }
-                    void onBuy(listing.id);
+                    void onBuy(listing);
                   }}
                   disabled={buyingId === listing.id}
                   className="mt-4 w-full rounded-xl bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-[var(--paper)] transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
@@ -380,7 +417,7 @@ export default function HomePage() {
                     : !canPurchase
                       ? "Verificar agente para pagar"
                       : overLimit
-                        ? "Intentar pago (pide aprobación)"
+                        ? "Reservar (pide aprobación)"
                         : "Reservar y pagar"}
                 </button>
               </div>
@@ -391,8 +428,8 @@ export default function HomePage() {
 
       {!search && (
         <p className="mt-6 text-sm text-[var(--muted)]">
-          Tip: tope default $0.1 → $0.05 paga solo; listings a $0.2 (lago,
-          Mendoza, Salta…) bloquean hasta subir el tope o Step C.
+          Tip: tope default $0.1 → $0.05 paga solo; listings a $0.2 piden
+          aprobación humana (World App) y después pagan.
         </p>
       )}
 
@@ -412,6 +449,20 @@ export default function HomePage() {
         limitMessage={limitMessage}
         onSaveLimit={onSaveLimit}
         onRefresh={refreshAll}
+      />
+
+      <PurchaseApprovalModal
+        open={Boolean(approvalListing)}
+        listing={approvalListing}
+        autoPayLimitUsdc={autoLimit}
+        onClose={() => setApprovalListing(null)}
+        onApprovedPurchase={(result) => {
+          setPurchase(result as PurchaseResponse);
+          setApprovalListing(null);
+          setError(null);
+          refreshAll();
+          void refreshSearchResults();
+        }}
       />
     </main>
   );

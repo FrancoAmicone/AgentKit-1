@@ -176,28 +176,17 @@ type Listing = {
 
 La disponibilidad se guarda **in-memory** (se resetea al reiniciar el server). Suficiente para Fase 1.
 
-## Fases siguientes
+## Fases
 
-### Fase 2 — World ID
-
-- Verificar al dueño del agente (World ID Kit / AgentBook).  
-- Regla: si el pago supera un umbral (ej. > 100 USDC), pedir re-verificación.  
-- Docs: [02-world-agentkit.md](./02-world-agentkit.md)
-
-### Fase 3 — 0G Storage
-
-- Por cada pago exitoso, subir JSON recibo:  
-  `{ timestamp, listingId, monto, txHash, nullifierHash? }`  
-- Mostrar content hash en la UI.  
-- Docs: [03-0g.md](./03-0g.md)
-
-### Fase 4 — Discovery (stretch)
-
-- Probar Bazaar / agentic.market para fuentes externas.  
-- No depende de que exista un servicio de hoteles real.
+### Fase 1 — MVP x402 — **DONE**
+### Fase 2A — AgentBook — **DONE** → [08](./08-phase2-agentbook.md)
+### Fase 2B — Auto-pay limit — **DONE** → [09](./09-phase2b-autopay-limit.md)
+### Fase 2C — HITL — **DONE** (código) → [10](./10-phase2c-hitl.md)
+### Fase 3 — 0G Storage — **pendiente** → [03](./03-0g.md)
+### Multi-user agents — **pendiente**
+### Fase 4 — Discovery — stretch
 
 ## Qué no hacer todavía
 
 - Mainnet / plata real  
 - Scraping de Airbnb/Booking  
-- World ID u 0G antes de que el pago testnet funcione de punta a punta  

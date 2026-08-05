@@ -1,5 +1,11 @@
 # Checklist — StayAgent
 
+## Higiene de docs
+
+Cada vez que se termina una tarea: **actualizar este checklist + docs de la fase** en el mismo cambio.
+
+---
+
 ## Fase 1 — MVP (testnet x402)
 
 ### Cuentas
@@ -22,15 +28,10 @@
 
 - [x] Buscar lodging en lenguaje natural
 - [x] Ver tarjetas / resultados
-- [x] **Reservar y pagar** con éxito (Bariloche · $0.2 USDC)
+- [x] **Reservar y pagar** con éxito (Bariloche · USDC testnet)
 - [x] Ver confirmación + link Basescan Sepolia
 - [ ] (Opcional) Reintentar el mismo listing → debe fallar (ya reservado)
 - [ ] (Opcional) Verificar que el USDC llegó a `MARKETPLACE_WALLET_ADDRESS`
-
-### Debug (ya no bloquea)
-
-- [x] Faucet / saldo agente resuelto (bajamos precios a $0.2)
-- [x] Pago x402 end-to-end en Base Sepolia
 
 **Fase 1: DONE**
 
@@ -40,38 +41,44 @@
 
 Ver [08-phase2-agentbook.md](./08-phase2-agentbook.md).
 
-- [x] Código: gate en `/api/agent/purchase` + `/api/agent/status` + UI badge
+- [x] Código: gate + status + registro in-app (QR / deep link)
 - [x] Marketplace/receiver **sin** verificación (by design)
-- [ ] World App en el teléfono (World ID Orb)
-- [ ] UI → **Registrar con World App** (QR en desktop / deep link en mobile)
-- [ ] UI badge → Human-backed ✓
-- [ ] Redeploy Vercel si hace falta
-- [ ] Probar: sin registro → 403; con registro → paga
+- [x] Popup **Configurar**; registro solo si falta
+- [x] Demo registrada → badge **Human-backed ✓**
+- [x] Pago bajo tope ($0.05)
 
-## Fase 2B — Auto-pay limit (dueño del agente)
-
-Ver [09-phase2b-autopay-limit.md](./09-phase2b-autopay-limit.md).
-
-- [x] Código: `GET/POST /api/agent/limits` + gate en purchase + UI
-- [x] Mínimo configurable: **$0.01 USDC**; default hardcodeado **$0.1**
-- [ ] Registrar agente (2A)
-- [ ] Probar listing barato ($0.05) → paga con default 0.1
-- [ ] Probar listing $0.2 (ej. Casa frente al lago / Mendoza) → `NEEDS_HUMAN_APPROVAL` (o subir tope en UI)
-
-## Fase 2C — después
-
-- [ ] Human-in-the-loop cuando supera el tope
-
-Ver [02-world-agentkit.md](./02-world-agentkit.md).
+**Fase 2A: DONE**
 
 ---
 
-## Fase 3 — 0G Storage (auditoría / recibos)
+## Fase 2B — Auto-pay limit
 
-- [ ] Agregar Galileo testnet (chainId `16602`)
-- [ ] Faucet https://faucet.0g.ai
-- [ ] Tras cada compra exitosa, subir JSON recibo a 0G Storage
-- [ ] Mostrar content hash en la UI de confirmación
+Ver [09-phase2b-autopay-limit.md](./09-phase2b-autopay-limit.md).
+
+- [x] Código: limits API + gate + UI modal
+- [x] Min **$0.01**; default **$0.1**
+- [x] Catálogo demo **$0.05** / **$0.2**
+- [x] Guardar tope y pagar $0.05
+
+**Fase 2B: DONE**
+
+---
+
+## Fase 2C — Human-in-the-loop
+
+Ver [10-phase2c-hitl.md](./10-phase2c-hitl.md).
+
+- [x] Código: `approve/prepare` + `approve/complete` + `approvalToken` en purchase
+- [x] UI: modal aprobar gasto alto con World App (QR / deep link)
+- [ ] Probar en prod: listing **$0.2** + tope **$0.1** → World App → paga
+
+---
+
+## Fase 3 — 0G Storage
+
+- [ ] Galileo testnet + faucet
+- [ ] Subir JSON recibo tras compra
+- [ ] Mostrar content hash en UI
 
 Ver [03-0g.md](./03-0g.md).
 
@@ -79,15 +86,18 @@ Ver [03-0g.md](./03-0g.md).
 
 ## Fase 4 — Discovery (stretch)
 
-- [ ] Probar Bazaar / agentic.market para fuentes externas
-- [ ] No depende de APIs de hoteles reales
+- [ ] Bazaar / agentic.market
 
 ---
 
-## Antes de mainnet (más adelante)
+## Multi-user agents (después del demo)
 
-- [ ] Límites de gasto del agente
-- [ ] Confirmación explícita en UI para montos altos
-- [ ] Persistencia real de reservas (DB; hoy es in-memory)
-- [ ] Mainnet Base + USDC real (solo cuando policy esté lista)
-- [ ] No commitear secrets; rotar keys si se filtraron
+- [ ] Crear wallet por usuario → fondear → registrar → pagar con *su* agente
+
+---
+
+## Antes de mainnet
+
+- [ ] Persistencia real (DB / KV)
+- [ ] Mainnet Base + USDC real
+- [ ] No commitear secrets
