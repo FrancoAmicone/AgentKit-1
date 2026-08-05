@@ -56,7 +56,7 @@ Ver [09-phase2b-autopay-limit.md](./09-phase2b-autopay-limit.md).
 - [x] Mínimo configurable: **$0.01 USDC**; default hardcodeado **$0.1**
 - [ ] Registrar agente (2A)
 - [ ] Probar listing barato ($0.05) → paga con default 0.1
-- [ ] Probar Mendoza ($2) → `NEEDS_HUMAN_APPROVAL` (o subir tope en UI)
+- [ ] Probar listing $0.2 (ej. Casa frente al lago / Mendoza) → `NEEDS_HUMAN_APPROVAL` (o subir tope en UI)
 
 ## Fase 2C — después
 
