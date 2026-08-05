@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AgentRegisterPanel } from "@/components/AgentRegisterPanel";
 
 export type AgentStatus = {
@@ -52,6 +53,11 @@ export function AgentSetupModal({
   onSaveLimit,
   onRefresh,
 }: Props) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -66,26 +72,31 @@ export function AgentSetupModal({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
-
   const minLimit = limitsInfo?.minAutoPayLimitUsdc ?? 0.01;
   const autoLimit = limitsInfo?.limits?.autoPayLimitUsdc;
   const needsRegister =
     Boolean(agentStatus?.required) && agentStatus?.registered !== true;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+  if (!mounted || !open) return null;
+
+  const modal = (
+    <div
+      className="fixed inset-0 flex items-end justify-center sm:items-center sm:p-4"
+      style={{ zIndex: 10000 }}
+      role="presentation"
+    >
       <button
         type="button"
         aria-label="Cerrar"
-        className="absolute inset-0 bg-[var(--ink)]/40 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-[rgba(26,36,33,0.72)]"
         onClick={onClose}
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="agent-setup-title"
-        className="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-[var(--line)] bg-[var(--paper)] p-5 shadow-[0_24px_80px_rgba(26,36,33,0.25)] sm:rounded-2xl sm:p-6"
+        className="relative isolate max-h-[min(92vh,720px)] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-[var(--line)] bg-[var(--paper)] p-5 shadow-[0_24px_80px_rgba(26,36,33,0.45)] sm:rounded-2xl sm:p-6"
+        style={{ zIndex: 10001 }}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
@@ -197,6 +208,8 @@ export function AgentSetupModal({
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }
 
 export function StatusBadge({ status }: { status: AgentStatus | null }) {

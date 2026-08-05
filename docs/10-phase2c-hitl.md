@@ -19,12 +19,14 @@ User taps $0.2 listing (tope $0.1)
 
 Under-limit purchases skip HITL entirely.
 
-## Mobile / World App
+## Mobile / World App (best practices)
 
-Never navigate away with `location.href` (kills the poll loop and often opens the
-App Store / Play Store). StayAgent keeps the page open, offers **Abrir World App**
-(`target=_blank` on the verify URL), and always shows a **QR** so the installed
-app can scan if the store redirect happens.
+1. **Prepare first** (async) — create World Bridge session + QR.  
+2. **Do not auto-open** after await (browsers lose the user gesture → popup spam / Chrome blocks).  
+3. **One open:** a single `<a href={connectorURI} target="_blank">Abrir World App</a>` after prepare.  
+4. Never use `location.href` (kills poll) or double `window.open` fallbacks.  
+5. Modal is portaled to `document.body` with opaque scrim so listing images don’t bleed through.  
+6. Always show **QR** as fallback if the store opens instead of the app.
 
 ## Why not the official Workflow HITL package?
 
