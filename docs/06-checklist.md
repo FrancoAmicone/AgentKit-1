@@ -72,6 +72,13 @@ Ver [10-phase2c-hitl.md](./10-phase2c-hitl.md).
 - [x] UI: modal aprobar gasto alto con World App (QR / deep link)
 - [ ] Probar en prod: listing **$0.2** + tope **$0.1** → World App → paga
 
+### Refactor React best practices
+
+- [x] Shared `Modal` (portal) + `WorldAppVerifyPanel` + `waitForWorldBridgeProof` (`AbortSignal`)
+- [x] HITL / register / setup usan los mismos primitivos; abort al cerrar
+- [x] `useAgentSession` + `ListingCard`; `useEffectEvent` para auto-open Configurar
+- [x] Documentar atajos demo en [11-demo-tradeoffs.md](./11-demo-tradeoffs.md)
+
 ---
 
 ## Fase 3 — 0G Storage

@@ -45,10 +45,15 @@ StayAgent uses a simple purchase API, so we reuse the same World Bridge pattern 
 | File | Role |
 | --- | --- |
 | `lib/human-approval.ts` | Sessions + one-time tokens |
+| `lib/world-bridge.ts` | Shared World Bridge create + poll (`AbortSignal`) |
+| `components/ui/Modal.tsx` | Portal modal (body, opaque scrim) |
+| `components/WorldAppVerifyPanel.tsx` | Single `<a>` + QR (no auto-open) |
 | `app/api/agent/approve/prepare/route.ts` | Start HITL |
 | `app/api/agent/approve/complete/route.ts` | Mint token after World ID |
 | `app/api/agent/purchase/route.ts` | Accept `approvalToken` when over tope |
-| `components/PurchaseApprovalModal.tsx` | QR / deep link UI |
+| `components/PurchaseApprovalModal.tsx` | Sí/No + World verify + purchase |
+
+Demo shortcuts: [11-demo-tradeoffs.md](./11-demo-tradeoffs.md).
 
 ## Env (optional)
 

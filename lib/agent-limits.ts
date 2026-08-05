@@ -42,7 +42,8 @@ export function clampLimit(value: number): number {
 }
 
 function storePath(): string {
-  // Vercel serverless FS is read-only except /tmp
+  // Demo-only: Vercel FS is read-only except /tmp (not durable).
+  // See docs/11-demo-tradeoffs.md.
   if (process.env.VERCEL) {
     return join("/tmp", "stay-agent-limits.json");
   }
