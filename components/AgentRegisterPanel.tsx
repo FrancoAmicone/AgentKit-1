@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createWorldBridgeStore } from "@worldcoin/idkit-core";
 import { solidityEncode } from "@worldcoin/idkit-core/hashing";
 import QRCode from "qrcode";
-import { isMobileDevice, openWorldAppLink } from "@/lib/world-app-link";
+import { isMobileDevice } from "@/lib/world-app-link";
 
 type PrepareResponse = {
   ok: boolean;
@@ -47,6 +47,7 @@ export function AgentRegisterPanel({
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const cancelRef = useRef(false);
+  const startingRef = useRef(false);
 
   useEffect(() => {
     setIsMobile(isMobileDevice());
@@ -54,6 +55,7 @@ export function AgentRegisterPanel({
 
   const reset = useCallback(() => {
     cancelRef.current = true;
+    startingRef.current = false;
     setPhase("idle");
     setMessage(null);
     setConnectorURI(null);
@@ -61,6 +63,8 @@ export function AgentRegisterPanel({
   }, []);
 
   const startRegistration = useCallback(async () => {
+    if (startingRef.current) return;
+    startingRef.current = true;
     cancelRef.current = false;
     setPhase("preparing");
     setMessage(null);
@@ -101,34 +105,37 @@ export function AgentRegisterPanel({
 
       const uri = worldID.getState().connectorURI;
       if (!uri) throw new Error("World App no devolvió link de verificación");
-
       if (cancelRef.current) return;
 
-      setConnectorURI(uri);
-      setPhase("waiting");
-
-      const mobile = isMobileDevice();
-      setIsMobile(mobile);
-
-      // Keep SPA alive to poll; never navigate away with location.href.
       const dataUrl = await QRCode.toDataURL(uri, {
         width: 220,
         margin: 2,
         color: { dark: "#1a2e24", light: "#ffffff" },
       });
       if (cancelRef.current) return;
+
+      setConnectorURI(uri);
       setQrDataUrl(dataUrl);
-      if (mobile) {
-        openWorldAppLink(uri);
-      }
+      setIsMobile(isMobileDevice());
+      setPhase("waiting");
+      // No auto-open after async — user taps the <a> once (fresh gesture).
 
       const deadline = Date.now() + 300_000;
       while (Date.now() < deadline) {
         if (cancelRef.current) return;
-        await worldID.getState().pollForUpdates();
+        try {
+          await worldID.getState().pollForUpdates();
+        } catch {
+          await new Promise((r) => setTimeout(r, 1500));
+          continue;
+        }
         const { result, errorCode } = worldID.getState();
         if (errorCode) {
-          throw new Error(`World ID: ${errorCode}`);
+          throw new Error(
+            errorCode === "connection_failed"
+              ? "Se cortó la conexión con World Bridge. Reintentá y abrí World App una sola vez."
+              : `World ID: ${errorCode}`,
+          );
         }
         if (result) {
           setPhase("submitting");
@@ -153,7 +160,7 @@ export function AgentRegisterPanel({
           onRegistered();
           return;
         }
-        await new Promise((r) => setTimeout(r, 1000));
+        await new Promise((r) => setTimeout(r, 1200));
       }
       throw new Error("Se agotó el tiempo esperando World App. Reintentá.");
     } catch (err) {
@@ -162,9 +169,11 @@ export function AgentRegisterPanel({
       const raw = err instanceof Error ? err.message : "Error de registro";
       const friendly =
         raw === "Load failed" || /failed to fetch|networkerror/i.test(raw)
-          ? "No se pudo conectar con World (Load failed). Usá “Abrir World App” o el QR desde la app instalada."
+          ? "Falló la conexión con World. Reintentá y abrí World App una sola vez (o escaneá el QR)."
           : raw;
       setMessage(friendly);
+    } finally {
+      startingRef.current = false;
     }
   }, [onRegistered]);
 
@@ -172,23 +181,25 @@ export function AgentRegisterPanel({
     <div className="mt-3 rounded-xl bg-[var(--sand)]/60 px-3 py-3 text-sm text-[var(--ink)]">
       <p className="font-medium">Falta registrar el agente en AgentBook</p>
       <p className="mt-1 text-[var(--muted)]">
-        Usá World App: en el teléfono se abre la app; en escritorio escaneá el
-        QR. Se registra la wallet del agente de StayAgent (la que paga).
+        Primero preparamos la verificación; después abrís World App{" "}
+        <strong>una sola vez</strong> o escaneás el QR.
       </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => void startRegistration()}
-          disabled={phase === "preparing" || phase === "waiting" || phase === "submitting"}
+          disabled={
+            phase === "preparing" ||
+            phase === "waiting" ||
+            phase === "submitting"
+          }
           className="rounded-xl bg-[var(--pine)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
           {phase === "preparing"
             ? "Preparando…"
             : phase === "waiting"
-              ? isMobile
-                ? "Esperando World App…"
-                : "Escaneá el QR…"
+              ? "Esperando World App…"
               : phase === "submitting"
                 ? "Registrando…"
                 : phase === "done"
@@ -216,17 +227,19 @@ export function AgentRegisterPanel({
       </div>
 
       {phase === "waiting" && connectorURI && (
-        <button
-          type="button"
-          onClick={() => openWorldAppLink(connectorURI)}
-          className="mt-3 rounded-xl bg-[var(--pine)] px-4 py-2 text-sm font-semibold text-white"
+        <a
+          href={connectorURI}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex rounded-xl bg-[var(--pine)] px-4 py-2 text-sm font-semibold text-white"
         >
           Abrir World App
-        </button>
+        </a>
       )}
 
       {phase === "waiting" && qrDataUrl && (
         <div className="mt-4 flex flex-col items-start gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={qrDataUrl}
             alt="QR para verificar en World App"
@@ -236,8 +249,8 @@ export function AgentRegisterPanel({
           />
           <p className="text-xs text-[var(--muted)]">
             {isMobile
-              ? "Si el link te manda a la tienda: abrí World App → escanear este QR."
-              : "Abrí World App → escanear QR → confirmar."}
+              ? "Si el link abre la tienda: World App → escanear este QR."
+              : "World App → escanear QR → confirmar."}
           </p>
         </div>
       )}
@@ -245,7 +258,7 @@ export function AgentRegisterPanel({
       {message && (
         <p
           className={`mt-3 text-xs ${
-            phase === "error" ? "text-red-700" : "text-[var(--muted)]"
+            phase === "error" ? "text-[var(--danger)]" : "text-[var(--muted)]"
           }`}
         >
           {message}
