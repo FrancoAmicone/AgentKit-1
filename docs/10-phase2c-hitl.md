@@ -19,6 +19,13 @@ User taps $0.2 listing (tope $0.1)
 
 Under-limit purchases skip HITL entirely.
 
+## Mobile / World App
+
+Never navigate away with `location.href` (kills the poll loop and often opens the
+App Store / Play Store). StayAgent keeps the page open, offers **Abrir World App**
+(`target=_blank` on the verify URL), and always shows a **QR** so the installed
+app can scan if the store redirect happens.
+
 ## Why not the official Workflow HITL package?
 
 `@worldcoin/human-in-the-loop` expects Vercel AI SDK + Workflow SDK + `WORLD_RP_ID` / signing keys.  
