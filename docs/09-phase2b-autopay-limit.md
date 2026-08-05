@@ -27,8 +27,7 @@ In the agent panel:
 Demo listings:
 
 - Cheap stays at **$0.05** → auto-pay under default `$0.1`  
-- **Casa frente al lago** at **$0.2** → over default tope (demo block)  
-- **Mendoza · $2** → over default; raise tope or wait for Step C
+- Several stays at **$0.2** (Casa frente al lago, Mendoza, Salta, etc.) → over default tope (demo block)
 
 ## APIs
 

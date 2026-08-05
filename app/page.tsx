@@ -391,8 +391,8 @@ export default function HomePage() {
 
       {!search && (
         <p className="mt-6 text-sm text-[var(--muted)]">
-          Tip: tope default $0.1 → $0.05 paga solo; buscá “Casa frente al lago”
-          ($0.2) o Mendoza ($2) para ver el bloqueo por tope.
+          Tip: tope default $0.1 → $0.05 paga solo; listings a $0.2 (lago,
+          Mendoza, Salta…) bloquean hasta subir el tope o Step C.
         </p>
       )}
 
