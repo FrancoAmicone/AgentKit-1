@@ -6,63 +6,46 @@ Agente de IA que busca alojamientos en lenguaje natural y **paga la reserva onch
 
 Pedís algo como *“casa en Bariloche con pileta, menos de 150 USD”* → el agente filtra un catálogo → elegís → el agente ejecuta el pago real de testnet y confirma la reserva.
 
-## Fase 1 (este repo, ahora)
+## Estado
 
-| Incluye | No incluye aún |
-| --- | --- |
-| Catálogo mock | World ID |
-| NLP (rules + LLM opcional) | 0G Storage |
-| Wallet CDP del agente | Fuentes externas / Bazaar |
-| Endpoint vendedor x402 | Mainnet / plata real |
-| Compra end-to-end en Base Sepolia | |
+| Fase | Incluye | Estado |
+| --- | --- | --- |
+| 1 | Catálogo mock + NLP + x402 Base Sepolia | **Hecha** |
+| 2A | AgentBook (payer) + registro World App in-UI | **Hecha** |
+| 2B | Tope auto-pay (default $0.1) + modal Configurar | **Hecha** |
+| 2C | HITL si supera el tope (World App → pay) | **Hecha** |
+| 3 | Recibos 0G | Pendiente |
+| — | Agente por usuario | Pendiente |
 
-Fase 2A (AgentBook gate, payer only): [docs/08-phase2-agentbook.md](./docs/08-phase2-agentbook.md).  
-Fases 2B–4: [docs/07-stay-agent.md](./docs/07-stay-agent.md).
+Checklist: [docs/06-checklist.md](./docs/06-checklist.md).
 
 ## Setup
 
-1. Copiá env:
-
 ```bash
 cp .env.example .env.local
-```
-
-2. Completá `CDP_API_KEY_ID`, `CDP_API_KEY_SECRET`, `CDP_WALLET_SECRET` desde [CDP Portal](https://portal.cdp.coinbase.com).
-
-3. Creá wallets y pedí faucet:
-
-```bash
+# completar CDP_* keys
 npm install
 npm run setup:wallets
-```
-
-Pegá en `.env.local` las líneas `AGENT_WALLET_ADDRESS` y `MARKETPLACE_WALLET_ADDRESS` que imprime el script.
-
-4. Corré la app:
-
-```bash
 npm run dev
 ```
 
-Abrí [http://localhost:3000](http://localhost:3000).
+Abrí [http://localhost:3000](http://localhost:3000) → **Configurar** (registro + tope).
 
 ## Flujo
 
-1. UI → `POST /api/agent/search` (interpreta query → filtra listings)
-2. Elegís un lugar → `POST /api/agent/purchase`
-3. El agente llama `POST /api/listings/[id]/buy` con `x402-fetch`
-4. Si no hay pago → **402** con precio; el cliente paga USDC y reintenta
-5. Reserva confirmada + meta de pago / link Basescan
+1. Search → `POST /api/agent/search`  
+2. Purchase → AgentBook → tope auto-pay (o HITL) → x402 pay  
+3. Confirmación + Basescan  
+
+## Precios demo
+
+- **$0.05** → auto-pay bajo tope $0.1  
+- **$0.20** → aprobar en World App → pagar  
 
 ## Stack
 
-- Next.js 16 (App Router) + TypeScript
-- `@coinbase/cdp-sdk` (`CdpX402Client`, Server Wallets)
-- `@x402/next` + `@x402/fetch`
-- Base Sepolia
+Next.js 16 · CDP x402 · World AgentBook / IDKit · Base Sepolia  
 
 ## Docs
 
-- [StayAgent — spec, APIs, env, fases](./docs/07-stay-agent.md)
-- [Checklist de setup](./docs/06-checklist.md)
-- Índice: [`docs/README.md`](./docs/README.md)
+Índice: [`docs/README.md`](./docs/README.md)

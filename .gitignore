@@ -42,5 +42,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# local agent limit store (Phase 2B)
+# local agent stores (Phase 2B / 2C)
 /data/agent-limits.json
+/data/agent-approvals.json

@@ -140,8 +140,8 @@ export function AgentSetupModal({
           </p>
           <p className="mt-1 text-xs text-[var(--muted)]">
             Paga solo si el listing cuesta ≤ este monto (mín. ${minLimit};
-            default $0.1). Arriba de eso se bloquea hasta aprobación humana
-            (Step C).
+            default $0.1). Arriba de eso pide aprobación humana en World App
+            (HITL) antes de pagar.
           </p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2">

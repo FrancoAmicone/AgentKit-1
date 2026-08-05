@@ -3,6 +3,7 @@ import { getListing } from "@/lib/listings";
 import { getAgentWalletAddress, getPaidFetch, readPaymentResponse } from "@/lib/agent-payer";
 import { assertAgentIsHumanBacked } from "@/lib/agentbook";
 import { canAutoPay, getAutoPayLimit } from "@/lib/agent-limits";
+import { consumeApprovalToken } from "@/lib/human-approval";
 
 export const runtime = "nodejs";
 
@@ -11,11 +12,15 @@ export const runtime = "nodejs";
  *
  * Phase 2 gates (payer only; marketplace not verified):
  * 1) AgentBook human-backed
- * 2) Amount <= owner auto-pay limit (else needs human approval — Step C)
+ * 2) Amount <= owner auto-pay limit OR valid one-time World HITL approvalToken (2C)
  */
 export async function POST(request: NextRequest) {
-  const body = (await request.json().catch(() => ({}))) as { listingId?: string };
+  const body = (await request.json().catch(() => ({}))) as {
+    listingId?: string;
+    approvalToken?: string;
+  };
   const listingId = body.listingId?.trim();
+  const approvalToken = body.approvalToken?.trim();
 
   if (!listingId) {
     return NextResponse.json({ error: "listingId is required" }, { status: 400 });
@@ -44,7 +49,7 @@ export async function POST(request: NextRequest) {
           code: "AGENT_NOT_HUMAN_BACKED",
           error: message,
           agentAddress,
-          registerHint: "Use the Register with World App button in the UI (QR on desktop / deep link on mobile).",
+          registerHint: "Use Configurar → Registrar con World App (QR / deep link).",
           hint: "Register the AGENT wallet with World App, then retry. Marketplace receiver is not verified.",
         },
         { status: 403 },
@@ -52,23 +57,51 @@ export async function POST(request: NextRequest) {
     }
 
     const limits = await getAutoPayLimit(agentAddress);
+    let usedHumanApproval = false;
     if (!canAutoPay(listing.pricePerNight, limits.autoPayLimitUsdc)) {
-      return NextResponse.json(
-        {
-          ok: false,
-          code: "NEEDS_HUMAN_APPROVAL",
-          error: `Amount $${listing.pricePerNight} USDC exceeds auto-pay limit $${limits.autoPayLimitUsdc} USDC.`,
-          agentAddress,
-          limits,
-          listing: {
-            id: listing.id,
-            title: listing.title,
-            amountUsdc: listing.pricePerNight,
+      if (!approvalToken) {
+        return NextResponse.json(
+          {
+            ok: false,
+            code: "NEEDS_HUMAN_APPROVAL",
+            error: `Amount $${listing.pricePerNight} USDC exceeds auto-pay limit $${limits.autoPayLimitUsdc} USDC.`,
+            agentAddress,
+            limits,
+            listing: {
+              id: listing.id,
+              title: listing.title,
+              amountUsdc: listing.pricePerNight,
+            },
+            hint: "Approve this spend with World App (HITL), or raise the auto-pay tope in Configurar.",
           },
-          hint: "Raise the auto-pay limit in the UI, or wait for Step C (World human-in-the-loop approval).",
-        },
-        { status: 403 },
-      );
+          { status: 403 },
+        );
+      }
+      const consumed = await consumeApprovalToken({
+        approvalToken,
+        agentAddress,
+        listingId: listing.id,
+        amountUsdc: listing.pricePerNight,
+      });
+      if (!consumed.ok) {
+        return NextResponse.json(
+          {
+            ok: false,
+            code: "NEEDS_HUMAN_APPROVAL",
+            error: consumed.error,
+            hint: "Start human approval again for this listing.",
+            agentAddress,
+            limits,
+            listing: {
+              id: listing.id,
+              title: listing.title,
+              amountUsdc: listing.pricePerNight,
+            },
+          },
+          { status: 403 },
+        );
+      }
+      usedHumanApproval = true;
     }
 
     const origin = request.nextUrl.origin;
@@ -105,6 +138,7 @@ export async function POST(request: NextRequest) {
         humanId: agentBook.humanId,
       },
       limits,
+      usedHumanApproval,
       listing: {
         id: listing.id,
         title: listing.title,
