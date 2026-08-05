@@ -4,45 +4,34 @@ No hace falta usar World + 0G + Coinbase juntos desde el día 1. StayAgent suma 
 
 ## Mapa por fase
 
-| Fase | Pieza activa | Pregunta que responde |
-| --- | --- | --- |
-| **1** | CDP + x402 (Base Sepolia) | ¿El agente puede pagar una reserva de verdad (testnet)? |
-| **2** | + World AgentKit / World ID | ¿Hay un humano verificable dueño del agente / del gasto alto? |
-| **3** | + 0G Storage | ¿Queda un recibo auditable fuera del server? |
-| **4** | + Bazaar / APIs externas | ¿De dónde salen listings reales? |
+| Fase | Pieza activa | Pregunta que responde | Estado |
+| --- | --- | --- | --- |
+| **1** | CDP + x402 (Base Sepolia) | ¿El agente puede pagar una reserva de verdad (testnet)? | **Hecha** |
+| **2A/2B** | + World AgentBook + tope auto-pay | ¿Hay un humano dueño del agente? ¿Hasta cuánto paga solo? | **Hecha** |
+| **2C** | + World HITL | ¿El humano aprueba este gasto alto? | Pendiente |
+| **3** | + 0G Storage | ¿Queda un recibo auditable fuera del server? | Pendiente |
+| **4** | + Bazaar / APIs externas | ¿De dónde salen listings reales? | Opcional |
 
-## Fase 1 (actual)
+## Fase 1
 
-Solo **Coinbase CDP + x402**:
+**Coinbase CDP + x402**: wallet del agente paga → `/buy` cobra → facilitator settle.
 
-- Wallet del agente paga  
-- Endpoint `/buy` cobra  
-- Facilitator CDP verifica/settle  
+## Fase 2 — World (parcialmente hecha)
 
-World y 0G **afuera** a propósito.
+- **2A:** AgentBook en purchase (payer only) + registro in-app.  
+- **2B:** tope de pago automático.  
+- **2C (pendiente):** aprobación humana si supera el tope.  
 
-## Fase 2 — sumar World
+World no mueve el USDC; condiciona *quién* puede gastar y *cuándo*.
 
-Tiene sentido cuando:
+## Fase 3 — 0G
 
-- Querés limitar gasto hasta verificar humano  
-- Querés free-trial / anti-spam si exponés APIs públicas  
-- Querés accountability del operador del agente  
-
-No reemplaza el pago: World no mueve el USDC de la reserva.
-
-## Fase 3 — sumar 0G
-
-Tiene sentido cuando:
-
-- Querés evidencia del pago más allá de los logs locales  
-- Más adelante tokenizás el agente (Agentic ID)  
-
-No reemplaza Base/CDP para el settlement USDC del MVP.
+Evidencia del pago más allá de logs locales / Agentic ID más adelante.  
+No reemplaza Base/CDP para settlement USDC.
 
 ## Regla práctica
 
-> Primero un pago testnet end-to-end. Recién ahí identidad (World) y auditoría (0G).
+> Primero pago testnet end-to-end → identidad AgentBook → tope → HITL → recibos 0G.
 
-Detalle de producto: [07-stay-agent.md](./07-stay-agent.md).  
+Detalle: [07-stay-agent.md](./07-stay-agent.md) · checklist [06](./06-checklist.md).  
 Resúmenes: [04](./04-coinbase-agentkit.md) · [02](./02-world-agentkit.md) · [03](./03-0g.md).
