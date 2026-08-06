@@ -36,6 +36,8 @@ type StoreFile = {
 };
 
 function storePath() {
+  // Demo-only persistence — /tmp is not durable across serverless instances.
+  // See docs/11-demo-tradeoffs.md before “fixing” with a DB.
   if (process.env.VERCEL) {
     return "/tmp/stay-agent-approvals.json";
   }

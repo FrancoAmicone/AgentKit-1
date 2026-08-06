@@ -20,6 +20,7 @@ Al cerrar cualquier tarea o PR: actualizar **checklist** + doc de la fase afecta
 | [08-phase2-agentbook.md](./08-phase2-agentbook.md) | Phase 2A: gate AgentBook (payer only) |
 | [09-phase2b-autopay-limit.md](./09-phase2b-autopay-limit.md) | Phase 2B: owner auto-pay limit |
 | [10-phase2c-hitl.md](./10-phase2c-hitl.md) | Phase 2C: human approval over tope |
+| [11-demo-tradeoffs.md](./11-demo-tradeoffs.md) | Atajos conscientes del demo (no “bugs”) |
 | [06-checklist.md](./06-checklist.md) | Checklist de cuentas, código y pruebas |
 | [04-coinbase-agentkit.md](./04-coinbase-agentkit.md) | CDP / AgentKit / x402 (Fase 1) |
 | [02-world-agentkit.md](./02-world-agentkit.md) | World AgentKit (Fase 2) |
