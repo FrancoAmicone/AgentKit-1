@@ -23,22 +23,57 @@ We stop using the shared demo payer (`stay-agent-payer` / single `AGENT_WALLET_A
 
 ## End-to-end flow (inside the app)
 
+One setup wizard (Configurar), then normal search → reserve.
+
 ```
-1. User opens StayAgent
-2. No agent yet → “Crear mi agente”
-      → server creates a dedicated CDP EOA for this user
-      → returns address (+ funding instructions)
-3. User funds that wallet (testnet USDC on Base Sepolia; ETH for gas if needed)
-4. User registers the agent with World → AgentBook (human-backed)
-5. User configures auto-pay tope for *this* agent
-6. Search lodgings → “Reservar”
-      ├─ price ≤ tope  → that agent pays via x402
-      └─ price > tope  → World HITL for this spend → then that agent pays
-7. On success → upload receipt JSON to 0G Storage
-8. Confirmation UI shows: listing, tx/explorer link, 0G content hash (+ link if available)
+1. Open StayAgent → tap Configurar (or auto-open if no agent)
+2. Step “Crear agente”
+      → POST /api/agent/create
+      → CDP getOrCreateAccount for this session
+      → show agent address
+3. Step “Cargar fondos” (simple fund UI)
+      → show address + QR + Copy
+      → optional “Abrir faucet” links (Base Sepolia ETH / USDC)
+      → poll balance until USDC > 0 (and gas if needed)
+      → user can send from MetaMask to this address (funding only)
+4. Step “Verificar con World”
+      → existing AgentBook QR / Abrir World App (scoped to this address)
+5. Step “Tope automático”
+      → save auto-pay limit for this agent (e.g. $0.1)
+6. Setup complete → search listings → Reservar
+      ├─ price ≤ tope + funded + registered → agent auto-pays (x402)
+      └─ price > tope → World HITL → then this agent pays
+7. Payment USDC goes to marketplace wallet (x402), not to 0G
+8. After success → upload receipt JSON to 0G Storage
+9. UI “Reserva confirmada” → tx link + 0G content hash
 ```
 
-Identity for “who is this browser user?” is a separate product choice (see Open questions). The **onchain payer** is always the user’s agent wallet, never the shared demo one.
+**Money vs receipt:** USDC settlement stays on Base (marketplace receives pay). **0G stores the receipt** (proof/audit), it does not receive the payment.
+
+Identity for “who is this browser user?” — see Open questions. Default first slice: anonymous session cookie → one agent per device/browser.
+
+---
+
+## UX: setup wizard (keep it simple)
+
+Single modal / panel with a short checklist. User only advances when the step is done.
+
+| Step | What the user sees | Done when |
+| --- | --- | --- |
+| 1. Crear agente | One button “Crear mi agente” → then show address | CDP account exists for session |
+| 2. Cargar fondos | Address (mono), **Copy**, **QR**, “Enviá USDC (Base Sepolia) acá”, faucet links, live balance | USDC balance ≥ small minimum (e.g. $0.05) |
+| 3. World | Same register panel as today (one Abrir World App + QR) | AgentBook `registered` |
+| 4. Tope | Number input + Guardar (min $0.01, default $0.1) | Limit saved for this address |
+
+Funding UX principles:
+
+- No seed phrases, no MetaMask “connect as agent.”
+- MetaMask (or any wallet) is only “send USDC **to** this address.”
+- Big Copy + QR; short network warning: **Base Sepolia**, asset **USDC**.
+- “Ya envié — actualizar saldo” button + light auto-poll.
+- Don’t block the whole app: user can close and reopen Configurar; progress persists on the session.
+
+After setup, home stays as today: search → cards → Reservar. Badge shows Human-backed + short address + tope.
 
 ---
 
