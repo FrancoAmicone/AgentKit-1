@@ -81,25 +81,34 @@ Ver [10-phase2c-hitl.md](./10-phase2c-hitl.md).
 
 ---
 
-## Fase 3 — 0G Storage
+## Multi-user + Fase 3 (0G) — design
 
-- [ ] Galileo testnet + faucet
-- [ ] Subir JSON recibo tras compra
-- [ ] Mostrar content hash en UI
+Ver [12-multiuser-and-0g.md](./12-multiuser-and-0g.md). **Cada usuario = su wallet + su agente** (no el payer compartido del demo).
 
-Ver [03-0g.md](./03-0g.md).
+### Multi-user agents
+
+- [x] Design doc (flujo + APIs)
+- [ ] Decidir sesión (cookie anónima vs World login) — ver open questions en 12
+- [ ] Persistencia durable (user → agent address)
+- [ ] `POST /api/agent/create` + UI “Crear mi agente”
+- [ ] Fondear wallet propia (USDC testnet)
+- [ ] Scope register / tope / HITL / purchase al agente actual
+- [ ] Dejar de usar `stay-agent-payer` como default
+
+### Fase 3 — 0G Storage
+
+- [x] Design doc (recibo post-compra; agente no “corre” en 0G)
+- [ ] Galileo testnet + faucet / credenciales upload
+- [ ] `lib/og-storage.ts` — subir JSON recibo tras compra
+- [ ] Mostrar content hash en UI de confirmación
+
+Detalle 0G: [03-0g.md](./03-0g.md).
 
 ---
 
 ## Fase 4 — Discovery (stretch)
 
 - [ ] Bazaar / agentic.market
-
----
-
-## Multi-user agents (después del demo)
-
-- [ ] Crear wallet por usuario → fondear → registrar → pagar con *su* agente
 
 ---
 
