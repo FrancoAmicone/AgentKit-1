@@ -5,7 +5,9 @@ If something below looks “wrong,” discuss before changing — it may be inte
 
 ## Shared payer wallet
 
-One CDP account account (`stay-agent-payer`) pays for everyone. Fine for hackathon demos; not multi-tenant. Real product: each user funds / registers their own agent wallet.
+One CDP account (`stay-agent-payer`) pays for everyone. Fine for hackathon demos; not multi-tenant.
+
+**Target (design):** each user creates and funds **their own** agent wallet — see [12-multiuser-and-0g.md](./12-multiuser-and-0g.md).
 
 ## File / `/tmp` persistence
 

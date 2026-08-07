@@ -1,41 +1,78 @@
 import { CdpX402Client } from "@coinbase/cdp-sdk/x402";
 import { wrapFetchWithPayment, decodePaymentResponseHeader } from "@x402/fetch";
+import { getSessionAccountName } from "@/lib/agent-session";
 
-let client: CdpX402Client | null = null;
-let paidFetch: typeof fetch | null = null;
+const clients = new Map<string, CdpX402Client>();
+const paidFetches = new Map<string, typeof fetch>();
+
+function x402Environment(): "production" | "development" {
+  return process.env.CDP_X402_CLIENT_ENVIRONMENT === "production"
+    ? "production"
+    : "development";
+}
 
 /**
- * Buyer-side x402 client. Pays from a CDP-managed wallet on Base Sepolia.
+ * Buyer-side x402 client for a named CDP EOA.
  * Requires CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET.
  */
-export function getAgentX402Client(): CdpX402Client {
+export function getAgentX402Client(accountName: string): CdpX402Client {
+  let client = clients.get(accountName);
   if (!client) {
     client = new CdpX402Client({
-      environment: "development", // Base Sepolia
+      environment: x402Environment(),
       walletConfig: {
         type: "eoa",
-        accountName: "stay-agent-payer",
+        accountName,
       },
     });
+    clients.set(accountName, client);
   }
   return client;
 }
 
-export async function getAgentWalletAddress(): Promise<string> {
-  const { evmAddress } = await getAgentX402Client().getAddresses();
-  if (process.env.AGENT_WALLET_ADDRESS && process.env.AGENT_WALLET_ADDRESS !== evmAddress) {
-    console.warn(
-      `[stay-agent] AGENT_WALLET_ADDRESS (${process.env.AGENT_WALLET_ADDRESS}) differs from CdpX402Client address (${evmAddress}). Using CDP client address.`,
-    );
+export async function getAgentWalletAddress(
+  accountName?: string,
+): Promise<string> {
+  const name = accountName ?? (await getSessionAccountName());
+  if (!name) {
+    throw Object.assign(new Error("No agent wallet yet — create one in Configurar"), {
+      code: "AGENT_NOT_CREATED",
+    });
   }
+  const { evmAddress } = await getAgentX402Client(name).getAddresses();
   return evmAddress;
 }
 
-export function getPaidFetch(): typeof fetch {
-  if (!paidFetch) {
-    paidFetch = wrapFetchWithPayment(globalThis.fetch, getAgentX402Client());
+export function getPaidFetch(accountName: string): typeof fetch {
+  let paid = paidFetches.get(accountName);
+  if (!paid) {
+    paid = wrapFetchWithPayment(
+      globalThis.fetch,
+      getAgentX402Client(accountName),
+    );
+    paidFetches.set(accountName, paid);
   }
-  return paidFetch;
+  return paid;
+}
+
+/** Resolve session account + paid fetch, or throw AGENT_NOT_CREATED. */
+export async function getSessionPaidFetch(): Promise<{
+  accountName: string;
+  address: string;
+  paidFetch: typeof fetch;
+}> {
+  const accountName = await getSessionAccountName();
+  if (!accountName) {
+    throw Object.assign(new Error("No agent wallet yet — create one in Configurar"), {
+      code: "AGENT_NOT_CREATED",
+    });
+  }
+  const address = await getAgentWalletAddress(accountName);
+  return {
+    accountName,
+    address,
+    paidFetch: getPaidFetch(accountName),
+  };
 }
 
 export function readPaymentResponse(headers: Headers) {

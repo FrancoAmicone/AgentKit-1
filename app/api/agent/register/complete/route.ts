@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionAccountName } from "@/lib/agent-session";
 import { getAgentWalletAddress } from "@/lib/agent-payer";
 import { getAgentBookStatus } from "@/lib/agentbook";
 import {
@@ -18,7 +19,18 @@ type Body = {
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as Body;
-    const agentAddress = await getAgentWalletAddress();
+    const accountName = await getSessionAccountName();
+    if (!accountName) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "AGENT_NOT_CREATED",
+          error: "Creá tu agente antes de registrarlo en World.",
+        },
+        { status: 403 },
+      );
+    }
+    const agentAddress = await getAgentWalletAddress(accountName);
     const status = await getAgentBookStatus(agentAddress);
 
     if (status.registered) {

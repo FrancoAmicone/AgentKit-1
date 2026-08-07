@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionAccountName } from "@/lib/agent-session";
 import { getAgentWalletAddress } from "@/lib/agent-payer";
 import { getAgentBookStatus } from "@/lib/agentbook";
 import {
@@ -12,12 +13,24 @@ import {
 export const runtime = "nodejs";
 
 /**
- * Owner-configurable auto-pay threshold for the agent payer wallet.
- * Only meaningful / writable when the agent is human-backed (AgentBook).
+ * Owner-configurable auto-pay threshold for the current session's agent.
+ * Only writable when the agent is human-backed (AgentBook).
  */
 export async function GET() {
   try {
-    const address = await getAgentWalletAddress();
+    const accountName = await getSessionAccountName();
+    if (!accountName) {
+      return NextResponse.json({
+        ok: true,
+        needsCreate: true,
+        canEdit: false,
+        minAutoPayLimitUsdc: MIN_AUTO_PAY_LIMIT_USDC,
+        defaultAutoPayLimitUsdc: HARDCODED_DEFAULT_AUTO_PAY_LIMIT_USDC,
+        maxAutoPayLimitUsdc: MAX_AUTO_PAY_LIMIT_USDC,
+      });
+    }
+
+    const address = await getAgentWalletAddress(accountName);
     const [book, limits] = await Promise.all([
       getAgentBookStatus(address),
       getAutoPayLimit(address),
@@ -25,6 +38,7 @@ export async function GET() {
 
     return NextResponse.json({
       ok: true,
+      needsCreate: false,
       role: "agent-payer",
       minAutoPayLimitUsdc: MIN_AUTO_PAY_LIMIT_USDC,
       defaultAutoPayLimitUsdc: HARDCODED_DEFAULT_AUTO_PAY_LIMIT_USDC,
@@ -36,7 +50,7 @@ export async function GET() {
       },
       limits,
       canEdit: book.registered || !book.required,
-      note: "Spends at or below autoPayLimitUsdc are paid automatically. Above that, human approval is required (Step C).",
+      note: "Spends at or below autoPayLimitUsdc are paid automatically. Above that, human approval is required (HITL).",
     });
   } catch (err) {
     return NextResponse.json(
@@ -48,7 +62,18 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const address = await getAgentWalletAddress();
+    const accountName = await getSessionAccountName();
+    if (!accountName) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "AGENT_NOT_CREATED",
+          error: "Creá tu agente antes de configurar el tope.",
+        },
+        { status: 403 },
+      );
+    }
+    const address = await getAgentWalletAddress(accountName);
     const book = await getAgentBookStatus(address);
 
     if (book.required && !book.registered) {

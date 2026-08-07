@@ -1,50 +1,110 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import type {
   AgentStatus,
   LimitsResponse,
 } from "@/components/AgentSetupModal";
 
+export type AgentMe = {
+  ok: boolean;
+  hasAgent?: boolean;
+  needsCreate?: boolean;
+  accountName?: string;
+  address?: string;
+  registered?: boolean;
+  humanId?: string | null;
+  required?: boolean;
+  readyToPay?: boolean;
+  balances?: {
+    usdc: number;
+    eth: number;
+    funded: boolean;
+    minUsdcToFund: number;
+  };
+  limits?: {
+    autoPayLimitUsdc: number;
+    source: "default" | "owner";
+    updatedAt: string;
+  };
+  fundHint?: {
+    network: string;
+    asset: string;
+    faucetEth?: string;
+    faucetUsdc?: string;
+    explorer?: string;
+  };
+  note?: string;
+  error?: string;
+  message?: string;
+};
+
 /**
- * Agent status, auto-pay limits, and setup modal state.
- * Shared demo wallet — not multi-user (see docs/11-demo-tradeoffs.md).
+ * Per-browser agent session: create CDP wallet, fund, register, tope.
  */
 export function useAgentSession() {
+  const [me, setMe] = useState<AgentMe | null>(null);
   const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
   const [limitsInfo, setLimitsInfo] = useState<LimitsResponse | null>(null);
   const [limitInput, setLimitInput] = useState("0.1");
   const [savingLimit, setSavingLimit] = useState(false);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [setupOpen, setSetupOpen] = useState(false);
-  const autoOpenedSetupRef = useRef(false);
+  const [creating, setCreating] = useState(false);
+  const [createMessage, setCreateMessage] = useState<string | null>(null);
+  const [refreshingBalances, setRefreshingBalances] = useState(false);
+  const [autoOpenedSetup, setAutoOpenedSetup] = useState(false);
 
-  const applyAgentStatus = useCallback((data: AgentStatus) => {
-    setAgentStatus(data);
-    // Open Configurar once when gate requires registration (from fetch, not an effect).
-    if (
-      !autoOpenedSetupRef.current &&
-      data.ok &&
-      data.required &&
-      data.registered !== true
-    ) {
-      autoOpenedSetupRef.current = true;
-      setSetupOpen(true);
+  const applyMe = useCallback((data: AgentMe) => {
+    setMe(data);
+    if (!data.hasAgent) {
+      setAgentStatus({
+        ok: true,
+        needsCreate: true,
+        registered: false,
+        required: true,
+        note: data.message,
+      });
+      return;
+    }
+    setAgentStatus({
+      ok: data.ok,
+      address: data.address,
+      registered: data.registered,
+      humanId: data.humanId,
+      required: data.required,
+      note: data.note,
+      needsCreate: false,
+      hasAgent: true,
+    });
+    if (data.limits) {
+      setLimitsInfo({
+        ok: true,
+        canEdit: Boolean(data.registered || !data.required),
+        minAutoPayLimitUsdc: 0.01,
+        maxAutoPayLimitUsdc: 10_000,
+        limits: data.limits,
+      });
+      setLimitInput(String(data.limits.autoPayLimitUsdc));
     }
   }, []);
 
-  const refreshAgentStatus = useCallback(async () => {
+  const refreshMe = useCallback(async () => {
     try {
-      const res = await fetch("/api/agent/status");
-      const data = (await res.json()) as AgentStatus;
-      applyAgentStatus(data);
+      const res = await fetch("/api/agent/me");
+      const data = (await res.json()) as AgentMe;
+      applyMe(data);
+      return data;
     } catch {
-      setAgentStatus({
+      const failed: AgentMe = {
         ok: false,
-        error: "No se pudo leer el status del agente",
-      });
+        error: "No se pudo leer el agente",
+      };
+      setMe(failed);
+      setAgentStatus({ ok: false, error: failed.error });
+      return failed;
     }
-  }, [applyAgentStatus]);
+  }, [applyMe]);
 
   const refreshLimits = useCallback(async () => {
     try {
@@ -60,39 +120,58 @@ export function useAgentSession() {
   }, []);
 
   const refreshAll = useCallback(() => {
-    void refreshAgentStatus();
-    void refreshLimits();
-  }, [refreshAgentStatus, refreshLimits]);
+    void refreshMe().then(() => void refreshLimits());
+  }, [refreshMe, refreshLimits]);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      try {
-        const [statusRes, limitsRes] = await Promise.all([
-          fetch("/api/agent/status"),
-          fetch("/api/agent/limits"),
-        ]);
-        const status = (await statusRes.json()) as AgentStatus;
-        const limits = (await limitsRes.json()) as LimitsResponse;
-        if (cancelled) return;
-        applyAgentStatus(status);
-        setLimitsInfo(limits);
-        if (limits.limits?.autoPayLimitUsdc != null) {
-          setLimitInput(String(limits.limits.autoPayLimitUsdc));
+      const data = await refreshMe();
+      if (cancelled) return;
+      if (!data.hasAgent || (data.required && !data.registered)) {
+        if (!autoOpenedSetup) {
+          setSetupOpen(true);
+          setAutoOpenedSetup(true);
         }
-      } catch {
-        if (cancelled) return;
-        setAgentStatus({
-          ok: false,
-          error: "No se pudo leer el status del agente",
-        });
-        setLimitsInfo({ ok: false, error: "No se pudieron cargar los límites" });
       }
+      await refreshLimits();
     })();
     return () => {
       cancelled = true;
     };
-  }, [applyAgentStatus]);
+    // intentionally once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function createAgent() {
+    setCreating(true);
+    setCreateMessage(null);
+    try {
+      const res = await fetch("/api/agent/create", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "No se pudo crear el agente");
+      }
+      setCreateMessage(data.message || "Agente creado");
+      await refreshMe();
+      await refreshLimits();
+    } catch (err) {
+      setCreateMessage(
+        err instanceof Error ? err.message : "Error al crear agente",
+      );
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function refreshBalances() {
+    setRefreshingBalances(true);
+    try {
+      await refreshMe();
+    } finally {
+      setRefreshingBalances(false);
+    }
+  }
 
   async function onSaveLimit(e: FormEvent) {
     e.preventDefault();
@@ -121,6 +200,7 @@ export function useAgentSession() {
       setLimitMessage(
         `Límite guardado: pago automático hasta $${data.limits?.autoPayLimitUsdc} USDC`,
       );
+      await refreshMe();
     } catch (err) {
       setLimitMessage(
         err instanceof Error ? err.message : "Error al guardar límite",
@@ -131,10 +211,13 @@ export function useAgentSession() {
   }
 
   const canPurchase =
-    Boolean(agentStatus?.ok) &&
-    (!agentStatus?.required || agentStatus.registered === true);
+    Boolean(me?.hasAgent) &&
+    Boolean(me?.ok) &&
+    (!me?.required || me.registered === true) &&
+    Boolean(me?.balances?.funded);
 
   return {
+    me,
     agentStatus,
     limitsInfo,
     limitInput,
@@ -146,7 +229,12 @@ export function useAgentSession() {
     refreshAll,
     onSaveLimit,
     canPurchase,
-    autoLimitUsdc: limitsInfo?.limits?.autoPayLimitUsdc,
+    autoLimitUsdc: limitsInfo?.limits?.autoPayLimitUsdc ?? me?.limits?.autoPayLimitUsdc,
     minLimitUsdc: limitsInfo?.minAutoPayLimitUsdc ?? 0.01,
+    createAgent,
+    creating,
+    createMessage,
+    refreshBalances,
+    refreshingBalances,
   };
 }

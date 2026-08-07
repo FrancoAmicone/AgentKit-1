@@ -81,25 +81,34 @@ Ver [10-phase2c-hitl.md](./10-phase2c-hitl.md).
 
 ---
 
-## Fase 3 — 0G Storage
+## Multi-user + Fase 3 (0G) — design
 
-- [ ] Galileo testnet + faucet
-- [ ] Subir JSON recibo tras compra
-- [ ] Mostrar content hash en UI
+Ver [12-multiuser-and-0g.md](./12-multiuser-and-0g.md). **Cada usuario = su wallet + su agente** (no el payer compartido del demo).
 
-Ver [03-0g.md](./03-0g.md).
+### Multi-user agents
+
+- [x] Design doc (flujo + APIs)
+- [x] Sesión: cookie httpOnly → CDP `accountName` (opción A del design)
+- [x] `POST /api/agent/create` + `GET /api/agent/me` + UI wizard
+- [x] Fondear wallet (Copy / QR / saldo USDC)
+- [x] Scope register / tope / HITL / purchase al agente de la sesión
+- [x] Default: sin `stay-agent-payer` (solo si `DEMO_SHARED_AGENT=true`)
+
+### Fase 3 — 0G Storage
+
+- [x] Design doc (recibo post-compra; agente no “corre” en 0G)
+- [x] `lib/og-storage.ts` — upload soft-fail tras compra
+- [x] Mostrar content hash / skipped en UI
+- [x] Guía env + faucet: [13-env-and-0g-setup.md](./13-env-and-0g-setup.md)
+- [ ] Ops: crear wallet Galileo, faucet, cargar `OG_PRIVATE_KEY` en Vercel
+
+Detalle 0G: [03-0g.md](./03-0g.md).
 
 ---
 
 ## Fase 4 — Discovery (stretch)
 
 - [ ] Bazaar / agentic.market
-
----
-
-## Multi-user agents (después del demo)
-
-- [ ] Crear wallet por usuario → fondear → registrar → pagar con *su* agente
 
 ---
 

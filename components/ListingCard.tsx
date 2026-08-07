@@ -82,7 +82,7 @@ export function ListingCard({
           {buying
             ? "Pagando con el agente…"
             : !canPurchase
-              ? "Verificar agente para pagar"
+              ? "Configurar agente para pagar"
               : overLimit
                 ? "Reservar (pide aprobación)"
                 : "Reservar y pagar"}

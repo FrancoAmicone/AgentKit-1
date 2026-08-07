@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSessionAccountName } from "@/lib/agent-session";
 import { getAgentWalletAddress } from "@/lib/agent-payer";
 import { getAgentBookStatus } from "@/lib/agentbook";
 import {
@@ -8,12 +9,25 @@ import {
 } from "@/lib/agentbook-register";
 
 /**
- * Prepare AgentBook registration for the StayAgent payer wallet.
+ * Prepare AgentBook registration for the current session's agent wallet.
  * Client then opens World App (mobile) or shows QR (desktop) via IDKit bridge.
  */
 export async function GET() {
   try {
-    const agentAddress = (await getAgentWalletAddress()) as `0x${string}`;
+    const accountName = await getSessionAccountName();
+    if (!accountName) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "AGENT_NOT_CREATED",
+          error: "Creá tu agente antes de registrarlo en World.",
+        },
+        { status: 403 },
+      );
+    }
+    const agentAddress = (await getAgentWalletAddress(
+      accountName,
+    )) as `0x${string}`;
     const status = await getAgentBookStatus(agentAddress);
 
     if (status.registered) {

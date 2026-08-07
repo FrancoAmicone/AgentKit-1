@@ -1,18 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getListing } from "@/lib/listings";
-import { getAgentWalletAddress, getPaidFetch, readPaymentResponse } from "@/lib/agent-payer";
+import {
+  getSessionPaidFetch,
+  readPaymentResponse,
+} from "@/lib/agent-payer";
 import { assertAgentIsHumanBacked } from "@/lib/agentbook";
 import { canAutoPay, getAutoPayLimit } from "@/lib/agent-limits";
 import { consumeApprovalToken } from "@/lib/human-approval";
+import { uploadReservationReceipt } from "@/lib/og-storage";
 
 export const runtime = "nodejs";
 
 /**
- * Agent pays the x402-protected buy endpoint with its CDP wallet.
+ * Current session's agent pays the x402-protected buy endpoint with its CDP wallet.
  *
- * Phase 2 gates (payer only; marketplace not verified):
- * 1) AgentBook human-backed
- * 2) Amount <= owner auto-pay limit OR valid one-time World HITL approvalToken (2C)
+ * Gates (payer only; marketplace not verified):
+ * 1) Agent created for this session
+ * 2) AgentBook human-backed
+ * 3) Amount <= auto-pay limit OR valid one-time World HITL approvalToken
+ * 4) After pay → best-effort 0G receipt upload
  */
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as {
@@ -35,7 +41,28 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const agentAddress = await getAgentWalletAddress();
+    let session;
+    try {
+      session = await getSessionPaidFetch();
+    } catch (err) {
+      const code =
+        err && typeof err === "object" && "code" in err
+          ? String((err as { code?: string }).code)
+          : undefined;
+      if (code === "AGENT_NOT_CREATED") {
+        return NextResponse.json(
+          {
+            ok: false,
+            code: "AGENT_NOT_CREATED",
+            error: "Creá tu agente en Configurar antes de pagar.",
+          },
+          { status: 403 },
+        );
+      }
+      throw err;
+    }
+
+    const { address: agentAddress, paidFetch: fetchWithPayment } = session;
 
     // Gate only the payer (agent). Receiver/marketplace needs no World check.
     let agentBook;
@@ -107,7 +134,6 @@ export async function POST(request: NextRequest) {
     const origin = request.nextUrl.origin;
     const buyUrl = `${origin}/api/listings/${listingId}/buy`;
 
-    const fetchWithPayment = getPaidFetch();
     const response = await fetchWithPayment(buyUrl, { method: "POST" });
     const paymentMeta = readPaymentResponse(response.headers);
 
@@ -129,6 +155,32 @@ export async function POST(request: NextRequest) {
     }
 
     const txHash = extractTxHash(paymentMeta);
+    const reservedAt =
+      payload.reservation &&
+      typeof payload.reservation === "object" &&
+      payload.reservation !== null &&
+      "reservedAt" in payload.reservation
+        ? String((payload.reservation as { reservedAt?: string }).reservedAt)
+        : new Date().toISOString();
+
+    const ogReceipt = await uploadReservationReceipt({
+      reservedAt,
+      agentAddress,
+      listing: {
+        id: listing.id,
+        title: listing.title,
+        location: listing.location,
+        amountUsdc: listing.pricePerNight,
+      },
+      payment: {
+        txHash,
+        network: "base-sepolia",
+        usedHumanApproval,
+      },
+      world: {
+        humanId: agentBook.humanId,
+      },
+    });
 
     return NextResponse.json({
       ok: true,
@@ -151,6 +203,7 @@ export async function POST(request: NextRequest) {
       explorerUrl: txHash
         ? `https://sepolia.basescan.org/tx/${txHash}`
         : undefined,
+      ogReceipt,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown purchase error";
@@ -158,7 +211,7 @@ export async function POST(request: NextRequest) {
       {
         ok: false,
         error: message,
-        hint: "Check CDP keys, AGENT wallet USDC on Base Sepolia, and MARKETPLACE_WALLET_ADDRESS.",
+        hint: "Check CDP keys, agent wallet USDC on Base Sepolia, and MARKETPLACE_WALLET_ADDRESS.",
       },
       { status: 500 },
     );

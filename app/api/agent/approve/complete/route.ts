@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionAccountName } from "@/lib/agent-session";
 import { getAgentWalletAddress } from "@/lib/agent-payer";
 import { completeApprovalSession } from "@/lib/human-approval";
 import type { WorldIdProofResult } from "@/lib/agentbook-register";
@@ -29,7 +30,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const agentAddress = await getAgentWalletAddress();
+    const accountName = await getSessionAccountName();
+    if (!accountName) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "AGENT_NOT_CREATED",
+          error: "Creá tu agente antes de completar la aprobación.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const agentAddress = await getAgentWalletAddress(accountName);
     const { session, approvalToken } = await completeApprovalSession({
       sessionId: body.sessionId,
       agentAddress,

@@ -182,8 +182,8 @@ La disponibilidad se guarda **in-memory** (se resetea al reiniciar el server). S
 ### Fase 2A — AgentBook — **DONE** → [08](./08-phase2-agentbook.md)
 ### Fase 2B — Auto-pay limit — **DONE** → [09](./09-phase2b-autopay-limit.md)
 ### Fase 2C — HITL — **DONE** (código) → [10](./10-phase2c-hitl.md)
-### Fase 3 — 0G Storage — **pendiente** → [03](./03-0g.md)
-### Multi-user agents — **pendiente**
+### Multi-user + Fase 3 (0G) — **implemented** → [12](./12-multiuser-and-0g.md) · env [13](./13-env-and-0g-setup.md)
+### Fase 3 detail (0G Storage) → [03](./03-0g.md)
 ### Fase 4 — Discovery — stretch
 
 ## Qué no hacer todavía
