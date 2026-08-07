@@ -37,7 +37,7 @@ Al cerrar cualquier tarea o PR: actualizar **checklist** + doc de la fase afecta
 | 1 | Catálogo mock + NLP + pago x402 (Base Sepolia) | **Hecha** |
 | 2A | AgentBook gate + registro in-app | **Hecha** |
 | 2B | Auto-pay limit + modal Configurar | **Hecha** |
-| 2C | HITL si supera el tope | **Hecha** (código); validar en prod |
-| — | Multi-user (wallet + agente propios) | **Implementado** → [12](./12-multiuser-and-0g.md) |
-| 3 | Recibos en 0G Storage | **Implementado** (soft-fail sin key) → [13](./13-env-and-0g-setup.md) |
+| 2C | HITL si supera el tope | **Hecha** (prod OK) |
+| — | Multi-user (wallet + agente propios) | **Hecha** (prod OK) → [12](./12-multiuser-and-0g.md) |
+| 3 | Recibos en 0G Storage | **Hecha** (prod OK) → [13](./13-env-and-0g-setup.md) |
 | 4 | Discovery | Opcional |
