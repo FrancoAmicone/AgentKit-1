@@ -1,7 +1,7 @@
 # Design — Multi-user agents + Phase 3 (0G Storage)
 
-**Status: design only — not implemented.**  
-**Prerequisite:** finish Phase 2C prod HITL validation when convenient; this design can be refined in parallel.
+**Status: implemented (multi-user session + 0G soft-fail uploads).**  
+Ops remaining: set `OG_PRIVATE_KEY` on Vercel — see [13-env-and-0g-setup.md](./13-env-and-0g-setup.md).
 
 ## Decision (confirmed)
 

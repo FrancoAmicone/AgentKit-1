@@ -35,6 +35,14 @@ type PurchaseResponse = {
     reservedAt: string;
   };
   usedHumanApproval?: boolean;
+  ogReceipt?: {
+    ok: boolean;
+    skipped?: boolean;
+    rootHash?: string;
+    txHash?: string;
+    explorerUrl?: string;
+    error?: string;
+  };
 };
 
 export default function HomePage() {
@@ -113,7 +121,10 @@ export default function HomePage() {
       });
       const data = (await res.json()) as PurchaseResponse;
       if (!res.ok || !data.ok) {
-        if (data.code === "AGENT_NOT_HUMAN_BACKED") {
+        if (
+          data.code === "AGENT_NOT_HUMAN_BACKED" ||
+          data.code === "AGENT_NOT_CREATED"
+        ) {
           agent.setSetupOpen(true);
         }
         if (data.code === "NEEDS_HUMAN_APPROVAL") {
@@ -254,6 +265,35 @@ export default function HomePage() {
               Pago liquidado (revisá payment meta / facilitator si no hay hash).
             </p>
           )}
+          {purchase.ogReceipt?.ok && purchase.ogReceipt.rootHash ? (
+            <p className="mt-3 break-all text-xs text-[var(--muted)]">
+              Recibo 0G:{" "}
+              <span className="font-mono text-[var(--ink)]">
+                {purchase.ogReceipt.rootHash}
+              </span>
+              {purchase.ogReceipt.explorerUrl ? (
+                <>
+                  {" · "}
+                  <a
+                    href={purchase.ogReceipt.explorerUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-[var(--pine)] underline"
+                  >
+                    Explorer 0G
+                  </a>
+                </>
+              ) : null}
+            </p>
+          ) : purchase.ogReceipt?.skipped ? (
+            <p className="mt-3 text-xs text-[var(--muted)]">
+              Recibo 0G omitido (falta OG_PRIVATE_KEY en el entorno).
+            </p>
+          ) : purchase.ogReceipt?.error ? (
+            <p className="mt-3 text-xs text-[var(--clay)]">
+              Reserva OK · recibo 0G pendiente: {purchase.ogReceipt.error}
+            </p>
+          ) : null}
         </section>
       )}
 
@@ -279,13 +319,14 @@ export default function HomePage() {
       )}
 
       <footer className="mt-auto pt-16 text-xs text-[var(--muted)]">
-        AgentBook + auto-pay (default $0.1, min ${agent.minLimitUsdc}) ·
-        marketplace sin verificación · Base Sepolia + x402 + CDP
+        Tu agente CDP + AgentBook + tope (min ${agent.minLimitUsdc}) ·
+        marketplace sin verificación · Base Sepolia + x402 · recibos 0G
       </footer>
 
       <AgentSetupModal
         open={agent.setupOpen}
         onClose={() => agent.setSetupOpen(false)}
+        me={agent.me}
         agentStatus={agent.agentStatus}
         limitsInfo={agent.limitsInfo}
         limitInput={agent.limitInput}
@@ -294,6 +335,11 @@ export default function HomePage() {
         limitMessage={agent.limitMessage}
         onSaveLimit={agent.onSaveLimit}
         onRefresh={agent.refreshAll}
+        onCreateAgent={() => void agent.createAgent()}
+        creating={agent.creating}
+        createMessage={agent.createMessage}
+        onRefreshBalances={() => void agent.refreshBalances()}
+        refreshingBalances={agent.refreshingBalances}
       />
 
       {approvalListing && (

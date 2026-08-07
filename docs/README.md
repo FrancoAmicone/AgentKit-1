@@ -22,6 +22,7 @@ Al cerrar cualquier tarea o PR: actualizar **checklist** + doc de la fase afecta
 | [10-phase2c-hitl.md](./10-phase2c-hitl.md) | Phase 2C: human approval over tope |
 | [11-demo-tradeoffs.md](./11-demo-tradeoffs.md) | Atajos conscientes del demo (no “bugs”) |
 | [12-multiuser-and-0g.md](./12-multiuser-and-0g.md) | Design: wallet por usuario + recibos 0G |
+| [13-env-and-0g-setup.md](./13-env-and-0g-setup.md) | Env Vercel + faucet / red 0G Galileo |
 | [06-checklist.md](./06-checklist.md) | Checklist de cuentas, código y pruebas |
 | [04-coinbase-agentkit.md](./04-coinbase-agentkit.md) | CDP / AgentKit / x402 (Fase 1) |
 | [02-world-agentkit.md](./02-world-agentkit.md) | World AgentKit (Fase 2) |
@@ -37,6 +38,6 @@ Al cerrar cualquier tarea o PR: actualizar **checklist** + doc de la fase afecta
 | 2A | AgentBook gate + registro in-app | **Hecha** |
 | 2B | Auto-pay limit + modal Configurar | **Hecha** |
 | 2C | HITL si supera el tope | **Hecha** (código); validar en prod |
-| — | Multi-user (wallet + agente propios) | **Design** → [12](./12-multiuser-and-0g.md) |
-| 3 | Recibos en 0G Storage | **Design** → [12](./12-multiuser-and-0g.md) |
+| — | Multi-user (wallet + agente propios) | **Implementado** → [12](./12-multiuser-and-0g.md) |
+| 3 | Recibos en 0G Storage | **Implementado** (soft-fail sin key) → [13](./13-env-and-0g-setup.md) |
 | 4 | Discovery | Opcional |

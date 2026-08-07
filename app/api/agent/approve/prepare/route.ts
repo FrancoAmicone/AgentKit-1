@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getListing } from "@/lib/listings";
+import { getSessionAccountName } from "@/lib/agent-session";
 import { getAgentWalletAddress } from "@/lib/agent-payer";
 import { assertAgentIsHumanBacked } from "@/lib/agentbook";
 import { canAutoPay, getAutoPayLimit } from "@/lib/agent-limits";
@@ -39,7 +40,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const agentAddress = await getAgentWalletAddress();
+    const accountName = await getSessionAccountName();
+    if (!accountName) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "AGENT_NOT_CREATED",
+          error: "Creá tu agente antes de pedir aprobación humana.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const agentAddress = await getAgentWalletAddress(accountName);
     try {
       await assertAgentIsHumanBacked(agentAddress);
     } catch {

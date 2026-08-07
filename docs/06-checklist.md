@@ -88,19 +88,19 @@ Ver [12-multiuser-and-0g.md](./12-multiuser-and-0g.md). **Cada usuario = su wall
 ### Multi-user agents
 
 - [x] Design doc (flujo + APIs)
-- [ ] Decidir sesión (cookie anónima vs World login) — ver open questions en 12
-- [ ] Persistencia durable (user → agent address)
-- [ ] `POST /api/agent/create` + UI “Crear mi agente”
-- [ ] Fondear wallet propia (USDC testnet)
-- [ ] Scope register / tope / HITL / purchase al agente actual
-- [ ] Dejar de usar `stay-agent-payer` como default
+- [x] Sesión: cookie httpOnly → CDP `accountName` (opción A del design)
+- [x] `POST /api/agent/create` + `GET /api/agent/me` + UI wizard
+- [x] Fondear wallet (Copy / QR / saldo USDC)
+- [x] Scope register / tope / HITL / purchase al agente de la sesión
+- [x] Default: sin `stay-agent-payer` (solo si `DEMO_SHARED_AGENT=true`)
 
 ### Fase 3 — 0G Storage
 
 - [x] Design doc (recibo post-compra; agente no “corre” en 0G)
-- [ ] Galileo testnet + faucet / credenciales upload
-- [ ] `lib/og-storage.ts` — subir JSON recibo tras compra
-- [ ] Mostrar content hash en UI de confirmación
+- [x] `lib/og-storage.ts` — upload soft-fail tras compra
+- [x] Mostrar content hash / skipped en UI
+- [x] Guía env + faucet: [13-env-and-0g-setup.md](./13-env-and-0g-setup.md)
+- [ ] Ops: crear wallet Galileo, faucet, cargar `OG_PRIVATE_KEY` en Vercel
 
 Detalle 0G: [03-0g.md](./03-0g.md).
 
