@@ -40,6 +40,7 @@ type PurchaseResponse = {
     skipped?: boolean;
     rootHash?: string;
     txHash?: string;
+    storageScanUrl?: string;
     explorerUrl?: string;
     error?: string;
   };
@@ -267,10 +268,23 @@ export default function HomePage() {
           )}
           {purchase.ogReceipt?.ok && purchase.ogReceipt.rootHash ? (
             <p className="mt-3 break-all text-xs text-[var(--muted)]">
-              Recibo 0G:{" "}
+              Recibo 0G Storage:{" "}
               <span className="font-mono text-[var(--ink)]">
                 {purchase.ogReceipt.rootHash}
               </span>
+              {purchase.ogReceipt.storageScanUrl ? (
+                <>
+                  {" · "}
+                  <a
+                    href={purchase.ogReceipt.storageScanUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-[var(--pine)] underline"
+                  >
+                    Storage Scan
+                  </a>
+                </>
+              ) : null}
               {purchase.ogReceipt.explorerUrl ? (
                 <>
                   {" · "}
@@ -280,14 +294,14 @@ export default function HomePage() {
                     rel="noreferrer"
                     className="font-semibold text-[var(--pine)] underline"
                   >
-                    Explorer 0G
+                    Tx 0G
                   </a>
                 </>
               ) : null}
             </p>
           ) : purchase.ogReceipt?.skipped ? (
             <p className="mt-3 text-xs text-[var(--muted)]">
-              Recibo 0G omitido (falta OG_PRIVATE_KEY en el entorno).
+              Recibo 0G omitido (falta OG_PRIVATE_KEY — ver docs/13-env-and-0g-setup.md).
             </p>
           ) : purchase.ogReceipt?.error ? (
             <p className="mt-3 text-xs text-[var(--clay)]">

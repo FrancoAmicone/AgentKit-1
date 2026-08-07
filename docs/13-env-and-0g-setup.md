@@ -1,6 +1,16 @@
-# Env vars (Vercel) + setup 0G (Galileo)
+# Env vars (Vercel) + setup 0G Storage (official)
 
-What to load in **Vercel** (Project → Settings → Environment Variables) and how to prepare **0G** on the web.
+What to load in **Vercel** and how to prepare **0G Storage** using the official Builder Hub / docs.
+
+**Sources we follow**
+
+- https://build.0g.ai/storage  
+- https://docs.0g.ai/developer-hub/building-on-0g/storage/sdk  
+- Package: `@0gfoundation/0g-storage-ts-sdk`  
+- Faucet: https://faucet.0g.ai  
+- Verify uploads: https://storagescan.0g.ai  
+
+We use **0G Storage only** (receipts). **Not** 0G Compute.
 
 ---
 
@@ -14,114 +24,118 @@ What to load in **Vercel** (Project → Settings → Environment Variables) and 
 | `MARKETPLACE_WALLET_ADDRESS` | Sí | `npm run setup:wallets` (receiver) |
 | `CDP_X402_CLIENT_ENVIRONMENT` | Recomendada | `development` (= Base Sepolia) |
 | `REQUIRE_HUMAN_BACKED_AGENT` | Recomendada | `true` |
-| `AGENT_WALLET_ADDRESS` | Opcional ahora | Solo si usás demo compartido (abajo) |
 
-Opcionales que ya existían:
+Opcionales:
 
 ```bash
 # WORLD_ID_APP_ID=app_a7c3e2b6b83927251a0db5345bd7146a
 # DEFAULT_AUTO_PAY_LIMIT_USDC=0.1
-# AGENTBOOK_RELAY_URL=https://x402-worldchain.vercel.app
-# OPENAI_API_KEY=
+# DEMO_SHARED_AGENT=true   # solo emergencia (payer compartido)
+# BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
 ```
 
 ---
 
-## 2. Nuevas variables — multi-user
+## 2. Multi-user
 
-| Variable | Default | Qué hace |
-| --- | --- | --- |
-| `DEMO_SHARED_AGENT` | unset / `false` | Si `true`, vuelve al payer compartido `stay-agent-payer` (solo demos de emergencia). **Dejálo apagado** en prod multi-user. |
-| `BASE_SEPOLIA_RPC_URL` | `https://sepolia.base.org` | RPC para leer saldo USDC/ETH del agente |
+Cada visitante crea su wallet CDP (`POST /api/agent/create`). No hace falta `AGENT_WALLET_ADDRESS` por usuario.
 
-Cada visitante crea su propia wallet CDP vía `POST /api/agent/create` (cookie httpOnly). **No hace falta** una `AGENT_WALLET_ADDRESS` fija por usuario.
-
-Marketplace sigue siendo una sola address (`MARKETPLACE_WALLET_ADDRESS`) que recibe el USDC.
+Marketplace sigue siendo una sola address (`MARKETPLACE_WALLET_ADDRESS`).
 
 ---
 
-## 3. Nuevas variables — 0G Storage (recibos)
+## 3. 0G Storage — variables (oficial)
 
-| Variable | ¿Obligatoria para 0G? | Valor tipico |
+| Variable | ¿Obligatoria para recibos? | Valor |
 | --- | --- | --- |
-| `OG_PRIVATE_KEY` | Sí (para subir recibos) | `0x…` private key de una wallet con gas en **0G Galileo** |
-| `OG_EVM_RPC` | No | `https://evmrpc-testnet.0g.ai` |
-| `OG_INDEXER_RPC` | No | `https://indexer-storage-testnet-turbo.0g.ai` |
+| `OG_PRIVATE_KEY` | Sí | `0x…` — misma idea que `PRIVATE_KEY` en el starter kit oficial |
+| `OG_NETWORK` | No | `testnet` (default) o `mainnet` |
+| `OG_STORAGE_MODE` | No | `turbo` (default) o `standard` |
+| `OG_EVM_RPC` | No | Override RPC (default testnet: `https://evmrpc-testnet.0g.ai`) |
+| `OG_INDEXER_RPC` | No | Override indexer (default turbo testnet: `https://indexer-storage-testnet-turbo.0g.ai`) |
 
-Si **no** ponés `OG_PRIVATE_KEY`, la reserva **igual funciona**; el recibo 0G se omite (`skipped`) y la UI lo indica.
+Si **no** ponés `OG_PRIVATE_KEY`, la reserva **igual funciona**; el recibo se omite (`skipped`).
 
-**Importante:** esta key solo paga gas en 0G para subir el JSON del recibo. **No** es la wallet del agente ni la del marketplace. Preferí una wallet chica solo para uploads.
+Endpoints oficiales (Builder Hub / starter kit):
+
+| | Testnet (Galileo) | Mainnet |
+| --- | --- | --- |
+| RPC | `https://evmrpc-testnet.0g.ai` | `https://evmrpc.0g.ai` |
+| Chain ID | `16602` | `16661` |
+| Indexer turbo | `https://indexer-storage-testnet-turbo.0g.ai` | `https://indexer-storage-turbo.0g.ai` |
+| Explorer | https://chainscan-galileo.0g.ai | https://chainscan.0g.ai |
+| Storage Scan | https://storagescan.0g.ai | https://storagescan.0g.ai |
+
+Implementación: `lib/og-storage.ts` → `Indexer` + `MemData` + `ethers.Wallet` (mismo flujo que https://build.0g.ai/storage pasos 01–06).
 
 ---
 
 ## 4. Cómo preparar 0G en la web (paso a paso)
 
-### 4.1 Crear / usar una wallet
+### 4.1 Wallet + private key
 
-1. Abrí MetaMask (u otra wallet).
-2. Creá una cuenta nueva (recomendado: solo para 0G testnet).
-3. Copiá la **address** y exportá la **private key** (MetaMask → Account details → Show private key).  
-   Esa private key va en Vercel como `OG_PRIVATE_KEY` (con `0x` al inicio).
+1. MetaMask → cuenta nueva (solo para uploads 0G).  
+2. Account details → **Show private key**.  
+3. Esa key → `OG_PRIVATE_KEY` en Vercel (con `0x`).
 
-### 4.2 Agregar red Galileo (0G testnet)
-
-En MetaMask → Networks → Add network → Add a network manually:
+### 4.2 Red Galileo en MetaMask
 
 | Campo | Valor |
 | --- | --- |
 | Network name | `0G Galileo Testnet` |
 | RPC URL | `https://evmrpc-testnet.0g.ai` |
 | Chain ID | `16602` |
-| Currency symbol | `0G` |
-| Block explorer | `https://chainscan-galileo.0g.ai` |
+| Currency | `0G` |
+| Explorer | `https://chainscan-galileo.0g.ai` |
 
-Docs: https://docs.0g.ai/developer-hub/testnet/testnet-overview
+Overview: https://docs.0g.ai/developer-hub/testnet/testnet-overview
 
-### 4.3 Pedir tokens en el faucet
+### 4.3 Faucet (Builder Hub step 02)
 
-1. Andá a **https://faucet.0g.ai**
-2. Conectá / pegá tu address de Galileo.
-3. Pedí tokens de testnet (gas para uploads).
-4. Verificá el saldo en MetaMask (red Galileo) o en https://chainscan-galileo.0g.ai
+1. Abrí **https://faucet.0g.ai**  
+2. Pedí tokens a tu address Galileo.  
+3. Confirmá saldo en MetaMask / chainscan.
 
-### 4.4 Cargar la key en Vercel (“Augie”)
+### 4.4 (Opcional) Probar sin StayAgent
 
-1. Vercel → tu proyecto StayAgent → **Settings** → **Environment Variables**
-2. Add:
-   - `OG_PRIVATE_KEY` = `0x…` (Production + Preview)
-   - (opcional) `OG_EVM_RPC`, `OG_INDEXER_RPC` si querés override
-3. **Redeploy** el proyecto para que tome las vars.
-
-### 4.5 Verificar
-
-1. En la app: crear agente → fondear USDC Base Sepolia → World → tope → reservar.
-2. En “Reserva confirmada” deberías ver **Recibo 0G** con `rootHash`.
-3. Si falla el upload, la reserva sigue OK y verás “recibo 0G pendiente”.
-
-Starter kit oficial (opcional, para probar uploads a mano):  
-https://github.com/0gfoundation/0g-storage-ts-starter-kit
-
----
-
-## 5. Cómo fondear el agente del usuario (Base Sepolia)
-
-Esto es **aparte** de 0G:
-
-1. En Configurar → **Crear mi agente** → copiá la address.
-2. Enviá **USDC** en red **Base Sepolia** a esa address (desde MetaMask u otra wallet).
-3. USDC contract Base Sepolia: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
-4. Faucet USDC: [CDP Portal](https://portal.cdp.coinbase.com) (o el que uses).
-5. Faucet ETH (gas): faucet de Base Sepolia.
-6. Tocá **Actualizar saldo** hasta ver ≥ ~$0.05 USDC.
-
-Al crear el agente, StayAgent intenta faucet CDP automático (ETH + USDC); a veces rate-limit — por eso existe el paso manual.
-
----
-
-## 6. Checklist rápido Vercel
+- UI sin código: Storage Scan Tool en https://build.0g.ai/storage  
+- O starter kit: https://github.com/0gfoundation/0g-storage-ts-starter-kit  
 
 ```bash
-# Ya existentes
+npm install @0gfoundation/0g-storage-ts-sdk ethers
+# PRIVATE_KEY=0x…  NETWORK=testnet  STORAGE_MODE=turbo
+```
+
+### 4.5 Cargar en Vercel y redeploy
+
+```bash
+OG_PRIVATE_KEY=0x…
+OG_NETWORK=testnet
+OG_STORAGE_MODE=turbo
+```
+
+Environment: Production + Preview → **Redeploy**.
+
+### 4.6 Verificar un recibo (Builder Hub step 06)
+
+1. Reservá en StayAgent.  
+2. En “Reserva confirmada” copiá el **root hash** / link Storage Scan.  
+3. Abrí **https://storagescan.0g.ai** y buscá el root hash.
+
+---
+
+## 5. Fondear el agente (Base Sepolia) — aparte de 0G
+
+1. Configurar → Crear mi agente → copiar address.  
+2. Enviar **USDC** en **Base Sepolia** a esa address.  
+3. Contract: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`  
+4. Actualizar saldo en la UI.
+
+---
+
+## 6. Checklist Vercel
+
+```bash
 CDP_API_KEY_ID=…
 CDP_API_KEY_SECRET=…
 CDP_WALLET_SECRET=…
@@ -129,13 +143,7 @@ MARKETPLACE_WALLET_ADDRESS=0x…
 CDP_X402_CLIENT_ENVIRONMENT=development
 REQUIRE_HUMAN_BACKED_AGENT=true
 
-# Multi-user (recomendado: NO poner DEMO_SHARED_AGENT)
-# DEMO_SHARED_AGENT=false
-
-# 0G receipts
 OG_PRIVATE_KEY=0x…
-# OG_EVM_RPC=https://evmrpc-testnet.0g.ai
-# OG_INDEXER_RPC=https://indexer-storage-testnet-turbo.0g.ai
+OG_NETWORK=testnet
+OG_STORAGE_MODE=turbo
 ```
-
-Después de guardar vars → **Redeploy**.
