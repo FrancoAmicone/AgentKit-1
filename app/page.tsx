@@ -7,6 +7,7 @@ import {
 } from "@/components/AgentSetupModal";
 import { ListingCard, type ListingCardData } from "@/components/ListingCard";
 import { PurchaseApprovalModal } from "@/components/PurchaseApprovalModal";
+import { ReservationReceipt } from "@/components/ReservationReceipt";
 import { useAgentSession } from "@/hooks/useAgentSession";
 
 type SearchResponse = {
@@ -144,6 +145,7 @@ export default function HomePage() {
       setPurchase(data);
       agent.refreshAll();
       await refreshSearchResults();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error de compra");
       agent.refreshAll();
@@ -152,70 +154,77 @@ export default function HomePage() {
     }
   }
 
+  const needsSetup = !agent.canPurchase;
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-5 py-10 sm:px-8">
-      <header className="mb-8 max-w-2xl">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-medium tracking-wide text-[var(--pine)]">
-            StayAgent
-          </p>
-          <button
-            type="button"
-            onClick={() => agent.setSetupOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-white/70 px-3 py-1.5 text-left transition hover:border-[var(--pine)]/40"
-          >
-            <StatusBadge status={agent.agentStatus} />
-            <span className="text-xs font-semibold text-[var(--pine)]">
-              Configurar
-            </span>
-          </button>
-        </div>
+    <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-5 pb-10 pt-6 sm:px-8 sm:pt-8">
+      <div className="mb-6 flex items-center justify-end">
+        <button
+          type="button"
+          onClick={() => agent.setSetupOpen(true)}
+          className="inline-flex items-center gap-2 border border-[var(--line)] bg-white/50 px-3 py-1.5 transition hover:border-[var(--pine)]/35 hover:bg-white/80"
+        >
+          <StatusBadge status={agent.agentStatus} />
+          <span className="text-xs font-semibold text-[var(--pine)]">
+            Configurar
+          </span>
+        </button>
+      </div>
+
+      {/* First composition: brand + one line + search CTA */}
+      <header className="stay-rise mb-8 max-w-3xl">
         <h1
-          className="text-4xl leading-tight text-[var(--ink)] sm:text-5xl"
+          className="text-[clamp(2.75rem,8vw,4.75rem)] leading-[0.95] tracking-tight text-[var(--ink)]"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Pedí un lugar. El agente lo reserva y paga onchain.
+          StayAgent
         </h1>
-        <p className="mt-4 text-base leading-relaxed text-[var(--muted)]">
-          Buscá libremente. Para pagar hace falta verificación humana del
-          agente y que el monto entre en tu tope (default $0.1 USDC).
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--muted)] sm:text-lg">
+          Pedí un lugar. Tu agente lo reserva y paga onchain.
         </p>
       </header>
 
       <form
         onSubmit={onSearch}
-        className="mb-8 flex flex-col gap-3 rounded-2xl border border-[var(--line)] bg-white/70 p-4 shadow-[0_20px_60px_rgba(26,36,33,0.06)] backdrop-blur sm:flex-row sm:items-center"
+        className="stay-rise-delay mb-8 flex flex-col gap-3 border border-[var(--line)] bg-white/55 p-2 backdrop-blur-sm sm:flex-row sm:items-stretch"
       >
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Ej: loft en Ushuaia con wifi, menos de 80"
-          className="min-w-0 flex-1 rounded-xl border border-[var(--line)] bg-[var(--paper)] px-4 py-3 text-[var(--ink)] outline-none ring-[var(--pine)] focus:ring-2"
+          className="min-w-0 flex-1 bg-transparent px-4 py-3 text-[var(--ink)] outline-none placeholder:text-[var(--muted)]/70"
+          aria-label="Qué lugar buscás"
         />
         <button
           type="submit"
           disabled={searching}
-          className="rounded-xl bg-[var(--pine)] px-5 py-3 font-semibold text-white transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
+          className="bg-[var(--pine)] px-6 py-3 font-semibold text-white transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
         >
           {searching ? "Buscando…" : "Buscar"}
         </button>
       </form>
 
-      {search && (
-        <p className="mb-6 text-sm text-[var(--muted)]">
-          {search.explanation}{" "}
-          <span className="text-[var(--ink)]/50">
-            ({search.parser} · {search.count} resultados)
-          </span>
+      {needsSetup && !search && (
+        <p className="stay-fade mb-8 text-sm text-[var(--muted)]">
+          Antes de pagar:{" "}
+          <button
+            type="button"
+            onClick={() => agent.setSetupOpen(true)}
+            className="font-semibold text-[var(--pine)] underline underline-offset-2"
+          >
+            configurá tu agente
+          </button>{" "}
+          (crear · fondear · World · tope).
         </p>
       )}
 
       {error && (
-        <div className="mb-6 rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/8 px-4 py-3 text-sm text-[var(--danger)]">
+        <div className="stay-fade mb-6 border border-[var(--danger)]/25 bg-[var(--danger)]/8 px-4 py-3 text-sm text-[var(--danger)]">
           {error}{" "}
           {(error.includes("aprobación") ||
             error.includes("Register") ||
-            error.includes("human")) && (
+            error.includes("human") ||
+            error.includes("agente")) && (
             <button
               type="button"
               onClick={() => agent.setSetupOpen(true)}
@@ -227,95 +236,33 @@ export default function HomePage() {
         </div>
       )}
 
-      {purchase?.ok && (
-        <section className="mb-8 rounded-2xl border border-[var(--pine)]/25 bg-[var(--pine)]/8 p-5">
-          <h2
-            className="text-2xl text-[var(--pine-deep)]"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            Reserva confirmada
-          </h2>
-          <p className="mt-2 text-[var(--ink)]">
-            {purchase.listing?.title} · ${purchase.listing?.amountUsdc} USDC
-            {purchase.usedHumanApproval ? " · con aprobación humana" : ""}
-          </p>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            {purchase.listing?.location}
-            {purchase.reservation?.reservedAt
-              ? ` · ${new Date(purchase.reservation.reservedAt).toLocaleString()}`
-              : ""}
-          </p>
-          {purchase.agentAddress && (
-            <p className="mt-3 break-all text-xs text-[var(--muted)]">
-              Wallet del agente: {purchase.agentAddress}
-            </p>
-          )}
-          {purchase.explorerUrl ? (
-            <a
-              href={purchase.explorerUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 inline-block text-sm font-semibold text-[var(--pine)] underline"
+      {purchase?.ok && <ReservationReceipt purchase={purchase} />}
+
+      {search && (
+        <div className="stay-fade mb-5 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2
+              className="text-2xl text-[var(--ink)]"
+              style={{ fontFamily: "var(--font-display)" }}
             >
-              Ver tx en Basescan Sepolia
-            </a>
-          ) : purchase.txHash ? (
-            <p className="mt-3 break-all text-xs">tx: {purchase.txHash}</p>
-          ) : (
-            <p className="mt-3 text-xs text-[var(--muted)]">
-              Pago liquidado (revisá payment meta / facilitator si no hay hash).
+              Lugares
+            </h2>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              {search.explanation}
             </p>
-          )}
-          {purchase.ogReceipt?.ok && purchase.ogReceipt.rootHash ? (
-            <p className="mt-3 break-all text-xs text-[var(--muted)]">
-              Recibo 0G Storage:{" "}
-              <span className="font-mono text-[var(--ink)]">
-                {purchase.ogReceipt.rootHash}
-              </span>
-              {purchase.ogReceipt.storageScanUrl ? (
-                <>
-                  {" · "}
-                  <a
-                    href={purchase.ogReceipt.storageScanUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-semibold text-[var(--pine)] underline"
-                  >
-                    Storage Scan
-                  </a>
-                </>
-              ) : null}
-              {purchase.ogReceipt.explorerUrl ? (
-                <>
-                  {" · "}
-                  <a
-                    href={purchase.ogReceipt.explorerUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-semibold text-[var(--pine)] underline"
-                  >
-                    Tx 0G
-                  </a>
-                </>
-              ) : null}
-            </p>
-          ) : purchase.ogReceipt?.skipped ? (
-            <p className="mt-3 text-xs text-[var(--muted)]">
-              Recibo 0G omitido (falta OG_PRIVATE_KEY — ver docs/13-env-and-0g-setup.md).
-            </p>
-          ) : purchase.ogReceipt?.error ? (
-            <p className="mt-3 text-xs text-[var(--clay)]">
-              Reserva OK · recibo 0G pendiente: {purchase.ogReceipt.error}
-            </p>
-          ) : null}
-        </section>
+          </div>
+          <p className="text-xs text-[var(--muted)]">
+            {search.count} resultados
+          </p>
+        </div>
       )}
 
       <section className="grid gap-5 sm:grid-cols-2">
-        {search?.results.map((listing) => (
+        {search?.results.map((listing, index) => (
           <ListingCard
             key={listing.id}
             listing={listing}
+            index={index}
             autoLimitUsdc={agent.autoLimitUsdc}
             canPurchase={agent.canPurchase}
             buying={buyingId === listing.id}
@@ -325,16 +272,14 @@ export default function HomePage() {
         ))}
       </section>
 
-      {!search && (
-        <p className="mt-6 text-sm text-[var(--muted)]">
-          Tip: tope default $0.1 → $0.05 paga solo; listings a $0.2 piden
-          aprobación humana (World App) y después pagan.
+      {!search && !purchase?.ok && (
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          Tip demo: $0.05 auto-paga · $0.2 pide World · recibo en 0G.
         </p>
       )}
 
-      <footer className="mt-auto pt-16 text-xs text-[var(--muted)]">
-        Tu agente CDP + AgentBook + tope (min ${agent.minLimitUsdc}) ·
-        marketplace sin verificación · Base Sepolia + x402 · recibos 0G
+      <footer className="mt-auto pt-16 text-xs tracking-wide text-[var(--muted)]">
+        Base Sepolia · x402 · World · 0G Storage
       </footer>
 
       <AgentSetupModal
@@ -369,6 +314,7 @@ export default function HomePage() {
             setError(null);
             agent.refreshAll();
             void refreshSearchResults();
+            window.scrollTo({ top: 0, behavior: "smooth" });
           }}
         />
       )}

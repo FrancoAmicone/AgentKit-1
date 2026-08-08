@@ -39,9 +39,9 @@ export function AgentFundPanel({
   useEffect(() => {
     let cancelled = false;
     void QRCode.toDataURL(address, {
-      width: 180,
-      margin: 2,
-      color: { dark: "#1a2e24", light: "#ffffff" },
+      width: 168,
+      margin: 1,
+      color: { dark: "#1a2421", light: "#ffffff" },
     }).then((url) => {
       if (!cancelled) setQr(url);
     });
@@ -61,26 +61,24 @@ export function AgentFundPanel({
   }, [address]);
 
   return (
-    <div className="rounded-xl border border-[var(--line)] bg-[var(--sand)]/50 p-3">
-      <p className="text-sm font-semibold text-[var(--ink)]">Cargar fondos</p>
-      <p className="mt-1 text-xs text-[var(--muted)]">
+    <div className="space-y-4">
+      <p className="text-sm leading-relaxed text-[var(--muted)]">
         Enviá{" "}
-        <strong>
-          {fundHint?.asset || "USDC"} en {fundHint?.network || "Base Sepolia"}
+        <strong className="text-[var(--ink)]">
+          {fundHint?.asset || "USDC"} · {fundHint?.network || "Base Sepolia"}
         </strong>{" "}
-        a la wallet de tu agente. Podés usar MetaMask u otra wallet — solo para
-        fondear, no para firmar pagos.
+        desde MetaMask u otra wallet. Solo fondeo — el agente firma después.
       </p>
 
-      <div className="mt-3 break-all rounded-lg border border-[var(--line)] bg-white px-3 py-2 font-mono text-xs text-[var(--ink)]">
+      <div className="break-all border border-[var(--line)] bg-white/80 px-3 py-3 font-mono text-xs text-[var(--ink)]">
         {address}
       </div>
 
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => void copy()}
-          className="rounded-xl bg-[var(--pine)] px-3 py-1.5 text-xs font-semibold text-white"
+          className="bg-[var(--pine)] px-3 py-2 text-xs font-semibold text-white"
         >
           {copied ? "Copiado ✓" : "Copiar address"}
         </button>
@@ -88,7 +86,7 @@ export function AgentFundPanel({
           type="button"
           onClick={onRefresh}
           disabled={refreshing}
-          className="rounded-xl border border-[var(--line)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--ink)] disabled:opacity-60"
+          className="border border-[var(--line)] bg-white px-3 py-2 text-xs font-semibold text-[var(--ink)] disabled:opacity-60"
         >
           {refreshing ? "Actualizando…" : "Actualizar saldo"}
         </button>
@@ -97,65 +95,69 @@ export function AgentFundPanel({
             href={fundHint.explorer}
             target="_blank"
             rel="noreferrer"
-            className="rounded-xl px-3 py-1.5 text-xs font-semibold text-[var(--pine)] underline"
+            className="px-3 py-2 text-xs font-semibold text-[var(--pine)] underline"
           >
-            Ver en Basescan
+            Basescan
           </a>
         )}
       </div>
 
-      {qr && (
-        <div className="mt-3 flex justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qr} alt="QR address del agente" width={180} height={180} />
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+        {qr && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={qr}
+            alt="QR address del agente"
+            width={168}
+            height={168}
+            className="border border-[var(--line)] bg-white p-2"
+          />
+        )}
+        <div>
+          <p className="text-sm text-[var(--ink)]">
+            Saldo{" "}
+            <strong>
+              {balances != null ? `$${balances.usdc.toFixed(4)}` : "…"} USDC
+            </strong>
+            {balances != null && (
+              <span className="text-[var(--muted)]">
+                {" "}
+                · {balances.eth.toFixed(5)} ETH
+              </span>
+            )}
+          </p>
+          {balances?.funded ? (
+            <p className="mt-1 text-xs font-medium text-[var(--pine-deep)]">
+              Fondos OK — siguiente: World
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-[var(--clay)]">
+              Mínimo ~${balances?.minUsdcToFund ?? 0.05} USDC para demos
+            </p>
+          )}
+          <div className="mt-3 flex flex-wrap gap-3 text-xs">
+            {fundHint?.faucetUsdc && (
+              <a
+                href={fundHint.faucetUsdc}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-[var(--pine)] underline"
+              >
+                Faucet USDC
+              </a>
+            )}
+            {fundHint?.faucetEth && (
+              <a
+                href={fundHint.faucetEth}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-[var(--pine)] underline"
+              >
+                Faucet ETH
+              </a>
+            )}
+          </div>
         </div>
-      )}
-
-      <p className="mt-3 text-sm text-[var(--ink)]">
-        Saldo:{" "}
-        <strong>
-          {balances != null ? `$${balances.usdc.toFixed(4)} USDC` : "…"}
-        </strong>
-        {balances != null && (
-          <span className="text-[var(--muted)]">
-            {" "}
-            · {balances.eth.toFixed(5)} ETH
-          </span>
-        )}
-      </p>
-
-      {balances?.funded ? (
-        <p className="mt-1 text-xs font-medium text-[var(--pine-deep)]">
-          Fondos OK (≥ ${balances.minUsdcToFund} USDC)
-        </p>
-      ) : (
-        <p className="mt-1 text-xs text-[var(--clay)]">
-          Necesitás al menos ${balances?.minUsdcToFund ?? 0.05} USDC para
-          reservar demos.
-        </p>
-      )}
-
-      <div className="mt-2 flex flex-wrap gap-3 text-xs">
-        {fundHint?.faucetUsdc && (
-          <a
-            href={fundHint.faucetUsdc}
-            target="_blank"
-            rel="noreferrer"
-            className="font-semibold text-[var(--pine)] underline"
-          >
-            Faucet USDC (CDP Portal)
-          </a>
-        )}
-        {fundHint?.faucetEth && (
-          <a
-            href={fundHint.faucetEth}
-            target="_blank"
-            rel="noreferrer"
-            className="font-semibold text-[var(--pine)] underline"
-          >
-            Faucet ETH Base Sepolia
-          </a>
-        )}
       </div>
     </div>
   );

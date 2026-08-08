@@ -155,19 +155,19 @@ export function AgentRegisterPanel({
     phase === "preparing" || phase === "waiting" || phase === "submitting";
 
   return (
-    <div className="mt-3 rounded-xl bg-[var(--sand)]/60 px-3 py-3 text-sm text-[var(--ink)]">
-      <p className="font-medium">Falta registrar el agente en AgentBook</p>
-      <p className="mt-1 text-[var(--muted)]">
-        Primero preparamos la verificación; después abrís World App{" "}
-        <strong>una sola vez</strong> o escaneás el QR.
+    <div className="space-y-4 text-sm text-[var(--ink)]">
+      <p className="leading-relaxed text-[var(--muted)]">
+        Preparamos la verificación; después abrís World App{" "}
+        <strong className="text-[var(--ink)]">una sola vez</strong> o escaneás
+        el QR.
       </p>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => void startRegistration()}
           disabled={busy}
-          className="rounded-xl bg-[var(--pine)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          className="bg-[var(--pine)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
         >
           {phase === "preparing"
             ? "Preparando…"
@@ -205,7 +205,7 @@ export function AgentRegisterPanel({
 
       {message && (
         <p
-          className={`mt-3 text-xs ${
+          className={`text-xs ${
             phase === "error" ? "text-[var(--danger)]" : "text-[var(--muted)]"
           }`}
         >

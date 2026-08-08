@@ -106,6 +106,14 @@ Detalle 0G: [03-0g.md](./03-0g.md).
 
 ---
 
+## UI product polish
+
+- [x] Home: brand StayAgent hero + search CTA + receipt confirmation
+- [x] Configurar: one-step wizard (crear → fondos → World → tope)
+- [x] Listings / motion polish
+
+---
+
 ## Fase 4 — Discovery (stretch)
 
 - [ ] Bazaar / agentic.market
