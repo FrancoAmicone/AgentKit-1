@@ -23,12 +23,12 @@ export function WorldAppVerifyPanel({
         href={deepLink}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex w-full items-center justify-center rounded-xl bg-[var(--pine)] px-4 py-3 text-center text-sm font-semibold text-white"
+        className="flex w-full items-center justify-center bg-[var(--pine)] px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-[var(--pine-deep)]"
       >
         Abrir World App
       </a>
       {qrDataUrl && (
-        <div className="rounded-xl border border-[var(--line)] bg-white p-3">
+        <div className="border border-[var(--line)] bg-white p-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={qrDataUrl}

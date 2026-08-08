@@ -70,7 +70,10 @@ Ver [10-phase2c-hitl.md](./10-phase2c-hitl.md).
 
 - [x] Código: `approve/prepare` + `approve/complete` + `approvalToken` en purchase
 - [x] UI: modal aprobar gasto alto con World App (QR / deep link)
-- [ ] Probar en prod: listing **$0.2** + tope **$0.1** → World App → paga
+- [x] Probar en prod: listing **$0.2** + tope **$0.1** → World App → paga  
+  (ej. Bariloche lago · agent `0xFC80…0305` · recibo 0G + tx Galileo)
+
+**Fase 2C: DONE** (código + validación prod)
 
 ### Refactor React best practices
 
@@ -100,9 +103,20 @@ Ver [12-multiuser-and-0g.md](./12-multiuser-and-0g.md). **Cada usuario = su wall
 - [x] `lib/og-storage.ts` — upload soft-fail tras compra
 - [x] Mostrar content hash / skipped en UI
 - [x] Guía env + faucet: [13-env-and-0g-setup.md](./13-env-and-0g-setup.md)
-- [ ] Ops: crear wallet Galileo, faucet, cargar `OG_PRIVATE_KEY` en Vercel
+- [x] Ops: `OG_PRIVATE_KEY` en Vercel + recibo onchain verificado  
+  (root `0x4606…bd90` · [tx Galileo](https://chainscan-galileo.0g.ai/tx/0x4920dbb3ac3adfbd428a614216c781f1c9f45cf90759380907b8251c2af8cf29))
+
+**Multi-user + Fase 3: DONE** (código + validación prod HITL + 0G)
 
 Detalle 0G: [03-0g.md](./03-0g.md).
+
+---
+
+## UI product polish
+
+- [x] Home: brand StayAgent hero + search CTA + receipt confirmation
+- [x] Configurar: one-step wizard (crear → fondos → World → tope)
+- [x] Listings / motion polish
 
 ---
 

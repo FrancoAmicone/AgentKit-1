@@ -18,6 +18,7 @@ type Props = {
   buying: boolean;
   onBuy: (listing: ListingCardData) => void;
   onNeedSetup: () => void;
+  index?: number;
 };
 
 export function ListingCard({
@@ -27,34 +28,38 @@ export function ListingCard({
   buying,
   onBuy,
   onNeedSetup,
+  index = 0,
 }: Props) {
   const overLimit =
     autoLimitUsdc != null && listing.pricePerNight > autoLimitUsdc;
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white/80 shadow-[0_12px_40px_rgba(26,36,33,0.05)]">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={listing.imageUrl}
-        alt={listing.title}
-        className="h-44 w-full object-cover"
-      />
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <h3
-            className="text-xl leading-snug"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            {listing.title}
-          </h3>
-          <p className="shrink-0 text-sm font-semibold text-[var(--clay)]">
-            ${listing.pricePerNight}
-            <span className="font-normal text-[var(--muted)]">/noche</span>
-          </p>
-        </div>
+    <article
+      className="stay-rise group overflow-hidden border border-[var(--line)] bg-white/55 transition duration-300 hover:border-[var(--pine)]/30 hover:bg-white/80"
+      style={{ animationDelay: `${Math.min(index, 6) * 0.05}s` }}
+    >
+      <div className="relative overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={listing.imageUrl}
+          alt={listing.title}
+          className="h-48 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+        />
+        <p className="absolute bottom-3 right-3 bg-[var(--ink)]/85 px-2.5 py-1 text-sm font-semibold text-[var(--paper)] backdrop-blur-sm">
+          ${listing.pricePerNight}
+          <span className="font-normal opacity-70">/noche</span>
+        </p>
+      </div>
+      <div className="p-4 sm:p-5">
+        <h3
+          className="text-xl leading-snug text-[var(--ink)]"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {listing.title}
+        </h3>
         <p className="mt-1 text-sm text-[var(--muted)]">{listing.location}</p>
-        <p className="mt-2 text-xs text-[var(--muted)]">
-          ★ {listing.rating} · {listing.amenities.join(" · ")}
+        <p className="mt-2 text-xs tracking-wide text-[var(--muted)]">
+          ★ {listing.rating} · {listing.amenities.slice(0, 3).join(" · ")}
         </p>
         {listing.matchReason && (
           <p className="mt-3 text-sm text-[var(--pine-deep)]">
@@ -63,8 +68,7 @@ export function ListingCard({
         )}
         {overLimit && (
           <p className="mt-2 text-xs font-medium text-[var(--clay)]">
-            Supera tu tope (${autoLimitUsdc} USDC). Al tocar pagar te preguntamos
-            si lo aprobás.
+            Sobre tu tope (${autoLimitUsdc}). Pedirá aprobación en World.
           </p>
         )}
         <button
@@ -77,7 +81,7 @@ export function ListingCard({
             onBuy(listing);
           }}
           disabled={buying}
-          className="mt-4 w-full rounded-xl bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-[var(--paper)] transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
+          className="mt-5 w-full bg-[var(--ink)] px-4 py-3 text-sm font-semibold text-[var(--paper)] transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
         >
           {buying
             ? "Pagando con el agente…"

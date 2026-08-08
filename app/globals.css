@@ -12,6 +12,7 @@
   --line: rgba(26, 36, 33, 0.12);
   --ok: #1f6f5b;
   --danger: #a33b2b;
+  --glow: rgba(31, 111, 91, 0.14);
 }
 
 @theme inline {
@@ -23,9 +24,9 @@
 
 body {
   background:
-    radial-gradient(1200px 600px at 10% -10%, #f7e7c8 0%, transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, #d9ebe4 0%, transparent 50%),
-    var(--paper);
+    radial-gradient(1100px 520px at 8% -8%, #f6e4c4 0%, transparent 58%),
+    radial-gradient(900px 480px at 96% 4%, #d5ebe3 0%, transparent 52%),
+    linear-gradient(180deg, #f7f3ea 0%, var(--paper) 42%, #efe8da 100%);
   color: var(--ink);
   font-family: var(--font-sans);
   min-height: 100vh;
@@ -33,4 +34,59 @@ body {
 
 ::selection {
   background: rgba(31, 111, 91, 0.22);
+}
+
+@keyframes stay-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stay-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes stay-soft-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--glow);
+  }
+  50% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+.stay-rise {
+  animation: stay-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stay-rise-delay {
+  animation: stay-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
+.stay-fade {
+  animation: stay-fade 0.45s ease both;
+}
+
+.stay-pulse-once {
+  animation: stay-soft-pulse 1.4s ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stay-rise,
+  .stay-rise-delay,
+  .stay-fade,
+  .stay-pulse-once {
+    animation: none;
+  }
 }
