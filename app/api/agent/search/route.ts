@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const query = body.query?.trim() || "";
 
   const { filters, explanation, source } = await parseSearchQuery(query);
-  const listings = filterListings(filters).sort((a, b) => b.rating - a.rating);
+  const listings = (await filterListings(filters)).sort((a, b) => b.rating - a.rating);
 
   const results = listings.map((l) => ({
     ...l,

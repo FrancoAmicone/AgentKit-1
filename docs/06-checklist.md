@@ -120,6 +120,38 @@ Detalle 0G: [03-0g.md](./03-0g.md).
 
 ---
 
+## Two-sided UI (huésped + anfitrión)
+
+Ver [14-two-sided-ui.md](./14-two-sided-ui.md).
+
+- [x] Shell global: `AgentSessionProvider` + `SiteHeader` (nav + chip agente en todas las páginas)
+- [x] Home dos lados: hero huésped/anfitrión + catálogo completo + chips de búsqueda
+- [x] Ficha pública `/stays/[id]`: descripción + calendario de disponibilidad público
+- [x] Bookings por rango de fechas (`lib/bookings.ts`, checkout exclusivo, máx 30 noches)
+- [x] Precio total = noches × precio/noche (402 x402 cobra el total; tope/HITL sobre el total)
+- [x] Modo anfitrión `/host`: publicar propiedad + wallet de cobro + reservas recibidas (tx Basescan)
+- [x] `payTo` por listing: wallet del anfitrión si la cargó (seed → marketplace)
+- [x] `/como-funciona`: explicación en producto de ambos lados y las piezas
+- [x] Lint + build + smoke test (catálogo, search, disponibilidad, publicar, gates de fechas)
+- [ ] Probar pago real testnet sobre rango de fechas (necesita CDP keys en el entorno)
+
+---
+
+## Host payouts + días disponibles
+
+Ver [15-host-payouts-and-availability.md](./15-host-payouts-and-availability.md).
+
+- [x] Perfil anfitrión: wallet de cobro registrada una vez, anclada a todas sus propiedades (`lib/host-profile.ts` + `GET/POST /api/host/profile`)
+- [x] Resolución payTo: override por propiedad → wallet del anfitrión → wallet única del marketplace (default actual)
+- [x] Días disponibles por propiedad (`availabilityWindows`, semiabiertas, máx 12) al publicar y editables después (`PATCH /api/host/listings/[id]`)
+- [x] Validación server en `/buy` + `/purchase` + `/approve/prepare` (409 fuera de ventana)
+- [x] Calendario 3 estados: reservado / no ofrecido / libre (ficha pública + panel anfitrión)
+- [x] Panel `/host`: “Tu wallet de cobro” + editor de ventanas + fuente de cobro por propiedad
+- [x] Lint + build + smoke tests (resolución de wallets, PATCH, 403 sin cookie, gates) + test visual browser
+- [ ] Futuro: verificar firma de la wallet, anfitrión World-verified, splits/fee, KV/DB (ver roadmap doc 15)
+
+---
+
 ## Fase 4 — Discovery (stretch)
 
 - [ ] Bazaar / agentic.market

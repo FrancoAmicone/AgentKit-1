@@ -23,6 +23,9 @@ export type ReservationReceipt = {
     title: string;
     location: string;
     amountUsdc: number;
+    checkIn?: string;
+    checkOut?: string;
+    nights?: number;
   };
   payment: {
     txHash?: string;

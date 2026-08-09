@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export type ListingCardData = {
   id: string;
   title: string;
@@ -8,34 +10,24 @@ export type ListingCardData = {
   amenities: string[];
   rating: number;
   imageUrl: string;
+  source?: "seed" | "host";
   matchReason?: string;
 };
 
 type Props = {
   listing: ListingCardData;
-  autoLimitUsdc?: number;
-  canPurchase: boolean;
-  buying: boolean;
-  onBuy: (listing: ListingCardData) => void;
-  onNeedSetup: () => void;
   index?: number;
 };
 
-export function ListingCard({
-  listing,
-  autoLimitUsdc,
-  canPurchase,
-  buying,
-  onBuy,
-  onNeedSetup,
-  index = 0,
-}: Props) {
-  const overLimit =
-    autoLimitUsdc != null && listing.pricePerNight > autoLimitUsdc;
-
+/**
+ * Catalog card: leads to the public listing page (/stays/[id]) where the
+ * availability calendar and the agent-powered booking live.
+ */
+export function ListingCard({ listing, index = 0 }: Props) {
   return (
-    <article
-      className="stay-rise group overflow-hidden border border-[var(--line)] bg-white/55 transition duration-300 hover:border-[var(--pine)]/30 hover:bg-white/80"
+    <Link
+      href={`/stays/${listing.id}`}
+      className="stay-rise group block overflow-hidden border border-[var(--line)] bg-white/55 transition duration-300 hover:border-[var(--pine)]/30 hover:bg-white/80"
       style={{ animationDelay: `${Math.min(index, 6) * 0.05}s` }}
     >
       <div className="relative overflow-hidden">
@@ -49,6 +41,11 @@ export function ListingCard({
           ${listing.pricePerNight}
           <span className="font-normal opacity-70">/noche</span>
         </p>
+        {listing.source === "host" && (
+          <p className="absolute left-3 top-3 bg-[var(--clay)]/90 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+            Publicado por anfitrión
+          </p>
+        )}
       </div>
       <div className="p-4 sm:p-5">
         <h3
@@ -66,32 +63,10 @@ export function ListingCard({
             {listing.matchReason}
           </p>
         )}
-        {overLimit && (
-          <p className="mt-2 text-xs font-medium text-[var(--clay)]">
-            Sobre tu tope (${autoLimitUsdc}). Pedirá aprobación en World.
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={() => {
-            if (!canPurchase) {
-              onNeedSetup();
-              return;
-            }
-            onBuy(listing);
-          }}
-          disabled={buying}
-          className="mt-5 w-full bg-[var(--ink)] px-4 py-3 text-sm font-semibold text-[var(--paper)] transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
-        >
-          {buying
-            ? "Pagando con el agente…"
-            : !canPurchase
-              ? "Configurar agente para pagar"
-              : overLimit
-                ? "Reservar (pide aprobación)"
-                : "Reservar y pagar"}
-        </button>
+        <p className="mt-4 text-sm font-semibold text-[var(--pine)] transition group-hover:translate-x-0.5">
+          Ver disponibilidad →
+        </p>
       </div>
-    </article>
+    </Link>
   );
 }

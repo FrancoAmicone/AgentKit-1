@@ -17,6 +17,8 @@ Al cerrar cualquier tarea o PR: actualizar **checklist** + doc de la fase afecta
 | Doc | Contenido |
 | --- | --- |
 | [07-stay-agent.md](./07-stay-agent.md) | Spec + APIs + roadmap fases |
+| [14-two-sided-ui.md](./14-two-sided-ui.md) | UI dos lados: huésped + anfitrión, fechas y disponibilidad pública |
+| [15-host-payouts-and-availability.md](./15-host-payouts-and-availability.md) | Wallet de cobro del anfitrión (anclada a sus propiedades) + días disponibles |
 | [08-phase2-agentbook.md](./08-phase2-agentbook.md) | Phase 2A: gate AgentBook (payer only) |
 | [09-phase2b-autopay-limit.md](./09-phase2b-autopay-limit.md) | Phase 2B: owner auto-pay limit |
 | [10-phase2c-hitl.md](./10-phase2c-hitl.md) | Phase 2C: human approval over tope |
@@ -40,4 +42,6 @@ Al cerrar cualquier tarea o PR: actualizar **checklist** + doc de la fase afecta
 | 2C | HITL si supera el tope | **Hecha** (prod OK) |
 | — | Multi-user (wallet + agente propios) | **Hecha** (prod OK) → [12](./12-multiuser-and-0g.md) |
 | 3 | Recibos en 0G Storage | **Hecha** (prod OK) → [13](./13-env-and-0g-setup.md) |
+| — | UI dos lados (huésped + anfitrión, fechas) | **Hecha** → [14](./14-two-sided-ui.md) |
+| — | Wallet de cobro por anfitrión + días disponibles | **Hecha** → [15](./15-host-payouts-and-availability.md) |
 | 4 | Discovery | Opcional |
