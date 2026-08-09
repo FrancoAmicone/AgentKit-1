@@ -1,13 +1,17 @@
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { isDateStr, type DateRange } from "./dates";
 import type { Listing } from "./listings-data";
 
 /** A listing published from the host side, owned by an anonymous host session. */
 export type HostListing = Listing & {
   hostId: string;
   createdAt: string;
-  /** Optional wallet the host set to receive x402 payments. */
+  /**
+   * Optional per-property override of the payout wallet. When absent, the
+   * host's profile wallet applies (lib/host-profile.ts), then marketplace.
+   */
   payoutAddress?: string;
 };
 
@@ -20,7 +24,35 @@ export type NewHostListingInput = {
   imageUrl?: string;
   maxGuests: number;
   payoutAddress?: string;
+  availabilityWindows?: DateRange[];
 };
+
+const MAX_AVAILABILITY_WINDOWS = 12;
+
+/** Validates + normalizes host-provided availability windows (sorted). */
+export function normalizeAvailabilityWindows(
+  input: unknown,
+): DateRange[] | undefined {
+  if (input == null) return undefined;
+  if (!Array.isArray(input)) {
+    throw new Error("availabilityWindows debe ser una lista de rangos.");
+  }
+  if (input.length === 0) return undefined;
+  if (input.length > MAX_AVAILABILITY_WINDOWS) {
+    throw new Error(`Máximo ${MAX_AVAILABILITY_WINDOWS} ventanas de disponibilidad.`);
+  }
+  const windows = input.map((raw) => {
+    const w = raw as { checkIn?: unknown; checkOut?: unknown };
+    if (!isDateStr(w?.checkIn) || !isDateStr(w?.checkOut)) {
+      throw new Error("Cada ventana necesita fechas YYYY-MM-DD (desde / hasta).");
+    }
+    if (w.checkIn >= w.checkOut) {
+      throw new Error("En cada ventana, el fin debe ser posterior al inicio.");
+    }
+    return { checkIn: w.checkIn, checkOut: w.checkOut };
+  });
+  return windows.sort((a, b) => a.checkIn.localeCompare(b.checkIn));
+}
 
 const FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80",
@@ -126,6 +158,8 @@ export async function createHostListing(
     .filter(Boolean)
     .slice(0, 8);
 
+  const availabilityWindows = normalizeAvailabilityWindows(input.availabilityWindows);
+
   const store = await readStore();
   const id = `${slugify(title) || "propiedad"}-${randomBytes(3).toString("hex")}`;
 
@@ -145,9 +179,50 @@ export async function createHostListing(
     hostId,
     createdAt: new Date().toISOString(),
     payoutAddress: payoutAddress || undefined,
+    availabilityWindows,
   };
 
   store.listings.push(listing);
+  await writeStore(store);
+  return listing;
+}
+
+export type HostListingPatch = {
+  /** New windows; empty array clears them (property always offered). */
+  availabilityWindows?: DateRange[];
+  /** Per-property payout override; empty string clears it (host wallet applies). */
+  payoutAddress?: string;
+};
+
+/** Update availability windows and/or payout override for one of the host's listings. */
+export async function updateHostListing(
+  hostId: string,
+  listingId: string,
+  patch: HostListingPatch,
+): Promise<HostListing> {
+  const store = await readStore();
+  const listing = store.listings.find(
+    (l) => l.id === listingId && l.hostId === hostId,
+  );
+  if (!listing) {
+    throw new Error("Propiedad no encontrada para este anfitrión.");
+  }
+
+  if ("availabilityWindows" in patch) {
+    listing.availabilityWindows = normalizeAvailabilityWindows(
+      patch.availabilityWindows,
+    );
+  }
+
+  if ("payoutAddress" in patch) {
+    const trimmed = String(patch.payoutAddress ?? "").trim();
+    if (trimmed && !isEvmAddress(trimmed)) {
+      throw new Error("La wallet de cobro debe ser una dirección EVM válida (0x…).");
+    }
+    listing.payoutAddress = trimmed || undefined;
+    listing.ownerWalletAddress = trimmed || "";
+  }
+
   await writeStore(store);
   return listing;
 }

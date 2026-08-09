@@ -47,3 +47,4 @@ next-env.d.ts
 /data/agent-approvals.json
 /data/bookings.json
 /data/host-listings.json
+/data/host-profiles.json

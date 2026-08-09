@@ -1,6 +1,7 @@
 # Two-sided UI — huésped + anfitrión, fechas y disponibilidad pública
 
-**Status: implemented.**
+**Status: implemented.** Evolución del lado anfitrión (wallet de cobro por
+perfil + días disponibles): [15-host-payouts-and-availability.md](./15-host-payouts-and-availability.md).
 
 Salto de producto: de una landing única de demo a una app navegable con dos
 lados (huésped y anfitrión), reservas **por rango de fechas** y calendario de

@@ -17,6 +17,7 @@ Pedís algo como *“casa en Bariloche con pileta, menos de 150 USD”* → el a
 | 3 | Recibos 0G | **Hecha** |
 | — | Agente por usuario | **Hecha** |
 | — | UI dos lados: huésped + anfitrión, fechas y disponibilidad pública | **Hecha** → [docs/14](./docs/14-two-sided-ui.md) |
+| — | Wallet de cobro por anfitrión (anclada a sus propiedades) + días disponibles | **Hecha** → [docs/15](./docs/15-host-payouts-and-availability.md) |
 
 Checklist: [docs/06-checklist.md](./docs/06-checklist.md).
 

@@ -5,6 +5,8 @@ import {
   addDays,
   diffDays,
   isDateStr,
+  isNightInRanges,
+  nightsInRange,
   rangesOverlap,
   todayStr,
   type DateRange,
@@ -133,6 +135,18 @@ export function validateStayRange(checkIn?: string, checkOut?: string): StayVali
 export async function isRangeFree(listingId: string, range: DateRange): Promise<boolean> {
   const booked = await getBookedRanges(listingId);
   return !booked.some((b) => rangesOverlap(b, range));
+}
+
+/**
+ * Whether every night of the stay falls inside the host's availability
+ * windows. No windows defined = the property is always offered.
+ */
+export function stayWithinAvailability(
+  windows: DateRange[] | undefined,
+  range: DateRange,
+): boolean {
+  if (!windows || windows.length === 0) return true;
+  return nightsInRange(range).every((night) => isNightInRanges(night, windows));
 }
 
 /** Exact total in USDC using integer micros (avoids float drift). */

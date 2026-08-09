@@ -1,5 +1,6 @@
 import { LISTINGS_SEED, type Listing, type ListingFilters } from "./listings-data";
 import { getAllHostListings } from "./host-listings";
+import { getAllHostProfiles } from "./host-profile";
 
 function marketplaceAddress(): string {
   return (
@@ -11,14 +12,24 @@ function marketplaceAddress(): string {
 
 /**
  * Full public catalog: host-published listings first, then the demo seed.
- * Seed listings collect to the marketplace wallet; host listings collect to
- * the host's payout wallet when they set one.
+ *
+ * payTo resolution per listing (see docs/15-host-payouts-and-availability.md):
+ *   1. per-listing override (payoutAddress on the listing)
+ *   2. host profile wallet (registered once, anchors all their properties)
+ *   3. marketplace wallet (single-wallet default)
  */
 export async function getAllListings(): Promise<Listing[]> {
   const fallbackPayTo = marketplaceAddress();
-  const host = (await getAllHostListings()).map((l) => ({
+  const [hostListings, hostProfiles] = await Promise.all([
+    getAllHostListings(),
+    getAllHostProfiles(),
+  ]);
+  const host = hostListings.map((l) => ({
     ...l,
-    ownerWalletAddress: l.payoutAddress || fallbackPayTo,
+    ownerWalletAddress:
+      l.payoutAddress ||
+      hostProfiles.get(l.hostId)?.payoutAddress ||
+      fallbackPayTo,
   }));
   const seed = LISTINGS_SEED.map((l) => ({
     ...l,

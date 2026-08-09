@@ -232,9 +232,23 @@ export function StayDetail({ listing, initialBookedRanges }: Props) {
               </p>
             </div>
 
+            {listing.availabilityWindows &&
+              listing.availabilityWindows.length > 0 && (
+                <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
+                  El anfitrión lo ofrece:{" "}
+                  {listing.availabilityWindows
+                    .map(
+                      (w) =>
+                        `${formatDateEs(w.checkIn)} → ${formatDateEs(w.checkOut)}`,
+                    )
+                    .join(" · ")}
+                </p>
+              )}
+
             <div className="mt-4">
               <AvailabilityCalendar
                 bookedRanges={bookedRanges}
+                availabilityWindows={listing.availabilityWindows}
                 value={selection}
                 onChange={(v) => {
                   setSelection(v);

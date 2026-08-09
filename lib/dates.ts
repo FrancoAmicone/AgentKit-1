@@ -54,6 +54,11 @@ export function rangesOverlap(a: DateRange, b: DateRange): boolean {
   return a.checkIn < b.checkOut && b.checkIn < a.checkOut;
 }
 
+/** Whether the night is covered by at least one half-open range. */
+export function isNightInRanges(night: string, ranges: DateRange[]): boolean {
+  return ranges.some((r) => r.checkIn <= night && night < r.checkOut);
+}
+
 /** Every night in the range (checkOut excluded). */
 export function nightsInRange(range: DateRange): string[] {
   const nights: string[] = [];

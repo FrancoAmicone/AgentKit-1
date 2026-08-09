@@ -4,6 +4,7 @@ import {
   attachTxToBooking,
   isRangeFree,
   stayTotalUsdc,
+  stayWithinAvailability,
   validateStayRange,
 } from "@/lib/bookings";
 import {
@@ -52,6 +53,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { ok: false, code: "INVALID_DATES", error: stay.error },
       { status: 400 },
+    );
+  }
+  if (!stayWithinAvailability(listing.availabilityWindows, stay)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        code: "DATES_TAKEN",
+        error:
+          "El anfitrión no ofrece este alojamiento en esas fechas. Elegí noches dentro de la disponibilidad.",
+      },
+      { status: 409 },
     );
   }
   if (!(await isRangeFree(listingId, stay))) {

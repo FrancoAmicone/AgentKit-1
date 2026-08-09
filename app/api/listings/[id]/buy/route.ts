@@ -5,6 +5,7 @@ import {
   createBooking,
   isRangeFree,
   stayTotalUsdc,
+  stayWithinAvailability,
   validateStayRange,
 } from "@/lib/bookings";
 import { isEvmAddress } from "@/lib/host-listings";
@@ -44,6 +45,13 @@ export async function POST(request: NextRequest, context: Ctx) {
   );
   if (!stay.ok) {
     return NextResponse.json({ error: stay.error }, { status: 400 });
+  }
+
+  if (!stayWithinAvailability(listing.availabilityWindows, stay)) {
+    return NextResponse.json(
+      { error: "El anfitrión no ofrece este alojamiento en esas fechas." },
+      { status: 409 },
+    );
   }
 
   if (!(await isRangeFree(id, stay))) {

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   daysInMonth,
+  isNightInRanges,
   nightsInRange,
   toDateStr,
   todayStr,
@@ -16,6 +17,11 @@ export type StaySelection = {
 
 type Props = {
   bookedRanges: DateRange[];
+  /**
+   * Host-defined windows when the property is offered. Absent/empty =
+   * always offered; otherwise nights outside every window render closed.
+   */
+  availabilityWindows?: DateRange[];
   value?: StaySelection;
   onChange?: (value: StaySelection) => void;
   readOnly?: boolean;
@@ -37,6 +43,7 @@ const MONTHS_ES = [
  */
 export function AvailabilityCalendar({
   bookedRanges,
+  availabilityWindows,
   value,
   onChange,
   readOnly = false,
@@ -54,15 +61,22 @@ export function AvailabilityCalendar({
     return set;
   }, [bookedRanges]);
 
+  const hasWindows = Boolean(availabilityWindows && availabilityWindows.length > 0);
+
   const selection = value ?? {};
 
   function isNightBooked(day: string): boolean {
     return bookedNights.has(day);
   }
 
+  function isNightClosed(day: string): boolean {
+    if (!hasWindows) return false;
+    return !isNightInRanges(day, availabilityWindows!);
+  }
+
   function handleDayClick(day: string) {
     if (readOnly || !onChange) return;
-    if (day < today || isNightBooked(day)) return;
+    if (day < today || isNightBooked(day) || isNightClosed(day)) return;
 
     const { checkIn, checkOut } = selection;
     if (!checkIn || (checkIn && checkOut)) {
@@ -73,9 +87,9 @@ export function AvailabilityCalendar({
       onChange({ checkIn: day, checkOut: undefined });
       return;
     }
-    // Every night between checkIn and day must be free.
+    // Every night between checkIn and day must be free and offered.
     const wanted = nightsInRange({ checkIn, checkOut: day });
-    if (wanted.some((n) => bookedNights.has(n))) {
+    if (wanted.some((n) => bookedNights.has(n) || isNightClosed(n))) {
       onChange({ checkIn: day, checkOut: undefined });
       return;
     }
@@ -152,6 +166,7 @@ export function AvailabilityCalendar({
                   const day = toDateStr(year, month1, i + 1);
                   const past = day < today;
                   const booked = isNightBooked(day);
+                  const closed = !booked && isNightClosed(day);
                   const isCheckIn = selection.checkIn === day;
                   const isCheckOut = selection.checkOut === day;
                   const inRange =
@@ -159,7 +174,7 @@ export function AvailabilityCalendar({
                     selection.checkOut &&
                     day > selection.checkIn &&
                     day < selection.checkOut;
-                  const selectable = !readOnly && !past && !booked;
+                  const selectable = !readOnly && !past && !booked && !closed;
 
                   let cls =
                     "flex items-center justify-center transition select-none ";
@@ -168,6 +183,8 @@ export function AvailabilityCalendar({
                   } else if (booked) {
                     cls +=
                       "bg-[var(--danger)]/10 text-[var(--danger)]/70 line-through";
+                  } else if (closed) {
+                    cls += "bg-black/[0.05] text-[var(--muted)]/50";
                   } else if (isCheckIn || isCheckOut) {
                     cls += "bg-[var(--pine)] font-semibold text-white";
                   } else if (inRange) {
@@ -186,7 +203,11 @@ export function AvailabilityCalendar({
                       onClick={() => handleDayClick(day)}
                       disabled={!selectable}
                       aria-label={
-                        booked ? `${day} — reservado` : `${day} — disponible`
+                        booked
+                          ? `${day} — reservado`
+                          : closed
+                            ? `${day} — no ofrecido`
+                            : `${day} — disponible`
                       }
                       className={`${cellSize} ${cls}`}
                     >
@@ -205,6 +226,12 @@ export function AvailabilityCalendar({
           <span className="inline-block h-3 w-3 bg-[var(--danger)]/15" />
           Reservado
         </span>
+        {hasWindows && (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="inline-block h-3 w-3 bg-black/[0.07]" />
+            No ofrecido
+          </span>
+        )}
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 bg-[var(--pine)]/20" />
           Tu selección

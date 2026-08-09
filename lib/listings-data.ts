@@ -1,3 +1,5 @@
+import type { DateRange } from "./dates";
+
 export type Listing = {
   id: string;
   title: string;
@@ -13,6 +15,11 @@ export type Listing = {
   ownerWalletAddress: string;
   /** "seed" = demo catalog (marketplace wallet) · "host" = published by a host. */
   source: "seed" | "host";
+  /**
+   * Host-defined windows when the property is offered (half-open, checkout
+   * exclusive — same semantics as bookings). Absent/empty = always offered.
+   */
+  availabilityWindows?: DateRange[];
 };
 
 /**

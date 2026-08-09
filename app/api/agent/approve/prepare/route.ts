@@ -3,6 +3,7 @@ import { getListing } from "@/lib/listings";
 import {
   isRangeFree,
   stayTotalUsdc,
+  stayWithinAvailability,
   validateStayRange,
 } from "@/lib/bookings";
 import { getSessionAccountName } from "@/lib/agent-session";
@@ -51,12 +52,15 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
-    if (!(await isRangeFree(listingId, stay))) {
+    if (
+      !stayWithinAvailability(listing.availabilityWindows, stay) ||
+      !(await isRangeFree(listingId, stay))
+    ) {
       return NextResponse.json(
         {
           ok: false,
           code: "DATES_TAKEN",
-          error: "Esas fechas ya están reservadas para este alojamiento.",
+          error: "Esas fechas no están disponibles para este alojamiento.",
         },
         { status: 409 },
       );
