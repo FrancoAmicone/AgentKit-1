@@ -94,19 +94,23 @@ Respuesta: `filters`, `explanation`, `parser` (`rules` \| `llm`), `results[]` co
 
 ### `POST /api/listings/[id]/buy` (vendedor x402)
 
-- Sin header de pago → **402** con precio `$${pricePerNight}` en Base Sepolia.  
-- Con pago válido → marca `available: false` y devuelve la reserva.  
-- `payTo` = `MARKETPLACE_WALLET_ADDRESS`.
+Query: `checkIn`, `checkOut` (YYYY-MM-DD, checkout exclusivo) y `agent` opcional.
+
+- Sin header de pago → **402** con precio total `noches × pricePerNight` en Base Sepolia.  
+- Con pago válido → crea el **booking** (bloquea esas noches) y devuelve la reserva.  
+- `payTo` = wallet del anfitrión si la cargó; seed → `MARKETPLACE_WALLET_ADDRESS`.
+
+Ver [14-two-sided-ui.md](./14-two-sided-ui.md).
 
 ### `POST /api/agent/purchase`
 
 Body:
 
 ```json
-{ "listingId": "bariloche-cabin" }
+{ "listingId": "bariloche-cabin", "checkIn": "2026-08-14", "checkOut": "2026-08-18" }
 ```
 
-El agente paga el `/buy` con su wallet. Devuelve reserva, `agentAddress`, `paymentMeta`, y `txHash` / `explorerUrl` si están disponibles.
+El agente paga el `/buy` con su wallet (gates de tope/HITL sobre el total del stay). Devuelve reserva, `stay`, `agentAddress`, `paymentMeta`, y `txHash` / `explorerUrl` si están disponibles.
 
 ## Archivos clave
 
@@ -165,16 +169,18 @@ type Listing = {
   id: string;
   title: string;
   location: string;
+  description: string;
   pricePerNight: number; // USDC
   amenities: string[];
   rating: number;
   imageUrl: string;
-  available: boolean;
-  ownerWalletAddress: string; // en runtime = MARKETPLACE_WALLET_ADDRESS
+  maxGuests: number;
+  ownerWalletAddress: string; // seed → MARKETPLACE_WALLET_ADDRESS; host → su payout wallet
+  source: "seed" | "host";
 };
 ```
 
-La disponibilidad se guarda **in-memory** (se resetea al reiniciar el server). Suficiente para Fase 1.
+La disponibilidad es **por fechas**: bookings `[checkIn, checkOut)` en `lib/bookings.ts` (file store; `/tmp` en Vercel). Ver [14-two-sided-ui.md](./14-two-sided-ui.md).
 
 ## Fases
 

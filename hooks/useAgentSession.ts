@@ -53,7 +53,6 @@ export function useAgentSession() {
   const [creating, setCreating] = useState(false);
   const [createMessage, setCreateMessage] = useState<string | null>(null);
   const [refreshingBalances, setRefreshingBalances] = useState(false);
-  const [autoOpenedSetup, setAutoOpenedSetup] = useState(false);
 
   const applyMe = useCallback((data: AgentMe) => {
     setMe(data);
@@ -123,22 +122,12 @@ export function useAgentSession() {
     void refreshMe().then(() => void refreshLimits());
   }, [refreshMe, refreshLimits]);
 
+  // No auto-open: the header chip and contextual nudges point to Configurar.
   useEffect(() => {
-    let cancelled = false;
     void (async () => {
-      const data = await refreshMe();
-      if (cancelled) return;
-      if (!data.hasAgent || (data.required && !data.registered)) {
-        if (!autoOpenedSetup) {
-          setSetupOpen(true);
-          setAutoOpenedSetup(true);
-        }
-      }
+      await refreshMe();
       await refreshLimits();
     })();
-    return () => {
-      cancelled = true;
-    };
     // intentionally once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -45,3 +45,5 @@ next-env.d.ts
 # local agent stores (Phase 2B / 2C)
 /data/agent-limits.json
 /data/agent-approvals.json
+/data/bookings.json
+/data/host-listings.json

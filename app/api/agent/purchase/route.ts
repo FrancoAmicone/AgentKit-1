@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getListing } from "@/lib/listings";
 import {
+  attachTxToBooking,
+  isRangeFree,
+  stayTotalUsdc,
+  validateStayRange,
+} from "@/lib/bookings";
+import {
   getSessionPaidFetch,
   readPaymentResponse,
 } from "@/lib/agent-payer";
@@ -12,17 +18,21 @@ import { uploadReservationReceipt } from "@/lib/og-storage";
 export const runtime = "nodejs";
 
 /**
- * Current session's agent pays the x402-protected buy endpoint with its CDP wallet.
+ * Current session's agent pays the x402-protected buy endpoint with its CDP
+ * wallet, for a specific date range (checkIn → checkOut, checkout exclusive).
  *
- * Gates (payer only; marketplace not verified):
+ * Gates (payer only; the host/marketplace receiver is not verified):
  * 1) Agent created for this session
  * 2) AgentBook human-backed
- * 3) Amount <= auto-pay limit OR valid one-time World HITL approvalToken
- * 4) After pay → best-effort 0G receipt upload
+ * 3) Stay total (noches × precio) <= auto-pay limit OR valid one-time World
+ *    HITL approvalToken bound to this listing + amount
+ * 4) After pay → best-effort 0G receipt upload + tx attached to the booking
  */
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as {
     listingId?: string;
+    checkIn?: string;
+    checkOut?: string;
     approvalToken?: string;
   };
   const listingId = body.listingId?.trim();
@@ -32,13 +42,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "listingId is required" }, { status: 400 });
   }
 
-  const listing = getListing(listingId);
+  const listing = await getListing(listingId);
   if (!listing) {
     return NextResponse.json({ error: "Listing not found" }, { status: 404 });
   }
-  if (!listing.available) {
-    return NextResponse.json({ error: "Listing already reserved" }, { status: 409 });
+
+  const stay = validateStayRange(body.checkIn?.trim(), body.checkOut?.trim());
+  if (!stay.ok) {
+    return NextResponse.json(
+      { ok: false, code: "INVALID_DATES", error: stay.error },
+      { status: 400 },
+    );
   }
+  if (!(await isRangeFree(listingId, stay))) {
+    return NextResponse.json(
+      {
+        ok: false,
+        code: "DATES_TAKEN",
+        error: "Esas fechas ya están reservadas. Elegí otras en el calendario.",
+      },
+      { status: 409 },
+    );
+  }
+
+  const totalUsdc = stayTotalUsdc(listing.pricePerNight, stay.nights);
 
   try {
     let session;
@@ -85,19 +112,22 @@ export async function POST(request: NextRequest) {
 
     const limits = await getAutoPayLimit(agentAddress);
     let usedHumanApproval = false;
-    if (!canAutoPay(listing.pricePerNight, limits.autoPayLimitUsdc)) {
+    if (!canAutoPay(totalUsdc, limits.autoPayLimitUsdc)) {
       if (!approvalToken) {
         return NextResponse.json(
           {
             ok: false,
             code: "NEEDS_HUMAN_APPROVAL",
-            error: `Amount $${listing.pricePerNight} USDC exceeds auto-pay limit $${limits.autoPayLimitUsdc} USDC.`,
+            error: `Total $${totalUsdc} USDC (${stay.nights} noche/s) supera el tope automático de $${limits.autoPayLimitUsdc} USDC.`,
             agentAddress,
             limits,
             listing: {
               id: listing.id,
               title: listing.title,
-              amountUsdc: listing.pricePerNight,
+              amountUsdc: totalUsdc,
+              checkIn: stay.checkIn,
+              checkOut: stay.checkOut,
+              nights: stay.nights,
             },
             hint: "Approve this spend with World App (HITL), or raise the auto-pay tope in Configurar.",
           },
@@ -108,7 +138,7 @@ export async function POST(request: NextRequest) {
         approvalToken,
         agentAddress,
         listingId: listing.id,
-        amountUsdc: listing.pricePerNight,
+        amountUsdc: totalUsdc,
       });
       if (!consumed.ok) {
         return NextResponse.json(
@@ -122,7 +152,10 @@ export async function POST(request: NextRequest) {
             listing: {
               id: listing.id,
               title: listing.title,
-              amountUsdc: listing.pricePerNight,
+              amountUsdc: totalUsdc,
+              checkIn: stay.checkIn,
+              checkOut: stay.checkOut,
+              nights: stay.nights,
             },
           },
           { status: 403 },
@@ -132,7 +165,12 @@ export async function POST(request: NextRequest) {
     }
 
     const origin = request.nextUrl.origin;
-    const buyUrl = `${origin}/api/listings/${listingId}/buy`;
+    const buyParams = new URLSearchParams({
+      checkIn: stay.checkIn,
+      checkOut: stay.checkOut,
+      agent: agentAddress,
+    });
+    const buyUrl = `${origin}/api/listings/${listingId}/buy?${buyParams}`;
 
     const response = await fetchWithPayment(buyUrl, { method: "POST" });
     const paymentMeta = readPaymentResponse(response.headers);
@@ -155,13 +193,23 @@ export async function POST(request: NextRequest) {
     }
 
     const txHash = extractTxHash(paymentMeta);
-    const reservedAt =
-      payload.reservation &&
-      typeof payload.reservation === "object" &&
-      payload.reservation !== null &&
-      "reservedAt" in payload.reservation
-        ? String((payload.reservation as { reservedAt?: string }).reservedAt)
-        : new Date().toISOString();
+    const reservation =
+      payload.reservation && typeof payload.reservation === "object"
+        ? (payload.reservation as {
+            bookingId?: string;
+            reservedAt?: string;
+            checkIn?: string;
+            checkOut?: string;
+            nights?: number;
+          })
+        : undefined;
+    const reservedAt = reservation?.reservedAt
+      ? String(reservation.reservedAt)
+      : new Date().toISOString();
+
+    if (reservation?.bookingId) {
+      await attachTxToBooking(reservation.bookingId, { txHash, usedHumanApproval });
+    }
 
     const ogReceipt = await uploadReservationReceipt({
       reservedAt,
@@ -170,7 +218,10 @@ export async function POST(request: NextRequest) {
         id: listing.id,
         title: listing.title,
         location: listing.location,
-        amountUsdc: listing.pricePerNight,
+        amountUsdc: totalUsdc,
+        checkIn: stay.checkIn,
+        checkOut: stay.checkOut,
+        nights: stay.nights,
       },
       payment: {
         txHash,
@@ -195,7 +246,13 @@ export async function POST(request: NextRequest) {
         id: listing.id,
         title: listing.title,
         location: listing.location,
-        amountUsdc: listing.pricePerNight,
+        amountUsdc: totalUsdc,
+        pricePerNight: listing.pricePerNight,
+      },
+      stay: {
+        checkIn: stay.checkIn,
+        checkOut: stay.checkOut,
+        nights: stay.nights,
       },
       reservation: payload.reservation,
       paymentMeta,

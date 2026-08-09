@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { formatDateEs } from "@/lib/dates";
 
 export type ReservationReceiptData = {
   listing?: {
@@ -8,6 +9,11 @@ export type ReservationReceiptData = {
     title: string;
     location: string;
     amountUsdc: number;
+  };
+  stay?: {
+    checkIn: string;
+    checkOut: string;
+    nights: number;
   };
   reservation?: {
     reservedAt: string;
@@ -54,6 +60,13 @@ export function ReservationReceipt({
           {purchase.listing?.location ? ` · ${purchase.listing.location}` : ""}
           {when ? ` · ${when}` : ""}
         </p>
+        {purchase.stay && (
+          <p className="mt-1 text-sm font-medium text-[var(--pine-deep)]">
+            {formatDateEs(purchase.stay.checkIn)} →{" "}
+            {formatDateEs(purchase.stay.checkOut)} · {purchase.stay.nights}{" "}
+            noche{purchase.stay.nights === 1 ? "" : "s"}
+          </p>
+        )}
       </div>
 
       <div className="grid gap-0 sm:grid-cols-2">

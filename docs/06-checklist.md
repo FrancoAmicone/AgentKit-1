@@ -120,6 +120,23 @@ Detalle 0G: [03-0g.md](./03-0g.md).
 
 ---
 
+## Two-sided UI (huésped + anfitrión)
+
+Ver [14-two-sided-ui.md](./14-two-sided-ui.md).
+
+- [x] Shell global: `AgentSessionProvider` + `SiteHeader` (nav + chip agente en todas las páginas)
+- [x] Home dos lados: hero huésped/anfitrión + catálogo completo + chips de búsqueda
+- [x] Ficha pública `/stays/[id]`: descripción + calendario de disponibilidad público
+- [x] Bookings por rango de fechas (`lib/bookings.ts`, checkout exclusivo, máx 30 noches)
+- [x] Precio total = noches × precio/noche (402 x402 cobra el total; tope/HITL sobre el total)
+- [x] Modo anfitrión `/host`: publicar propiedad + wallet de cobro + reservas recibidas (tx Basescan)
+- [x] `payTo` por listing: wallet del anfitrión si la cargó (seed → marketplace)
+- [x] `/como-funciona`: explicación en producto de ambos lados y las piezas
+- [x] Lint + build + smoke test (catálogo, search, disponibilidad, publicar, gates de fechas)
+- [ ] Probar pago real testnet sobre rango de fechas (necesita CDP keys en el entorno)
+
+---
+
 ## Fase 4 — Discovery (stretch)
 
 - [ ] Bazaar / agentic.market

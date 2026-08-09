@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AgentSessionProvider } from "@/components/AgentSessionProvider";
+import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
-  title: "StayAgent — reserve con pago onchain",
+  title: "StayAgent — reservá y publicá con pago onchain",
   description:
-    "Agente que busca alojamientos y paga la reserva en USDC (Base Sepolia) vía x402 + CDP.",
+    "Marketplace de estadías donde tu agente busca, reserva y paga en USDC (Base Sepolia) vía x402 + CDP, y los anfitriones publican y cobran onchain.",
 };
 
 export default function RootLayout({
@@ -14,7 +16,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <AgentSessionProvider>
+          <SiteHeader />
+          {children}
+          <footer className="mx-auto max-w-6xl px-5 pb-8 pt-14 text-xs tracking-wide text-[var(--muted)] sm:px-8">
+            Base Sepolia · x402 · World · 0G Storage — demo testnet, sin dinero
+            real.
+          </footer>
+        </AgentSessionProvider>
+      </body>
     </html>
   );
 }

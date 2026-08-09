@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
 
   const hasFilters = Boolean(destino || precioMax || amenities?.length);
   const listings = hasFilters
-    ? filterListings({ destino, precioMax, amenities })
-    : getAllListings().filter((l) => l.available);
+    ? await filterListings({ destino, precioMax, amenities })
+    : await getAllListings();
 
   return NextResponse.json({ listings, count: listings.length });
 }

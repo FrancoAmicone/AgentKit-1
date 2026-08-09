@@ -13,8 +13,12 @@ import { isMobileDevice } from "@/lib/world-app-link";
 type ListingInfo = {
   id: string;
   title: string;
+  /** Total del stay (noches × precio), no el precio por noche. */
   amountUsdc: number;
   location?: string;
+  checkIn: string;
+  checkOut: string;
+  nights: number;
 };
 
 type PrepareResponse = {
@@ -116,7 +120,11 @@ export function PurchaseApprovalModal({
       const prepRes = await fetch("/api/agent/approve/prepare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listingId: listing.id }),
+        body: JSON.stringify({
+          listingId: listing.id,
+          checkIn: listing.checkIn,
+          checkOut: listing.checkOut,
+        }),
         signal: ac.signal,
       });
       const prep = (await prepRes.json()) as PrepareResponse;
@@ -130,7 +138,11 @@ export function PurchaseApprovalModal({
         const buyRes = await fetch("/api/agent/purchase", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ listingId: listing.id }),
+          body: JSON.stringify({
+            listingId: listing.id,
+            checkIn: listing.checkIn,
+            checkOut: listing.checkOut,
+          }),
           signal: ac.signal,
         });
         const buy = await buyRes.json();
@@ -192,6 +204,8 @@ export function PurchaseApprovalModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           listingId: listing.id,
+          checkIn: listing.checkIn,
+          checkOut: listing.checkOut,
           approvalToken: complete.approvalToken,
         }),
         signal: ac.signal,
@@ -235,7 +249,8 @@ export function PurchaseApprovalModal({
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
               <strong className="text-[var(--ink)]">{listing.title}</strong>{" "}
-              cuesta{" "}
+              por {listing.nights} noche{listing.nights === 1 ? "" : "s"} (
+              {listing.checkIn} → {listing.checkOut}) cuesta{" "}
               <strong className="text-[var(--ink)]">
                 ${listing.amountUsdc} USDC
               </strong>
@@ -290,7 +305,8 @@ export function PurchaseApprovalModal({
                         : "Confirmá en World App"}
                 </h2>
                 <p className="mt-2 text-sm text-[var(--muted)]">
-                  {listing.title} · ${listing.amountUsdc} USDC
+                  {listing.title} · {listing.nights} noche
+                  {listing.nights === 1 ? "" : "s"} · ${listing.amountUsdc} USDC
                 </p>
               </div>
               <button

@@ -1,10 +1,10 @@
 # StayAgent
 
-Agente de IA que busca alojamientos en lenguaje natural y **paga la reserva onchain** (USDC en Base Sepolia) con su propia wallet CDP, vía protocolo **x402**.
+Marketplace de estadías **de dos lados** con pago onchain: el huésped delega la reserva en un agente de IA con wallet CDP propia (USDC en Base Sepolia, protocolo **x402**); el anfitrión publica su propiedad, muestra un **calendario público de disponibilidad** y cobra directo en su wallet.
 
 ## Pitch
 
-Pedís algo como *“casa en Bariloche con pileta, menos de 150 USD”* → el agente filtra un catálogo → elegís → el agente ejecuta el pago real de testnet y confirma la reserva.
+Pedís algo como *“casa en Bariloche con pileta, menos de 150 USD”* → el agente filtra el catálogo → elegís fechas libres en el calendario → el agente paga el total (noches × precio) en testnet y esas noches quedan bloqueadas para todos.
 
 ## Estado
 
@@ -14,8 +14,9 @@ Pedís algo como *“casa en Bariloche con pileta, menos de 150 USD”* → el a
 | 2A | AgentBook (payer) + registro World App in-UI | **Hecha** |
 | 2B | Tope auto-pay (default $0.1) + modal Configurar | **Hecha** |
 | 2C | HITL si supera el tope (World App → pay) | **Hecha** |
-| 3 | Recibos 0G | Pendiente |
-| — | Agente por usuario | Pendiente |
+| 3 | Recibos 0G | **Hecha** |
+| — | Agente por usuario | **Hecha** |
+| — | UI dos lados: huésped + anfitrión, fechas y disponibilidad pública | **Hecha** → [docs/14](./docs/14-two-sided-ui.md) |
 
 Checklist: [docs/06-checklist.md](./docs/06-checklist.md).
 
@@ -29,18 +30,26 @@ npm run setup:wallets
 npm run dev
 ```
 
-Abrí [http://localhost:3000](http://localhost:3000) → **Configurar** (registro + tope).
+Abrí [http://localhost:3000](http://localhost:3000) → **Mi agente** (crear · fondear · World · tope).
+
+## Superficies
+
+- `/` — explorar + búsqueda NLP (huésped)  
+- `/stays/[id]` — ficha pública con calendario de disponibilidad  
+- `/host` — publicar propiedad + reservas recibidas (anfitrión)  
+- `/como-funciona` — explicación de ambos lados  
 
 ## Flujo
 
 1. Search → `POST /api/agent/search`  
-2. Purchase → AgentBook → tope auto-pay (o HITL) → x402 pay  
-3. Confirmación + Basescan  
+2. Ficha → elegir fechas libres → total = noches × precio  
+3. Purchase → AgentBook → tope auto-pay (o HITL) → x402 pay → booking bloquea las noches  
+4. Confirmación + Basescan + recibo 0G  
 
-## Precios demo
+## Precios demo (1 noche)
 
-- **$0.05** → auto-pay bajo tope $0.1  
-- **$0.20** → aprobar en World App → pagar  
+- **$0.05/noche** → auto-pay bajo tope $0.1  
+- **$0.20/noche** (o varias noches) → aprobar en World App → pagar  
 
 ## Stack
 

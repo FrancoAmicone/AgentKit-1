@@ -1,14 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import {
-  AgentSetupModal,
-  StatusBadge,
-} from "@/components/AgentSetupModal";
+import Link from "next/link";
+import { FormEvent, useEffect, useState } from "react";
 import { ListingCard, type ListingCardData } from "@/components/ListingCard";
-import { PurchaseApprovalModal } from "@/components/PurchaseApprovalModal";
-import { ReservationReceipt } from "@/components/ReservationReceipt";
-import { useAgentSession } from "@/hooks/useAgentSession";
+import { useAgent } from "@/components/AgentSessionProvider";
 
 type SearchResponse = {
   explanation: string;
@@ -17,63 +12,47 @@ type SearchResponse = {
   count: number;
 };
 
-type PurchaseResponse = {
-  ok: boolean;
-  error?: string;
-  hint?: string;
-  registerHint?: string;
-  code?: string;
-  agentAddress?: string;
-  txHash?: string;
-  explorerUrl?: string;
-  listing?: {
-    id: string;
-    title: string;
-    location: string;
-    amountUsdc: number;
-  };
-  reservation?: {
-    reservedAt: string;
-  };
-  usedHumanApproval?: boolean;
-  ogReceipt?: {
-    ok: boolean;
-    skipped?: boolean;
-    rootHash?: string;
-    txHash?: string;
-    storageScanUrl?: string;
-    explorerUrl?: string;
-    error?: string;
-  };
-};
+const SUGGESTIONS = [
+  "Casa en Bariloche con pileta, menos de 150 USD",
+  "Loft en Ushuaia con wifi",
+  "Algo cerca del mar para las vacaciones",
+  "Cabaña con parrilla en Córdoba",
+];
 
 export default function HomePage() {
-  const agent = useAgentSession();
-  const [query, setQuery] = useState(
-    "Casa en Bariloche con pileta, menos de 150 USD por día",
-  );
+  const agent = useAgent();
+  const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
-  const [buyingId, setBuyingId] = useState<string | null>(null);
   const [search, setSearch] = useState<SearchResponse | null>(null);
-  const [purchase, setPurchase] = useState<PurchaseResponse | null>(null);
+  const [catalog, setCatalog] = useState<ListingCardData[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [approvalListing, setApprovalListing] = useState<{
-    id: string;
-    title: string;
-    amountUsdc: number;
-    location?: string;
-  } | null>(null);
 
-  async function onSearch(e: FormEvent) {
-    e.preventDefault();
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/listings");
+        const data = (await res.json()) as { listings: ListingCardData[] };
+        if (!cancelled && Array.isArray(data.listings)) {
+          setCatalog(data.listings);
+        }
+      } catch {
+        // catalog stays empty; search still works
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function runSearch(text: string) {
     setSearching(true);
     setError(null);
-    setPurchase(null);
     try {
       const res = await fetch("/api/agent/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query: text }),
       });
       const data = (await res.json()) as SearchResponse & { error?: string };
       if (!res.ok) throw new Error(data.error || "Search failed");
@@ -85,108 +64,85 @@ export default function HomePage() {
     }
   }
 
-  async function refreshSearchResults() {
-    const refresh = await fetch("/api/agent/search", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
-    });
-    if (refresh.ok) setSearch((await refresh.json()) as SearchResponse);
+  function onSearch(e: FormEvent) {
+    e.preventDefault();
+    if (!query.trim()) return;
+    void runSearch(query);
   }
 
-  async function onBuy(listing: ListingCardData) {
-    setBuyingId(listing.id);
-    setError(null);
-    setPurchase(null);
-
-    const autoLimit = agent.autoLimitUsdc;
-    if (
-      agent.canPurchase &&
-      autoLimit != null &&
-      listing.pricePerNight > autoLimit
-    ) {
-      setBuyingId(null);
-      setApprovalListing({
-        id: listing.id,
-        title: listing.title,
-        amountUsdc: listing.pricePerNight,
-        location: listing.location,
-      });
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/agent/purchase", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listingId: listing.id }),
-      });
-      const data = (await res.json()) as PurchaseResponse;
-      if (!res.ok || !data.ok) {
-        if (
-          data.code === "AGENT_NOT_HUMAN_BACKED" ||
-          data.code === "AGENT_NOT_CREATED"
-        ) {
-          agent.setSetupOpen(true);
-        }
-        if (data.code === "NEEDS_HUMAN_APPROVAL") {
-          setApprovalListing({
-            id: listing.id,
-            title: listing.title,
-            amountUsdc: listing.pricePerNight,
-            location: listing.location,
-          });
-          setBuyingId(null);
-          return;
-        }
-        const parts = [data.error, data.hint, data.registerHint].filter(Boolean);
-        throw new Error(parts.join(" — ") || "No se pudo completar el pago");
-      }
-      setPurchase(data);
-      agent.refreshAll();
-      await refreshSearchResults();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error de compra");
-      agent.refreshAll();
-    } finally {
-      setBuyingId(null);
-    }
-  }
-
+  const showing = search ? search.results : catalog;
   const needsSetup = !agent.canPurchase;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-5 pb-10 pt-6 sm:px-8 sm:pt-8">
-      <div className="mb-6 flex items-center justify-end">
-        <button
-          type="button"
-          onClick={() => agent.setSetupOpen(true)}
-          className="inline-flex items-center gap-2 border border-[var(--line)] bg-white/50 px-3 py-1.5 transition hover:border-[var(--pine)]/35 hover:bg-white/80"
-        >
-          <StatusBadge status={agent.agentStatus} />
-          <span className="text-xs font-semibold text-[var(--pine)]">
-            Configurar
-          </span>
-        </button>
-      </div>
-
-      {/* First composition: brand + one line + search CTA */}
+    <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-5 pb-10 pt-8 sm:px-8 sm:pt-12">
+      {/* Hero */}
       <header className="stay-rise mb-8 max-w-3xl">
         <h1
-          className="text-[clamp(2.75rem,8vw,4.75rem)] leading-[0.95] tracking-tight text-[var(--ink)]"
+          className="text-[clamp(2.5rem,7vw,4.25rem)] leading-[0.98] tracking-tight text-[var(--ink)]"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          StayAgent
+          Tu agente reserva.
+          <br />
+          Vos viajás.
         </h1>
         <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--muted)] sm:text-lg">
-          Pedí un lugar. Tu agente lo reserva y paga onchain.
+          Marketplace de estadías con pago onchain: pedí un lugar en lenguaje
+          natural y tu agente lo reserva y paga en USDC. ¿Tenés una propiedad?
+          Publicala y cobrá directo en tu wallet.
         </p>
       </header>
 
+      {/* Two sides */}
+      <section className="stay-rise-delay mb-10 grid gap-4 sm:grid-cols-2">
+        <div className="border border-[var(--line)] bg-white/55 p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--pine)]">
+            Soy huésped
+          </p>
+          <h2
+            className="mt-1 text-xl text-[var(--ink)]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Buscá y reservá con tu agente
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+            Elegí fechas en el calendario público, y tu agente paga la reserva
+            con su propia wallet (con tu tope y tu aprobación).
+          </p>
+          <a
+            href="#buscar"
+            className="mt-4 inline-block bg-[var(--pine)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--pine-deep)]"
+          >
+            Buscar estadía
+          </a>
+        </div>
+        <div className="border border-[var(--line)] bg-white/55 p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--clay)]">
+            Soy anfitrión
+          </p>
+          <h2
+            className="mt-1 text-xl text-[var(--ink)]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Publicá tu propiedad y cobrá onchain
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+            Cargá tu casa o depto, definí el precio por noche y mirá cómo se
+            bloquean las fechas cuando un agente paga la reserva.
+          </p>
+          <Link
+            href="/host"
+            className="mt-4 inline-block border border-[var(--clay)] px-4 py-2 text-sm font-semibold text-[var(--clay)] transition hover:bg-[var(--clay)] hover:text-white"
+          >
+            Ir al modo anfitrión
+          </Link>
+        </div>
+      </section>
+
+      {/* Search */}
       <form
+        id="buscar"
         onSubmit={onSearch}
-        className="stay-rise-delay mb-8 flex flex-col gap-3 border border-[var(--line)] bg-white/55 p-2 backdrop-blur-sm sm:flex-row sm:items-stretch"
+        className="stay-rise-delay mb-3 flex scroll-mt-24 flex-col gap-3 border border-[var(--line)] bg-white/55 p-2 backdrop-blur-sm sm:flex-row sm:items-stretch"
       >
         <input
           value={query}
@@ -204,9 +160,25 @@ export default function HomePage() {
         </button>
       </form>
 
-      {needsSetup && !search && (
-        <p className="stay-fade mb-8 text-sm text-[var(--muted)]">
-          Antes de pagar:{" "}
+      <div className="mb-8 flex flex-wrap gap-2">
+        {SUGGESTIONS.map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => {
+              setQuery(s);
+              void runSearch(s);
+            }}
+            className="border border-[var(--line)] bg-white/40 px-3 py-1.5 text-xs text-[var(--muted)] transition hover:border-[var(--pine)]/35 hover:text-[var(--pine-deep)]"
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+
+      {needsSetup && (
+        <p className="stay-fade mb-6 text-sm text-[var(--muted)]">
+          Para pagar reservas, primero{" "}
           <button
             type="button"
             onClick={() => agent.setSetupOpen(true)}
@@ -214,110 +186,72 @@ export default function HomePage() {
           >
             configurá tu agente
           </button>{" "}
-          (crear · fondear · World · tope).
+          (crear · fondear · World · tope). Mirar disponibilidad es libre.
         </p>
       )}
 
       {error && (
         <div className="stay-fade mb-6 border border-[var(--danger)]/25 bg-[var(--danger)]/8 px-4 py-3 text-sm text-[var(--danger)]">
-          {error}{" "}
-          {(error.includes("aprobación") ||
-            error.includes("Register") ||
-            error.includes("human") ||
-            error.includes("agente")) && (
-            <button
-              type="button"
-              onClick={() => agent.setSetupOpen(true)}
-              className="font-semibold underline"
-            >
-              Abrir configuración
-            </button>
-          )}
+          {error}
         </div>
       )}
 
-      {purchase?.ok && <ReservationReceipt purchase={purchase} />}
-
-      {search && (
-        <div className="stay-fade mb-5 flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <h2
-              className="text-2xl text-[var(--ink)]"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              Lugares
-            </h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">
-              {search.explanation}
-            </p>
-          </div>
-          <p className="text-xs text-[var(--muted)]">
-            {search.count} resultados
+      <div className="stay-fade mb-5 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2
+            className="text-2xl text-[var(--ink)]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            {search ? "Resultados" : "Todos los alojamientos"}
+          </h2>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            {search
+              ? search.explanation
+              : "Cada lugar tiene su calendario público de disponibilidad."}
           </p>
         </div>
-      )}
+        <div className="flex items-center gap-3">
+          {search && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch(null);
+                setQuery("");
+              }}
+              className="text-xs font-semibold text-[var(--pine)] underline underline-offset-2"
+            >
+              Ver todo
+            </button>
+          )}
+          <p className="text-xs text-[var(--muted)]">
+            {showing.length} lugares
+          </p>
+        </div>
+      </div>
 
-      <section className="grid gap-5 sm:grid-cols-2">
-        {search?.results.map((listing, index) => (
-          <ListingCard
-            key={listing.id}
-            listing={listing}
-            index={index}
-            autoLimitUsdc={agent.autoLimitUsdc}
-            canPurchase={agent.canPurchase}
-            buying={buyingId === listing.id}
-            onBuy={(item) => void onBuy(item)}
-            onNeedSetup={() => agent.setSetupOpen(true)}
-          />
+      <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {showing.map((listing, index) => (
+          <ListingCard key={listing.id} listing={listing} index={index} />
         ))}
       </section>
 
-      {!search && !purchase?.ok && (
-        <p className="mt-2 text-sm text-[var(--muted)]">
-          Tip demo: $0.05 auto-paga · $0.2 pide World · recibo en 0G.
+      {search && showing.length === 0 && (
+        <p className="text-sm text-[var(--muted)]">
+          Nada con esos filtros. Probá otra búsqueda o mirá el catálogo
+          completo.
         </p>
       )}
 
-      <footer className="mt-auto pt-16 text-xs tracking-wide text-[var(--muted)]">
-        Base Sepolia · x402 · World · 0G Storage
-      </footer>
-
-      <AgentSetupModal
-        open={agent.setupOpen}
-        onClose={() => agent.setSetupOpen(false)}
-        me={agent.me}
-        agentStatus={agent.agentStatus}
-        limitsInfo={agent.limitsInfo}
-        limitInput={agent.limitInput}
-        onLimitInputChange={agent.setLimitInput}
-        savingLimit={agent.savingLimit}
-        limitMessage={agent.limitMessage}
-        onSaveLimit={agent.onSaveLimit}
-        onRefresh={agent.refreshAll}
-        onCreateAgent={() => void agent.createAgent()}
-        creating={agent.creating}
-        createMessage={agent.createMessage}
-        onRefreshBalances={() => void agent.refreshBalances()}
-        refreshingBalances={agent.refreshingBalances}
-      />
-
-      {approvalListing && (
-        <PurchaseApprovalModal
-          key={approvalListing.id}
-          open
-          listing={approvalListing}
-          autoPayLimitUsdc={agent.autoLimitUsdc}
-          onClose={() => setApprovalListing(null)}
-          onApprovedPurchase={(result) => {
-            setPurchase(result as PurchaseResponse);
-            setApprovalListing(null);
-            setError(null);
-            agent.refreshAll();
-            void refreshSearchResults();
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-        />
-      )}
+      <p className="mt-10 text-sm text-[var(--muted)]">
+        Tip demo: $0.05/noche auto-paga bajo el tope · $0.2/noche pide
+        aprobación en World · el recibo va a 0G.{" "}
+        <Link
+          href="/como-funciona"
+          className="font-semibold text-[var(--pine)] underline underline-offset-2"
+        >
+          Cómo funciona
+        </Link>
+      </p>
     </main>
   );
 }
