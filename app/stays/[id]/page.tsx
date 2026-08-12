@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { getListing } from "@/lib/listings";
 import { getBookedRanges } from "@/lib/bookings";
 import { StayDetail } from "@/components/StayDetail";
@@ -20,15 +19,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * Public listing page: anyone can see the description and which dates are
- * locked; paying a reservation goes through the session's agent.
+ * Public listing page. Never hard-404s on SSR: if the store miss happens
+ * (cold serverless /tmp race before Runtime Cache), the client re-fetches
+ * `/api/listings/[id]` and recovers. See docs/16-host-payto-verification.md.
  */
 export default async function StayPage({ params }: Props) {
   const { id } = await params;
   const listing = await getListing(id);
-  if (!listing) notFound();
+  const bookedRanges = listing ? await getBookedRanges(id) : [];
 
-  const bookedRanges = await getBookedRanges(id);
-
-  return <StayDetail listing={listing} initialBookedRanges={bookedRanges} />;
+  return (
+    <StayDetail
+      listingId={id}
+      listing={listing ?? null}
+      initialBookedRanges={bookedRanges}
+    />
+  );
 }

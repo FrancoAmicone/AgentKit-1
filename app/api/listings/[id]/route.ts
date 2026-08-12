@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getListing } from "@/lib/listings";
+import { getListing, resolveListingPayTo } from "@/lib/listings";
 import { getBookedRanges, MAX_NIGHTS } from "@/lib/bookings";
 
 export const runtime = "nodejs";
@@ -9,6 +9,7 @@ type Ctx = { params: Promise<{ id: string }> };
 /**
  * Public listing detail + availability: anyone (buyer, host, or another
  * agent) can read which nights are already locked without paying.
+ * Also returns where the x402 payment will settle (payTo + source).
  */
 export async function GET(_request: NextRequest, context: Ctx) {
   const { id } = await context.params;
@@ -19,10 +20,12 @@ export async function GET(_request: NextRequest, context: Ctx) {
   }
 
   const bookedRanges = await getBookedRanges(id);
+  const payout = await resolveListingPayTo(listing);
 
   return NextResponse.json({
     listing,
     bookedRanges,
     maxNights: MAX_NIGHTS,
+    payout,
   });
 }

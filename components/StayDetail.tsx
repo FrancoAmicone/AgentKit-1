@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AvailabilityCalendar,
   type StaySelection,
@@ -23,8 +23,15 @@ type PurchaseResponse = ReservationReceiptData & {
   code?: string;
 };
 
+type PayoutInfo = {
+  address: string;
+  source: "listing" | "host" | "marketplace";
+  isEvm: boolean;
+};
+
 type Props = {
-  listing: Listing;
+  listingId: string;
+  listing: Listing | null;
   initialBookedRanges: DateRange[];
 };
 
@@ -32,8 +39,23 @@ function stayTotal(pricePerNight: number, nights: number): number {
   return (Math.round(pricePerNight * 1e6) * nights) / 1e6;
 }
 
-export function StayDetail({ listing, initialBookedRanges }: Props) {
+function payoutLabel(source: PayoutInfo["source"]): string {
+  if (source === "listing") return "wallet de esta propiedad";
+  if (source === "host") return "wallet del anfitrión";
+  return "wallet del marketplace (demo)";
+}
+
+export function StayDetail({
+  listingId,
+  listing: initialListing,
+  initialBookedRanges,
+}: Props) {
   const agent = useAgent();
+  const [listing, setListing] = useState<Listing | null>(initialListing);
+  const [payout, setPayout] = useState<PayoutInfo | null>(null);
+  const [loadState, setLoadState] = useState<"ready" | "loading" | "missing">(
+    initialListing ? "ready" : "loading",
+  );
   const [bookedRanges, setBookedRanges] = useState<DateRange[]>(initialBookedRanges);
   const [selection, setSelection] = useState<StaySelection>({});
   const [buying, setBuying] = useState(false);
@@ -46,23 +68,60 @@ export function StayDetail({ listing, initialBookedRanges }: Props) {
     totalUsdc: number;
   } | null>(null);
 
+  const loadListing = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/listings/${listingId}`);
+      if (res.status === 404) {
+        setLoadState("missing");
+        setListing(null);
+        return;
+      }
+      const data = (await res.json()) as {
+        listing?: Listing;
+        bookedRanges?: DateRange[];
+        payout?: PayoutInfo;
+      };
+      if (!data.listing) {
+        setLoadState("missing");
+        return;
+      }
+      setListing(data.listing);
+      if (Array.isArray(data.bookedRanges)) setBookedRanges(data.bookedRanges);
+      if (data.payout) setPayout(data.payout);
+      setLoadState("ready");
+    } catch {
+      setLoadState(initialListing ? "ready" : "missing");
+    }
+  }, [listingId, initialListing]);
+
+  useEffect(() => {
+    void (async () => {
+      await loadListing();
+    })();
+  }, [loadListing]);
+
   const nights =
     selection.checkIn && selection.checkOut
       ? diffDays(selection.checkIn, selection.checkOut)
       : 0;
-  const totalUsdc = nights > 0 ? stayTotal(listing.pricePerNight, nights) : 0;
+  const totalUsdc =
+    listing && nights > 0 ? stayTotal(listing.pricePerNight, nights) : 0;
   const autoLimit = agent.autoLimitUsdc;
   const overLimit = autoLimit != null && totalUsdc > autoLimit && nights > 0;
 
   const refreshAvailability = useCallback(async () => {
     try {
-      const res = await fetch(`/api/listings/${listing.id}`);
-      const data = (await res.json()) as { bookedRanges?: DateRange[] };
+      const res = await fetch(`/api/listings/${listingId}`);
+      const data = (await res.json()) as {
+        bookedRanges?: DateRange[];
+        payout?: PayoutInfo;
+      };
       if (Array.isArray(data.bookedRanges)) setBookedRanges(data.bookedRanges);
+      if (data.payout) setPayout(data.payout);
     } catch {
       // keep the ranges we have
     }
-  }, [listing.id]);
+  }, [listingId]);
 
   const onPurchaseSuccess = useCallback(
     (result: PurchaseResponse) => {
@@ -78,6 +137,7 @@ export function StayDetail({ listing, initialBookedRanges }: Props) {
   );
 
   async function onReserve() {
+    if (!listing) return;
     if (!selection.checkIn || !selection.checkOut) {
       setError("Elegí check-in y check-out en el calendario.");
       return;
@@ -140,6 +200,65 @@ export function StayDetail({ listing, initialBookedRanges }: Props) {
     [bookedRanges],
   );
 
+  if (loadState === "loading") {
+    return (
+      <main className="mx-auto min-h-screen max-w-6xl px-5 pb-10 pt-6 sm:px-8">
+        <Link
+          href="/"
+          className="text-sm font-semibold text-[var(--pine)] underline-offset-2 hover:underline"
+        >
+          ← Volver al catálogo
+        </Link>
+        <p className="mt-10 text-sm text-[var(--muted)]">Cargando alojamiento…</p>
+      </main>
+    );
+  }
+
+  if (!listing || loadState === "missing") {
+    return (
+      <main className="mx-auto min-h-screen max-w-6xl px-5 pb-10 pt-6 sm:px-8">
+        <Link
+          href="/"
+          className="text-sm font-semibold text-[var(--pine)] underline-offset-2 hover:underline"
+        >
+          ← Volver al catálogo
+        </Link>
+        <h1
+          className="mt-8 text-3xl text-[var(--ink)]"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          No encontramos este alojamiento
+        </h1>
+        <p className="mt-3 max-w-lg text-sm leading-relaxed text-[var(--muted)]">
+          Puede que todavía se esté propagando después de publicarlo, o que el
+          enlace sea viejo. Si acabás de publicarlo, esperá un segundo y
+          reintentá.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setLoadState("loading");
+              void loadListing();
+            }}
+            className="bg-[var(--pine)] px-4 py-2 text-sm font-semibold text-white"
+          >
+            Reintentar
+          </button>
+          <Link
+            href="/host"
+            className="border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--ink)]"
+          >
+            Ir al modo anfitrión
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  const payAddress = payout?.address || listing.ownerWalletAddress;
+  const paySource = payout?.source || (listing.source === "host" ? "host" : "marketplace");
+
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-5 pb-10 pt-6 sm:px-8">
       <Link
@@ -156,7 +275,6 @@ export function StayDetail({ listing, initialBookedRanges }: Props) {
       )}
 
       <div className="mt-4 grid gap-8 lg:grid-cols-[minmax(0,1fr)_400px]">
-        {/* Left: the place */}
         <section className="stay-rise">
           <div className="relative overflow-hidden border border-[var(--line)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -200,22 +318,21 @@ export function StayDetail({ listing, initialBookedRanges }: Props) {
 
           <div className="mt-6 border border-[var(--line)] bg-white/45 p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
-              Cobro del anfitrión (x402)
+              Cobro automático (x402 → {payoutLabel(paySource)})
             </p>
             <p className="mt-1.5 break-all font-mono text-xs text-[var(--ink)]">
-              {listing.ownerWalletAddress}
+              {payAddress}
             </p>
             <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">
-              Cuando un agente paga la reserva, el USDC va directo a esta
-              wallet en Base Sepolia
-              {listing.source === "host"
-                ? " (la wallet del anfitrión)."
-                : " (marketplace demo)."}
+              Cuando el agente del huésped paga la reserva, el USDC se liquida
+              directo a esta wallet en Base Sepolia — sin custodia intermedia.
+              {paySource === "marketplace"
+                ? " El anfitrión todavía no registró wallet propia."
+                : " Este es el destino del pago automático al anfitrión."}
             </p>
           </div>
         </section>
 
-        {/* Right: availability + booking */}
         <aside className="stay-rise-delay lg:sticky lg:top-20 lg:self-start">
           <div className="border border-[var(--line)] bg-white/55 p-5">
             <div className="flex items-baseline justify-between">

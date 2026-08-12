@@ -11,7 +11,14 @@ One CDP account (`stay-agent-payer`) pays for everyone. Fine for hackathon demos
 
 ## File / `/tmp` persistence
 
-`lib/agent-limits.ts` and `lib/human-approval.ts` store state under `/tmp` (or local `.data/`). On Vercel serverless this can reset between instances. Enough to demo HITL + tope; not durable. Next step: Redis / KV / DB.
+`lib/agent-limits.ts` and `lib/human-approval.ts` still store state under
+`/tmp` (or local `data/`) on Vercel — can reset between instances.
+
+**Host listings / profiles / bookings** no longer use `/tmp`: they go through
+`lib/demo-store.ts` (Vercel Runtime Cache when `VERCEL=1`, file locally). That
+fixes the post-publish `/stays/[id]` 404. Still ephemeral demo storage — see
+[16-host-payto-verification.md](./16-host-payto-verification.md). Next step for
+everything: Redis / KV / DB.
 
 ## Lean HITL (not official Human-in-the-Loop SDK)
 

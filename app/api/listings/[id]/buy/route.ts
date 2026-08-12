@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withX402 } from "@x402/next";
-import { getListing } from "@/lib/listings";
+import { getListing, resolveListingPayTo } from "@/lib/listings";
 import {
   createBooking,
   isRangeFree,
@@ -11,7 +11,6 @@ import {
 import { isEvmAddress } from "@/lib/host-listings";
 import {
   BASE_SEPOLIA,
-  getMarketplacePayTo,
   getX402ResourceServer,
   shouldSyncFacilitator,
 } from "@/lib/x402-server";
@@ -28,7 +27,7 @@ type Ctx = { params: Promise<{ id: string }> };
  *
  * Without a valid payment → 402 with price = pricePerNight × nights USDC.
  * With payment → locks those nights (booking) and returns the reservation.
- * payTo = host payout wallet for host listings, marketplace wallet for seed.
+ * payTo = resolved host/marketplace wallet (see resolveListingPayTo).
  */
 export async function POST(request: NextRequest, context: Ctx) {
   const { id } = await context.params;
@@ -65,14 +64,14 @@ export async function POST(request: NextRequest, context: Ctx) {
   const guestAgentAddress =
     guestAgentRaw && isEvmAddress(guestAgentRaw) ? guestAgentRaw : undefined;
 
-  let payTo: `0x${string}`;
-  try {
-    payTo = isEvmAddress(listing.ownerWalletAddress)
-      ? (listing.ownerWalletAddress as `0x${string}`)
-      : getMarketplacePayTo();
-  } catch (err) {
+  const payout = await resolveListingPayTo(listing);
+  const payTo = payout.address as `0x${string}`;
+  if (!payout.isEvm) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Marketplace wallet not configured" },
+      {
+        error:
+          "No hay wallet de cobro válida. El anfitrión debe registrar su wallet, o configurá MARKETPLACE_WALLET_ADDRESS.",
+      },
       { status: 500 },
     );
   }
@@ -107,6 +106,7 @@ export async function POST(request: NextRequest, context: Ctx) {
         nights: booking.nights,
         amountUsdc: totalUsdc,
         payTo,
+        payoutSource: payout.source,
         reservedAt: booking.createdAt,
       },
       message: `Reservado: ${listing.title} · ${booking.nights} noche(s)`,

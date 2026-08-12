@@ -15,6 +15,8 @@ export type Listing = {
   ownerWalletAddress: string;
   /** "seed" = demo catalog (marketplace wallet) · "host" = published by a host. */
   source: "seed" | "host";
+  /** Present on host-published listings (used to resolve the host payout wallet). */
+  hostId?: string;
   /**
    * Host-defined windows when the property is offered (half-open, checkout
    * exclusive — same semantics as bookings). Absent/empty = always offered.
