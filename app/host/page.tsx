@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { AvailabilityCalendar } from "@/components/AvailabilityCalendar";
 import { formatDateEs, type DateRange } from "@/lib/dates";
@@ -67,6 +68,7 @@ function shortAddress(address: string): string {
 }
 
 export default function HostPage() {
+  const router = useRouter();
   const [data, setData] = useState<HostData | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formWindows, setFormWindows] = useState<DateRange[]>([]);
@@ -132,6 +134,11 @@ export default function HostPage() {
       setForm(EMPTY_FORM);
       setFormWindows([]);
       await refresh();
+      // Hard navigation so /stays/[id] always hits the server fresh
+      // (avoids soft-nav cache races right after publish).
+      if (payload.publicUrl) {
+        router.push(payload.publicUrl);
+      }
     } catch (err) {
       setMessage({
         ok: false,

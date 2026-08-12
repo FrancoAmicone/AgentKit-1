@@ -1,6 +1,5 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
 import { isEvmAddress } from "./host-listings";
+import { readDemoStore, writeDemoStore } from "./demo-store";
 
 /**
  * Host-level profile: the payout wallet a host registers ONCE and that
@@ -21,32 +20,17 @@ type StoreFile = {
   byHost: Record<string, { payoutAddress?: string; updatedAt: string }>;
 };
 
-function storePath(): string {
-  // Demo-only: Vercel FS is read-only except /tmp (not durable).
-  // See docs/11-demo-tradeoffs.md.
-  if (process.env.VERCEL) {
-    return join("/tmp", "stay-agent-host-profiles.json");
-  }
-  return join(process.cwd(), "data", "host-profiles.json");
-}
+const STORE_NAME = "host-profiles";
+const EMPTY: StoreFile = { byHost: {} };
 
 async function readStore(): Promise<StoreFile> {
-  try {
-    const raw = await readFile(storePath(), "utf8");
-    const parsed = JSON.parse(raw) as StoreFile;
-    if (!parsed?.byHost || typeof parsed.byHost !== "object") {
-      return { byHost: {} };
-    }
-    return parsed;
-  } catch {
-    return { byHost: {} };
-  }
+  const parsed = await readDemoStore<StoreFile>(STORE_NAME, EMPTY);
+  if (!parsed?.byHost || typeof parsed.byHost !== "object") return EMPTY;
+  return parsed;
 }
 
 async function writeStore(store: StoreFile): Promise<void> {
-  const path = storePath();
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, JSON.stringify(store, null, 2), "utf8");
+  await writeDemoStore(STORE_NAME, store);
 }
 
 export async function getHostProfile(hostId: string): Promise<HostProfile | null> {

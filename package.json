@@ -13,6 +13,7 @@
     "@0gfoundation/0g-storage-ts-sdk": "^1.2.11",
     "@coinbase/agentkit": "^0.10.4",
     "@coinbase/cdp-sdk": "^1.54.0",
+    "@vercel/functions": "^3.9.3",
     "@worldcoin/agentkit": "^0.2.0",
     "@worldcoin/idkit-core": "^2.1.0",
     "@x402/core": "^2.20.0",

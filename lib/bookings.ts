@@ -1,6 +1,4 @@
 import { randomBytes } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
 import {
   addDays,
   diffDays,
@@ -11,6 +9,7 @@ import {
   todayStr,
   type DateRange,
 } from "./dates";
+import { readDemoStore, writeDemoStore } from "./demo-store";
 
 /** Longest stay the demo accepts (keeps totals sane on testnet). */
 export const MAX_NIGHTS = 30;
@@ -34,30 +33,16 @@ type StoreFile = {
   bookings: Booking[];
 };
 
-function storePath(): string {
-  // Demo-only: Vercel FS is read-only except /tmp (not durable).
-  // See docs/11-demo-tradeoffs.md.
-  if (process.env.VERCEL) {
-    return join("/tmp", "stay-agent-bookings.json");
-  }
-  return join(process.cwd(), "data", "bookings.json");
-}
+const STORE_NAME = "bookings";
 
 async function readStore(): Promise<StoreFile> {
-  try {
-    const raw = await readFile(storePath(), "utf8");
-    const parsed = JSON.parse(raw) as StoreFile;
-    if (!Array.isArray(parsed?.bookings)) return { bookings: [] };
-    return parsed;
-  } catch {
-    return { bookings: [] };
-  }
+  const parsed = await readDemoStore<StoreFile>(STORE_NAME, { bookings: [] });
+  if (!Array.isArray(parsed?.bookings)) return { bookings: [] };
+  return parsed;
 }
 
 async function writeStore(store: StoreFile): Promise<void> {
-  const path = storePath();
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, JSON.stringify(store, null, 2), "utf8");
+  await writeDemoStore(STORE_NAME, store);
 }
 
 /**

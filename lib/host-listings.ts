@@ -1,7 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
 import { isDateStr, type DateRange } from "./dates";
+import { readDemoStore, writeDemoStore } from "./demo-store";
 import type { Listing } from "./listings-data";
 
 /** A listing published from the host side, owned by an anonymous host session. */
@@ -28,6 +27,7 @@ export type NewHostListingInput = {
 };
 
 const MAX_AVAILABILITY_WINDOWS = 12;
+const STORE_NAME = "host-listings";
 
 /** Validates + normalizes host-provided availability windows (sorted). */
 export function normalizeAvailabilityWindows(
@@ -68,30 +68,14 @@ type StoreFile = {
   listings: HostListing[];
 };
 
-function storePath(): string {
-  // Demo-only: Vercel FS is read-only except /tmp (not durable).
-  // See docs/11-demo-tradeoffs.md.
-  if (process.env.VERCEL) {
-    return join("/tmp", "stay-agent-host-listings.json");
-  }
-  return join(process.cwd(), "data", "host-listings.json");
-}
-
 async function readStore(): Promise<StoreFile> {
-  try {
-    const raw = await readFile(storePath(), "utf8");
-    const parsed = JSON.parse(raw) as StoreFile;
-    if (!Array.isArray(parsed?.listings)) return { listings: [] };
-    return parsed;
-  } catch {
-    return { listings: [] };
-  }
+  const parsed = await readDemoStore<StoreFile>(STORE_NAME, { listings: [] });
+  if (!Array.isArray(parsed?.listings)) return { listings: [] };
+  return parsed;
 }
 
 async function writeStore(store: StoreFile): Promise<void> {
-  const path = storePath();
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, JSON.stringify(store, null, 2), "utf8");
+  await writeDemoStore(STORE_NAME, store);
 }
 
 function slugify(title: string): string {

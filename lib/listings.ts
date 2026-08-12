@@ -1,5 +1,9 @@
 import { LISTINGS_SEED, type Listing, type ListingFilters } from "./listings-data";
-import { getAllHostListings } from "./host-listings";
+import {
+  getAllHostListings,
+  isEvmAddress,
+  type HostListing,
+} from "./host-listings";
 import { getAllHostProfiles } from "./host-profile";
 
 function marketplaceAddress(): string {
@@ -8,6 +12,45 @@ function marketplaceAddress(): string {
     LISTINGS_SEED[0]?.ownerWalletAddress ||
     "0x0000000000000000000000000000000000000001"
   );
+}
+
+export type ListingPayout = {
+  address: string;
+  source: "listing" | "host" | "marketplace";
+  /** True when the address is a real EVM wallet (vs placeholder). */
+  isEvm: boolean;
+};
+
+/**
+ * Where x402 will settle USDC for this listing.
+ * Same resolution used by the /buy route (must stay in sync).
+ */
+export async function resolveListingPayTo(listing: Listing): Promise<ListingPayout> {
+  const fallback = marketplaceAddress();
+
+  if (listing.source === "host") {
+    const hostListing = listing as HostListing;
+    if (hostListing.payoutAddress && isEvmAddress(hostListing.payoutAddress)) {
+      return {
+        address: hostListing.payoutAddress,
+        source: "listing",
+        isEvm: true,
+      };
+    }
+    if (hostListing.hostId) {
+      const profiles = await getAllHostProfiles();
+      const hostWallet = profiles.get(hostListing.hostId)?.payoutAddress;
+      if (hostWallet && isEvmAddress(hostWallet)) {
+        return { address: hostWallet, source: "host", isEvm: true };
+      }
+    }
+  }
+
+  return {
+    address: fallback,
+    source: "marketplace",
+    isEvm: isEvmAddress(fallback),
+  };
 }
 
 /**
@@ -19,11 +62,11 @@ function marketplaceAddress(): string {
  *   3. marketplace wallet (single-wallet default)
  */
 export async function getAllListings(): Promise<Listing[]> {
-  const fallbackPayTo = marketplaceAddress();
   const [hostListings, hostProfiles] = await Promise.all([
     getAllHostListings(),
     getAllHostProfiles(),
   ]);
+  const fallbackPayTo = marketplaceAddress();
   const host = hostListings.map((l) => ({
     ...l,
     ownerWalletAddress:

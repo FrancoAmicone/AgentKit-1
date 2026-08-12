@@ -152,6 +152,18 @@ Ver [15-host-payouts-and-availability.md](./15-host-payouts-and-availability.md)
 
 ---
 
+## Host payTo verification + stay 404 fix
+
+Ver [16-host-payto-verification.md](./16-host-payto-verification.md).
+
+- [x] Shared `lib/demo-store.ts` (file local / Vercel Runtime Cache) for host listings, profiles, bookings
+- [x] Stay page soft-load (no hard `notFound`); client refetch + retry
+- [x] Publish → `router.push` to `/stays/[id]`
+- [x] `resolveListingPayTo` shared by listing API + `/buy`; UI shows “Cobro automático → wallet del anfitrión”
+- [ ] Probar pago real testnet al wallet del host (CDP keys + USDC Base Sepolia)
+
+---
+
 ## Fase 4 — Discovery (stretch)
 
 - [ ] Bazaar / agentic.market
