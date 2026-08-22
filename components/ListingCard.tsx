@@ -27,7 +27,7 @@ export function ListingCard({ listing, index = 0 }: Props) {
   return (
     <Link
       href={`/stays/${listing.id}`}
-      className="stay-rise group block overflow-hidden border border-[var(--line)] bg-white/55 transition duration-300 hover:border-[var(--pine)]/30 hover:bg-white/80"
+      className="stay-rise group block overflow-hidden border border-[var(--line)] bg-[var(--surface)] transition duration-300 hover:border-[var(--pine)]/30 hover:bg-[var(--surface-strong)]"
       style={{ animationDelay: `${Math.min(index, 6) * 0.05}s` }}
     >
       <div className="relative overflow-hidden">
@@ -59,7 +59,7 @@ export function ListingCard({ listing, index = 0 }: Props) {
           ★ {listing.rating} · {listing.amenities.slice(0, 3).join(" · ")}
         </p>
         {listing.matchReason && (
-          <p className="mt-3 text-sm text-[var(--pine-deep)]">
+          <p className="mt-3 text-sm text-[var(--pine)]">
             {listing.matchReason}
           </p>
         )}

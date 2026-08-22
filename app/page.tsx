@@ -94,7 +94,7 @@ export default function HomePage() {
 
       {/* Two sides */}
       <section className="stay-rise-delay mb-10 grid gap-4 sm:grid-cols-2">
-        <div className="border border-[var(--line)] bg-white/55 p-5">
+        <div className="border border-[var(--line)] bg-[var(--surface)] p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--pine)]">
             Soy huésped
           </p>
@@ -115,7 +115,7 @@ export default function HomePage() {
             Buscar estadía
           </a>
         </div>
-        <div className="border border-[var(--line)] bg-white/55 p-5">
+        <div className="border border-[var(--line)] bg-[var(--surface)] p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--clay)]">
             Soy anfitrión
           </p>
@@ -142,7 +142,7 @@ export default function HomePage() {
       <form
         id="buscar"
         onSubmit={onSearch}
-        className="stay-rise-delay mb-3 flex scroll-mt-24 flex-col gap-3 border border-[var(--line)] bg-white/55 p-2 backdrop-blur-sm sm:flex-row sm:items-stretch"
+        className="stay-rise-delay mb-3 flex scroll-mt-24 flex-col gap-3 border border-[var(--line)] bg-[var(--surface)] p-2 backdrop-blur-sm sm:flex-row sm:items-stretch"
       >
         <input
           value={query}
@@ -169,7 +169,7 @@ export default function HomePage() {
               setQuery(s);
               void runSearch(s);
             }}
-            className="border border-[var(--line)] bg-white/40 px-3 py-1.5 text-xs text-[var(--muted)] transition hover:border-[var(--pine)]/35 hover:text-[var(--pine-deep)]"
+            className="border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--muted)] transition hover:border-[var(--pine)]/35 hover:text-[var(--pine)]"
           >
             {s}
           </button>

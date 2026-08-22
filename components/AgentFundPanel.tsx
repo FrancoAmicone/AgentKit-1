@@ -70,7 +70,7 @@ export function AgentFundPanel({
         desde MetaMask u otra wallet. Solo fondeo — el agente firma después.
       </p>
 
-      <div className="break-all border border-[var(--line)] bg-white/80 px-3 py-3 font-mono text-xs text-[var(--ink)]">
+      <div className="break-all border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-3 font-mono text-xs text-[var(--ink)]">
         {address}
       </div>
 
@@ -86,7 +86,7 @@ export function AgentFundPanel({
           type="button"
           onClick={onRefresh}
           disabled={refreshing}
-          className="border border-[var(--line)] bg-white px-3 py-2 text-xs font-semibold text-[var(--ink)] disabled:opacity-60"
+          className="border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2 text-xs font-semibold text-[var(--ink)] disabled:opacity-60"
         >
           {refreshing ? "Actualizando…" : "Actualizar saldo"}
         </button>
@@ -110,7 +110,7 @@ export function AgentFundPanel({
             alt="QR address del agente"
             width={168}
             height={168}
-            className="border border-[var(--line)] bg-white p-2"
+            className="border border-[var(--line)] bg-[var(--surface-strong)] p-2"
           />
         )}
         <div>
@@ -127,7 +127,7 @@ export function AgentFundPanel({
             )}
           </p>
           {balances?.funded ? (
-            <p className="mt-1 text-xs font-medium text-[var(--pine-deep)]">
+            <p className="mt-1 text-xs font-medium text-[var(--pine)]">
               Fondos OK — siguiente: World
             </p>
           ) : (

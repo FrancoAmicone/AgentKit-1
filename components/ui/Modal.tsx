@@ -52,7 +52,7 @@ export function Modal({
       <button
         type="button"
         aria-label="Cerrar"
-        className="absolute inset-0 bg-[rgba(26,36,33,0.72)]"
+        className="absolute inset-0 bg-[rgba(2,6,12,0.78)] backdrop-blur-[2px]"
         onClick={() => {
           if (closeOnScrim) onClose();
         }}
@@ -61,7 +61,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className={`relative isolate max-h-[min(92vh,720px)] w-full overflow-y-auto rounded-t-2xl border border-[var(--line)] bg-[var(--paper)] shadow-[0_24px_80px_rgba(26,36,33,0.45)] sm:rounded-xl ${
+        className={`relative isolate max-h-[min(92vh,720px)] w-full overflow-y-auto rounded-t-2xl border border-[var(--line)] bg-[var(--sand)] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-xl ${
           size === "lg" ? "max-w-lg p-5 sm:p-6" : "max-w-md"
         }`}
         style={{ zIndex: 10001 }}

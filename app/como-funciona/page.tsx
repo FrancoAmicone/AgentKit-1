@@ -103,9 +103,9 @@ export default function ComoFuncionaPage() {
           {BUYER_STEPS.map((step) => (
             <div
               key={step.title}
-              className="border border-[var(--line)] bg-white/55 p-5"
+              className="border border-[var(--line)] bg-[var(--surface)] p-5"
             >
-              <h3 className="text-sm font-semibold text-[var(--pine-deep)]">
+              <h3 className="text-sm font-semibold text-[var(--pine)]">
                 {step.title}
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
@@ -130,7 +130,7 @@ export default function ComoFuncionaPage() {
           {HOST_STEPS.map((step) => (
             <div
               key={step.title}
-              className="border border-[var(--line)] bg-white/55 p-5"
+              className="border border-[var(--line)] bg-[var(--surface)] p-5"
             >
               <h3 className="text-sm font-semibold text-[var(--clay)]">
                 {step.title}
@@ -150,7 +150,7 @@ export default function ComoFuncionaPage() {
         >
           Las piezas
         </h2>
-        <div className="mt-5 overflow-hidden border border-[var(--line)] bg-white/55">
+        <div className="mt-5 overflow-hidden border border-[var(--line)] bg-[var(--surface)]">
           {TECH.map((item, i) => (
             <div
               key={item.name}

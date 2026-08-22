@@ -136,8 +136,8 @@ export function AgentSetupModal({
                 step === id
                   ? "border-[var(--pine)] bg-[var(--pine)] text-white"
                   : done
-                    ? "border-[var(--pine)]/25 bg-[var(--pine)]/10 text-[var(--pine-deep)]"
-                    : "border-[var(--line)] bg-white/40 text-[var(--muted)]"
+                    ? "border-[var(--pine)]/25 bg-[var(--pine)]/10 text-[var(--pine)]"
+                    : "border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]"
               }`}
             >
               {done && step !== id ? "✓ " : ""}
@@ -169,7 +169,7 @@ export function AgentSetupModal({
             {creating ? "Creando…" : "Crear mi agente"}
           </button>
           {createMessage && (
-            <p className="mt-3 text-xs text-[var(--pine-deep)]">{createMessage}</p>
+            <p className="mt-3 text-xs text-[var(--pine)]">{createMessage}</p>
           )}
         </section>
       )}
@@ -195,7 +195,7 @@ export function AgentSetupModal({
       {step === "tope" && (
         <section className="stay-fade">
           {registered && (
-            <p className="mb-4 text-sm text-[var(--pine-deep)]">
+            <p className="mb-4 text-sm text-[var(--pine)]">
               Human-backed ✓ — definí hasta cuánto puede pagar solo.
             </p>
           )}
@@ -213,7 +213,7 @@ export function AgentSetupModal({
                 value={limitInput}
                 onChange={(e) => onLimitInputChange(e.target.value)}
                 disabled={!limitsInfo?.canEdit && needsRegister}
-                className="w-36 border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--pine)] focus:ring-2 disabled:opacity-50"
+                className="w-36 border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2.5 text-sm outline-none ring-[var(--pine)] focus:ring-2 disabled:opacity-50"
               />
               <span className="text-sm text-[var(--muted)]">USDC</span>
               <button
@@ -228,7 +228,7 @@ export function AgentSetupModal({
               Actual: {autoLimit != null ? `$${autoLimit} USDC` : "…"}
             </p>
             {limitMessage && (
-              <p className="text-xs font-medium text-[var(--pine-deep)]">
+              <p className="text-xs font-medium text-[var(--pine)]">
                 {limitMessage}
               </p>
             )}
@@ -281,7 +281,7 @@ export function StatusBadge({
     "inline-flex rounded-sm px-2 py-0.5 text-[11px] font-semibold " + className;
   if (!status) {
     return (
-      <span className={`${base} bg-black/5 text-[var(--muted)]`}>Checando…</span>
+      <span className={`${base} bg-white/5 text-[var(--muted)]`}>Checando…</span>
     );
   }
   if (status.needsCreate) {
@@ -300,12 +300,12 @@ export function StatusBadge({
   }
   if (!status.required) {
     return (
-      <span className={`${base} bg-black/5 text-[var(--muted)]`}>Gate off</span>
+      <span className={`${base} bg-white/5 text-[var(--muted)]`}>Gate off</span>
     );
   }
   if (status.registered) {
     return (
-      <span className={`${base} bg-[var(--pine)]/15 text-[var(--pine-deep)]`}>
+      <span className={`${base} bg-[var(--pine)]/15 text-[var(--pine)]`}>
         Human-backed
       </span>
     );

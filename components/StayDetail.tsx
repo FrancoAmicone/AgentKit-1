@@ -305,7 +305,7 @@ export function StayDetail({
             {listing.amenities.map((a) => (
               <span
                 key={a}
-                className="border border-[var(--line)] bg-white/50 px-2.5 py-1 text-xs text-[var(--muted)]"
+                className="border border-[var(--line)] bg-[var(--surface)] px-2.5 py-1 text-xs text-[var(--muted)]"
               >
                 {a}
               </span>
@@ -316,7 +316,7 @@ export function StayDetail({
             {listing.description}
           </p>
 
-          <div className="mt-6 border border-[var(--line)] bg-white/45 p-4">
+          <div className="mt-6 border border-[var(--line)] bg-[var(--surface)] p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
               Cobro automático (x402 → {payoutLabel(paySource)})
             </p>
@@ -334,7 +334,7 @@ export function StayDetail({
         </section>
 
         <aside className="stay-rise-delay lg:sticky lg:top-20 lg:self-start">
-          <div className="border border-[var(--line)] bg-white/55 p-5">
+          <div className="border border-[var(--line)] bg-[var(--surface)] p-5">
             <div className="flex items-baseline justify-between">
               <p className="text-2xl font-semibold text-[var(--ink)]">
                 ${listing.pricePerNight}
