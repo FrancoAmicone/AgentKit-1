@@ -1,39 +1,69 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@500;600;700&display=swap");
 @import "tailwindcss";
 
+/**
+ * Dark tech theme.
+ * Tokens keep the same names (--ink, --paper, --pine…) so existing
+ * components flip with the palette. --surface replaces hard-coded white panels.
+ */
 :root {
-  --ink: #1a2421;
-  --muted: #5c6b66;
-  --paper: #f3efe6;
-  --sand: #e4d8c4;
-  --pine: #1f6f5b;
-  --pine-deep: #145043;
-  --clay: #c45c26;
-  --line: rgba(26, 36, 33, 0.12);
-  --ok: #1f6f5b;
-  --danger: #a33b2b;
-  --glow: rgba(31, 111, 91, 0.14);
+  --ink: #e8eef7;
+  --muted: #8b9bb0;
+  --paper: #070b12;
+  --sand: #121a26;
+  --surface: rgba(16, 24, 38, 0.78);
+  --surface-strong: rgba(22, 32, 48, 0.92);
+  --pine: #2ec4b6;
+  --pine-deep: #1a9e93;
+  --clay: #f0a35e;
+  --line: rgba(148, 178, 210, 0.14);
+  --ok: #2ec4b6;
+  --danger: #f07178;
+  --glow: rgba(46, 196, 182, 0.16);
+  --grid: rgba(148, 178, 210, 0.055);
 }
 
 @theme inline {
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--paper);
   --color-foreground: var(--ink);
 }
 
 body {
   background:
-    radial-gradient(1100px 520px at 8% -8%, #f6e4c4 0%, transparent 58%),
-    radial-gradient(900px 480px at 96% 4%, #d5ebe3 0%, transparent 52%),
-    linear-gradient(180deg, #f7f3ea 0%, var(--paper) 42%, #efe8da 100%);
+    radial-gradient(900px 480px at 12% -10%, rgba(46, 196, 182, 0.12) 0%, transparent 55%),
+    radial-gradient(800px 420px at 92% 8%, rgba(56, 120, 220, 0.1) 0%, transparent 50%),
+    linear-gradient(180deg, #0a101a 0%, var(--paper) 45%, #05080e 100%);
+  background-attachment: fixed;
   color: var(--ink);
+  color-scheme: dark;
   font-family: var(--font-sans);
   min-height: 100vh;
 }
 
+/* Subtle tech grid over the page atmosphere */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 20%, #000 20%, transparent 75%);
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
 ::selection {
-  background: rgba(31, 111, 91, 0.22);
+  background: rgba(46, 196, 182, 0.28);
+  color: #fff;
 }
 
 @keyframes stay-rise {

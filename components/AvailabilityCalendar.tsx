@@ -119,7 +119,7 @@ export function AvailabilityCalendar({
           onClick={() => setOffset((o) => Math.max(0, o - 1))}
           disabled={offset === 0}
           aria-label="Mes anterior"
-          className="border border-[var(--line)] bg-white/60 px-2.5 py-1 text-sm text-[var(--ink)] transition hover:bg-white disabled:opacity-40"
+          className="border border-[var(--line)] bg-[var(--surface)] px-2.5 py-1 text-sm text-[var(--ink)] transition hover:bg-[var(--surface-strong)] disabled:opacity-40"
         >
           ←
         </button>
@@ -130,7 +130,7 @@ export function AvailabilityCalendar({
           type="button"
           onClick={() => setOffset((o) => Math.min(11, o + 1))}
           aria-label="Mes siguiente"
-          className="border border-[var(--line)] bg-white/60 px-2.5 py-1 text-sm text-[var(--ink)] transition hover:bg-white disabled:opacity-40"
+          className="border border-[var(--line)] bg-[var(--surface)] px-2.5 py-1 text-sm text-[var(--ink)] transition hover:bg-[var(--surface-strong)] disabled:opacity-40"
         >
           →
         </button>
@@ -184,11 +184,11 @@ export function AvailabilityCalendar({
                     cls +=
                       "bg-[var(--danger)]/10 text-[var(--danger)]/70 line-through";
                   } else if (closed) {
-                    cls += "bg-black/[0.05] text-[var(--muted)]/50";
+                    cls += "bg-white/[0.04] text-[var(--muted)]/50";
                   } else if (isCheckIn || isCheckOut) {
                     cls += "bg-[var(--pine)] font-semibold text-white";
                   } else if (inRange) {
-                    cls += "bg-[var(--pine)]/20 text-[var(--pine-deep)]";
+                    cls += "bg-[var(--pine)]/20 text-[var(--pine)]";
                   } else if (selectable) {
                     cls +=
                       "cursor-pointer text-[var(--ink)] hover:bg-[var(--pine)]/15";
@@ -228,7 +228,7 @@ export function AvailabilityCalendar({
         </span>
         {hasWindows && (
           <span className="inline-flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 bg-black/[0.07]" />
+            <span className="inline-block h-3 w-3 bg-white/[0.06]" />
             No ofrecido
           </span>
         )}
@@ -237,7 +237,7 @@ export function AvailabilityCalendar({
           Tu selección
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 border border-[var(--line)] bg-white/70" />
+          <span className="inline-block h-3 w-3 border border-[var(--line)] bg-[var(--surface-strong)]" />
           Libre
         </span>
       </div>

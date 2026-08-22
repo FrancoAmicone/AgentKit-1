@@ -276,7 +276,7 @@ export function PurchaseApprovalModal({
               <button
                 type="button"
                 onClick={close}
-                className="flex-1 rounded-xl border border-[var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[var(--ink)]"
+                className="flex-1 rounded-xl border border-[var(--line)] bg-[var(--surface-strong)] px-4 py-3 text-sm font-semibold text-[var(--ink)]"
               >
                 No, cancelar
               </button>
@@ -312,7 +312,7 @@ export function PurchaseApprovalModal({
               <button
                 type="button"
                 onClick={close}
-                className="shrink-0 rounded-lg px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-black/5"
+                className="shrink-0 rounded-lg px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-white/5"
               >
                 Cerrar
               </button>
@@ -349,7 +349,7 @@ export function PurchaseApprovalModal({
             )}
 
             {phase === "done" && (
-              <p className="text-sm font-medium text-[var(--pine-deep)]">
+              <p className="text-sm font-medium text-[var(--pine)]">
                 Reserva pagada con tu aprobación.
               </p>
             )}

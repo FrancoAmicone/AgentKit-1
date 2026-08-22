@@ -178,7 +178,7 @@ export default function HostPage() {
 
           <form
             onSubmit={onPublish}
-            className="border border-[var(--line)] bg-white/55 p-5"
+            className="border border-[var(--line)] bg-[var(--surface)] p-5"
           >
             <h2
               className="text-xl text-[var(--ink)]"
@@ -193,7 +193,7 @@ export default function HostPage() {
                 onChange={(e) => setField("title", e.target.value)}
                 placeholder="Cabaña con vista al valle"
                 required
-                className="w-full border border-[var(--line)] bg-white/70 px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
+                className="w-full border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
               />
             </Field>
 
@@ -203,7 +203,7 @@ export default function HostPage() {
                 onChange={(e) => setField("location", e.target.value)}
                 placeholder="Tafí del Valle, Tucumán"
                 required
-                className="w-full border border-[var(--line)] bg-white/70 px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
+                className="w-full border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
               />
             </Field>
 
@@ -214,7 +214,7 @@ export default function HostPage() {
                 placeholder="Contá qué hace especial a tu lugar…"
                 required
                 rows={3}
-                className="w-full resize-y border border-[var(--line)] bg-white/70 px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
+                className="w-full resize-y border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
               />
             </Field>
 
@@ -227,7 +227,7 @@ export default function HostPage() {
                   min="0.01"
                   step="0.01"
                   required
-                  className="w-full border border-[var(--line)] bg-white/70 px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
+                  className="w-full border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
                 />
               </Field>
               <Field label="Huéspedes máx.">
@@ -238,7 +238,7 @@ export default function HostPage() {
                   min="1"
                   max="20"
                   required
-                  className="w-full border border-[var(--line)] bg-white/70 px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
+                  className="w-full border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
                 />
               </Field>
             </div>
@@ -248,7 +248,7 @@ export default function HostPage() {
                 value={form.amenities}
                 onChange={(e) => setField("amenities", e.target.value)}
                 placeholder="wifi, pileta, parrilla"
-                className="w-full border border-[var(--line)] bg-white/70 px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
+                className="w-full border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
               />
             </Field>
 
@@ -257,7 +257,7 @@ export default function HostPage() {
                 value={form.imageUrl}
                 onChange={(e) => setField("imageUrl", e.target.value)}
                 placeholder="https://…"
-                className="w-full border border-[var(--line)] bg-white/70 px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
+                className="w-full border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
               />
             </Field>
 
@@ -273,7 +273,7 @@ export default function HostPage() {
                 value={form.payoutAddress}
                 onChange={(e) => setField("payoutAddress", e.target.value)}
                 placeholder="0x… (si no, aplica tu wallet de anfitrión)"
-                className="w-full border border-[var(--line)] bg-white/70 px-3 py-2 font-mono text-xs text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
+                className="w-full border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2 font-mono text-xs text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
               />
             </Field>
 
@@ -288,7 +288,7 @@ export default function HostPage() {
             {message && (
               <p
                 className={`mt-3 text-sm ${
-                  message.ok ? "text-[var(--pine-deep)]" : "text-[var(--danger)]"
+                  message.ok ? "text-[var(--pine)]" : "text-[var(--danger)]"
                 }`}
               >
                 {message.text}
@@ -323,7 +323,7 @@ export default function HostPage() {
           </div>
 
           {data && listings.length === 0 && (
-            <div className="border border-dashed border-[var(--line)] bg-white/30 p-8 text-center">
+            <div className="border border-dashed border-[var(--line)] bg-[var(--surface)] p-8 text-center">
               <p className="text-sm text-[var(--muted)]">
                 Todavía no publicaste nada en este navegador.
                 <br />
@@ -398,7 +398,7 @@ function WalletPanel({
   }
 
   return (
-    <div className="border border-[var(--line)] bg-white/55 p-5">
+    <div className="border border-[var(--line)] bg-[var(--surface)] p-5">
       <h2
         className="text-xl text-[var(--ink)]"
         style={{ fontFamily: "var(--font-display)" }}
@@ -434,7 +434,7 @@ function WalletPanel({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="0x…"
-          className="min-w-0 flex-1 border border-[var(--line)] bg-white/70 px-3 py-2 font-mono text-xs text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
+          className="min-w-0 flex-1 border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2 font-mono text-xs text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
           aria-label="Wallet de cobro del anfitrión"
         />
         <button
@@ -460,7 +460,7 @@ function WalletPanel({
       {note && (
         <p
           className={`mt-2 text-xs ${
-            note.ok ? "text-[var(--pine-deep)]" : "text-[var(--danger)]"
+            note.ok ? "text-[var(--pine)]" : "text-[var(--danger)]"
           }`}
         >
           {note.text}
@@ -510,7 +510,7 @@ function WindowsEditor({
           {windows.map((w, i) => (
             <li
               key={`${w.checkIn}-${w.checkOut}-${i}`}
-              className="flex items-center justify-between gap-2 border border-[var(--line)] bg-white/60 px-2.5 py-1.5 text-xs text-[var(--ink)]"
+              className="flex items-center justify-between gap-2 border border-[var(--line)] bg-[var(--surface)] px-2.5 py-1.5 text-xs text-[var(--ink)]"
             >
               <span>
                 {formatDateEs(w.checkIn)} → {formatDateEs(w.checkOut)}
@@ -534,7 +534,7 @@ function WindowsEditor({
           value={from}
           onChange={(e) => setFrom(e.target.value)}
           aria-label="Disponible desde"
-          className="border border-[var(--line)] bg-white/70 px-2 py-1.5 text-xs text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
+          className="border border-[var(--line)] bg-[var(--surface-strong)] px-2 py-1.5 text-xs text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
         />
         <span className="text-xs text-[var(--muted)]">→</span>
         <input
@@ -542,7 +542,7 @@ function WindowsEditor({
           value={to}
           onChange={(e) => setTo(e.target.value)}
           aria-label="Disponible hasta (checkout)"
-          className="border border-[var(--line)] bg-white/70 px-2 py-1.5 text-xs text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
+          className="border border-[var(--line)] bg-[var(--surface-strong)] px-2 py-1.5 text-xs text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
         />
         <button
           type="button"
@@ -599,7 +599,7 @@ function PropertyCard({
         : "Cobra en la wallet del marketplace (registrá tu wallet arriba)";
 
   return (
-    <article className="overflow-hidden border border-[var(--line)] bg-white/55">
+    <article className="overflow-hidden border border-[var(--line)] bg-[var(--surface)]">
       <div className="flex flex-col gap-0 sm:flex-row">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -688,7 +688,7 @@ function PropertyCard({
               {listing.bookings.map((b) => (
                 <li
                   key={b.id}
-                  className="border border-[var(--line)] bg-white/60 px-3 py-2 text-xs"
+                  className="border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs"
                 >
                   <p className="font-semibold text-[var(--ink)]">
                     {formatDateEs(b.checkIn)} → {formatDateEs(b.checkOut)} ·{" "}

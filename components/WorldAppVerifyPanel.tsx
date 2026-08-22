@@ -28,7 +28,7 @@ export function WorldAppVerifyPanel({
         Abrir World App
       </a>
       {qrDataUrl && (
-        <div className="border border-[var(--line)] bg-white p-3">
+        <div className="border border-[var(--line)] bg-[var(--surface-strong)] p-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={qrDataUrl}

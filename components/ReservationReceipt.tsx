@@ -49,7 +49,7 @@ export function ReservationReceipt({
           Reserva confirmada
         </p>
         <h2
-          className="mt-1 text-3xl leading-tight text-[var(--pine-deep)]"
+          className="mt-1 text-3xl leading-tight text-[var(--pine)]"
           style={{ fontFamily: "var(--font-display)" }}
         >
           {purchase.listing?.title || "Listo"}
@@ -61,7 +61,7 @@ export function ReservationReceipt({
           {when ? ` · ${when}` : ""}
         </p>
         {purchase.stay && (
-          <p className="mt-1 text-sm font-medium text-[var(--pine-deep)]">
+          <p className="mt-1 text-sm font-medium text-[var(--pine)]">
             {formatDateEs(purchase.stay.checkIn)} →{" "}
             {formatDateEs(purchase.stay.checkOut)} · {purchase.stay.nights}{" "}
             noche{purchase.stay.nights === 1 ? "" : "s"}
