@@ -8,7 +8,12 @@ import {
   waitForWorldBridgeProof,
 } from "@/lib/world-bridge";
 import { formatWorldIdError } from "@/lib/world-id-errors";
-import { isMobileDevice } from "@/lib/world-app-link";
+import {
+  closeReservedWindow,
+  isMobileDevice,
+  navigateWorldAppWindow,
+  reserveWorldAppWindow,
+} from "@/lib/world-app-link";
 
 type ListingInfo = {
   id: string;
@@ -60,7 +65,7 @@ type Props = {
  * HITL modal:
  * 1) Sí/No confirm
  * 2) Prepare World Bridge session (async)
- * 3) User taps a single <a> to open World App (fresh gesture) OR scans QR
+ * 3) Mobile: open World App directly (no QR). Desktop: <a> / QR
  * 4) Poll until proof → one-time token → purchase
  *
  * Parent should remount with `key={listing.id}` so local state resets cleanly
@@ -78,8 +83,10 @@ export function PurchaseApprovalModal({
   const [message, setMessage] = useState<string | null>(null);
   const [connectorURI, setConnectorURI] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [openedViaReserve, setOpenedViaReserve] = useState(false);
   const startingRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
+  const reservedWinRef = useRef<Window | null>(null);
 
   const abortInFlight = useCallback(() => {
     abortRef.current?.abort();
@@ -91,15 +98,21 @@ export function PurchaseApprovalModal({
     if (!open) {
       abortInFlight();
       startingRef.current = false;
+      closeReservedWindow(reservedWinRef.current);
+      reservedWinRef.current = null;
     }
     return () => {
       abortInFlight();
       startingRef.current = false;
+      closeReservedWindow(reservedWinRef.current);
+      reservedWinRef.current = null;
     };
   }, [open, abortInFlight]);
 
   const close = useCallback(() => {
     abortInFlight();
+    closeReservedWindow(reservedWinRef.current);
+    reservedWinRef.current = null;
     startingRef.current = false;
     onClose();
   }, [abortInFlight, onClose]);
@@ -110,6 +123,10 @@ export function PurchaseApprovalModal({
     startingRef.current = true;
     const ac = new AbortController();
     abortRef.current = ac;
+
+    closeReservedWindow(reservedWinRef.current);
+    reservedWinRef.current = isMobileDevice() ? reserveWorldAppWindow() : null;
+    setOpenedViaReserve(false);
 
     setPhase("preparing");
     setMessage(null);
@@ -134,6 +151,8 @@ export function PurchaseApprovalModal({
 
       // Server says under tope again — pay without World (race / limit changed).
       if (!prep.approvalNeeded) {
+        closeReservedWindow(reservedWinRef.current);
+        reservedWinRef.current = null;
         setPhase("purchasing");
         const buyRes = await fetch("/api/agent/purchase", {
           method: "POST",
@@ -161,7 +180,7 @@ export function PurchaseApprovalModal({
       setPhase("waiting");
       setMessage(
         isMobileDevice()
-          ? "Tocá una sola vez “Abrir World App”, o escaneá el QR desde la app."
+          ? "Abrimos World App en este teléfono. Si no la tenés, usá el link de la tienda."
           : "Escaneá el QR con World App. Esta ventana se queda esperando.",
       );
 
@@ -178,6 +197,15 @@ export function PurchaseApprovalModal({
         {
           signal: ac.signal,
           onReady: ({ connectorURI: uri, qrDataUrl: qr }) => {
+            const reserved = reservedWinRef.current;
+            reservedWinRef.current = null;
+            let opened = false;
+            if (isMobileDevice()) {
+              opened = navigateWorldAppWindow(reserved, uri);
+            } else {
+              closeReservedWindow(reserved);
+            }
+            setOpenedViaReserve(opened);
             setConnectorURI(uri);
             setQrDataUrl(qr);
           },
@@ -218,6 +246,8 @@ export function PurchaseApprovalModal({
       setMessage("Reserva pagada con tu aprobación.");
       onApprovedPurchase(buy);
     } catch (err) {
+      closeReservedWindow(reservedWinRef.current);
+      reservedWinRef.current = null;
       if (isAbortError(err) || ac.signal.aborted) return;
       setPhase("error");
       setMessage(formatWorldIdError(err));
@@ -328,13 +358,14 @@ export function PurchaseApprovalModal({
               <>
                 <p className="text-sm text-[var(--muted)]">
                   {isMobileDevice()
-                    ? "Quedate en esta pantalla. Abrí World App una sola vez con el botón, o escaneá el QR desde la app instalada."
+                    ? "Quedate en esta pantalla. World App debería abrirse sola; si no, usá los botones de abajo."
                     : "Escaneá el QR con World App. StayAgent espera acá."}
                 </p>
                 {connectorURI && (
                   <WorldAppVerifyPanel
                     deepLink={connectorURI}
                     qrDataUrl={qrDataUrl}
+                    autoOpen={!openedViaReserve}
                   />
                 )}
               </>

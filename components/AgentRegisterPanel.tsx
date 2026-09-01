@@ -7,6 +7,12 @@ import {
   waitForWorldBridgeProof,
 } from "@/lib/world-bridge";
 import { formatWorldIdError } from "@/lib/world-id-errors";
+import {
+  closeReservedWindow,
+  isMobileDevice,
+  navigateWorldAppWindow,
+  reserveWorldAppWindow,
+} from "@/lib/world-app-link";
 
 type PrepareResponse = {
   ok: boolean;
@@ -47,23 +53,34 @@ export function AgentRegisterPanel({
   const [message, setMessage] = useState<string | null>(null);
   const [connectorURI, setConnectorURI] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [openedViaReserve, setOpenedViaReserve] = useState(false);
   const startingRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
+  const reservedWinRef = useRef<Window | null>(null);
 
   const abortInFlight = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
   }, []);
 
-  useEffect(() => () => abortInFlight(), [abortInFlight]);
+  useEffect(() => {
+    return () => {
+      abortInFlight();
+      closeReservedWindow(reservedWinRef.current);
+      reservedWinRef.current = null;
+    };
+  }, [abortInFlight]);
 
   const reset = useCallback(() => {
     abortInFlight();
+    closeReservedWindow(reservedWinRef.current);
+    reservedWinRef.current = null;
     startingRef.current = false;
     setPhase("idle");
     setMessage(null);
     setConnectorURI(null);
     setQrDataUrl(null);
+    setOpenedViaReserve(false);
   }, [abortInFlight]);
 
   const startRegistration = useCallback(async () => {
@@ -72,6 +89,12 @@ export function AgentRegisterPanel({
     abortInFlight();
     const ac = new AbortController();
     abortRef.current = ac;
+
+    // Reserve a window in the tap gesture so mobile can open World without a
+    // second click (post-await window.open is often blocked).
+    closeReservedWindow(reservedWinRef.current);
+    reservedWinRef.current = isMobileDevice() ? reserveWorldAppWindow() : null;
+    setOpenedViaReserve(false);
 
     setPhase("preparing");
     setMessage(null);
@@ -88,6 +111,8 @@ export function AgentRegisterPanel({
       }
 
       if (prep.alreadyRegistered) {
+        closeReservedWindow(reservedWinRef.current);
+        reservedWinRef.current = null;
         setPhase("done");
         setMessage("El agente ya está registrado en AgentBook.");
         onRegistered();
@@ -112,6 +137,15 @@ export function AgentRegisterPanel({
         {
           signal: ac.signal,
           onReady: ({ connectorURI: uri, qrDataUrl: qr }) => {
+            const reserved = reservedWinRef.current;
+            reservedWinRef.current = null;
+            let opened = false;
+            if (isMobileDevice()) {
+              opened = navigateWorldAppWindow(reserved, uri);
+            } else {
+              closeReservedWindow(reserved);
+            }
+            setOpenedViaReserve(opened);
             setConnectorURI(uri);
             setQrDataUrl(qr);
           },
@@ -140,6 +174,8 @@ export function AgentRegisterPanel({
       );
       onRegistered();
     } catch (err) {
+      closeReservedWindow(reservedWinRef.current);
+      reservedWinRef.current = null;
       if (isAbortError(err) || ac.signal.aborted) return;
       setPhase("error");
       setMessage(formatWorldIdError(err));
@@ -153,13 +189,24 @@ export function AgentRegisterPanel({
 
   const busy =
     phase === "preparing" || phase === "waiting" || phase === "submitting";
+  const mobile = isMobileDevice();
 
   return (
     <div className="space-y-4 text-sm text-[var(--ink)]">
       <p className="leading-relaxed text-[var(--muted)]">
-        Preparamos la verificación; después abrís World App{" "}
-        <strong className="text-[var(--ink)]">una sola vez</strong> o escaneás
-        el QR.
+        {mobile ? (
+          <>
+            Preparamos la verificación y abrimos{" "}
+            <strong className="text-[var(--ink)]">World App</strong> en este
+            teléfono. Si no la tenés, te mandamos a la tienda.
+          </>
+        ) : (
+          <>
+            Preparamos la verificación; después abrís World App{" "}
+            <strong className="text-[var(--ink)]">una sola vez</strong> o
+            escaneás el QR.
+          </>
+        )}
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -200,7 +247,11 @@ export function AgentRegisterPanel({
       </div>
 
       {phase === "waiting" && connectorURI && (
-        <WorldAppVerifyPanel deepLink={connectorURI} qrDataUrl={qrDataUrl} />
+        <WorldAppVerifyPanel
+          deepLink={connectorURI}
+          qrDataUrl={qrDataUrl}
+          autoOpen={!openedViaReserve}
+        />
       )}
 
       {message && (
