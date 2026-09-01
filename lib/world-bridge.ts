@@ -21,7 +21,7 @@ export type WorldBridgeSessionInput = {
 
 export type WorldBridgeReady = {
   connectorURI: string;
-  qrDataUrl: string;
+  qrDataUrl: string | null;
 };
 
 function assertNotAborted(signal: AbortSignal) {
@@ -37,7 +37,8 @@ function assertNotAborted(signal: AbortSignal) {
  *
  * Best practice: call this after a user gesture starts the flow, then expose
  * `connectorURI` via a real <a target="_blank"> — do not auto-open after await
- * (browsers treat that as a blocked popup).
+ * (browsers treat that as a blocked popup). On mobile, reserve a window in the
+ * click handler and navigate it when `onReady` fires.
  */
 export async function waitForWorldBridgeProof(
   input: WorldBridgeSessionInput,
@@ -46,10 +47,16 @@ export async function waitForWorldBridgeProof(
     onReady: (ready: WorldBridgeReady) => void;
     pollIntervalMs?: number;
     timeoutMs?: number;
+    /** Skip QR generation (default: skip on mobile). */
+    includeQr?: boolean;
   },
 ): Promise<WorldBridgeProof> {
   const pollIntervalMs = options.pollIntervalMs ?? 1200;
   const timeoutMs = options.timeoutMs ?? 300_000;
+  const includeQr =
+    options.includeQr ??
+    !(typeof navigator !== "undefined" &&
+      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent));
 
   assertNotAborted(options.signal);
 
@@ -76,11 +83,13 @@ export async function waitForWorldBridgeProof(
     throw new Error("World App no devolvió link de verificación");
   }
 
-  const qrDataUrl = await QRCode.toDataURL(connectorURI, {
-    width: 220,
-    margin: 2,
-    color: { dark: "#1a2e24", light: "#ffffff" },
-  });
+  const qrDataUrl = includeQr
+    ? await QRCode.toDataURL(connectorURI, {
+        width: 220,
+        margin: 2,
+        color: { dark: "#1a2e24", light: "#ffffff" },
+      })
+    : null;
 
   assertNotAborted(options.signal);
   options.onReady({ connectorURI, qrDataUrl });
