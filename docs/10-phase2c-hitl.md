@@ -21,12 +21,16 @@ Under-limit purchases skip HITL entirely.
 
 ## Mobile / World App (best practices)
 
-1. **Prepare first** (async) — create World Bridge session + QR.  
-2. **Do not auto-open** after await (browsers lose the user gesture → popup spam / Chrome blocks).  
-3. **One open:** a single `<a href={connectorURI} target="_blank">Abrir World App</a>` after prepare.  
-4. Never use `location.href` (kills poll) or double `window.open` fallbacks.  
-5. Modal is portaled to `document.body` with opaque scrim so listing images don’t bleed through.  
-6. Always show **QR** as fallback if the store opens instead of the app.
+1. **Prepare first** (async) — create World Bridge session.  
+2. **Desktop:** show QR + “Abrir World App” (no auto-open after await).  
+3. **Mobile:** **no QR**. Reserve a window on the tap gesture, navigate it to
+   `connectorURI` so World App opens without a second click.  
+4. Never use `location.href` on the StayAgent tab (kills poll) or spam
+   `window.open` after `await`.  
+5. If World isn’t installed: after ~1.8s still visible → highlight **App Store
+   (iOS)** or **Play Store (Android)** (`lib/world-app-link.ts`).  
+6. Modal is portaled to `document.body` with opaque scrim so listing images
+   don’t bleed through.
 
 ## Why not the official Workflow HITL package?
 
