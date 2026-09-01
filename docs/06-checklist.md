@@ -148,7 +148,8 @@ Ver [15-host-payouts-and-availability.md](./15-host-payouts-and-availability.md)
 - [x] Calendario 3 estados: reservado / no ofrecido / libre (ficha pública + panel anfitrión)
 - [x] Panel `/host`: “Tu wallet de cobro” + editor de ventanas + fuente de cobro por propiedad
 - [x] Lint + build + smoke tests (resolución de wallets, PATCH, 403 sin cookie, gates) + test visual browser
-- [ ] Futuro: verificar firma de la wallet, anfitrión World-verified, splits/fee, KV/DB (ver roadmap doc 15)
+- [x] Anfitrión World-verified (AgentBook sobre wallet de cobro; gate al publicar)
+- [ ] Futuro: verificar firma de la wallet (SIWE), splits/fee, KV/DB (ver roadmap doc 15)
 
 ---
 
@@ -161,6 +162,18 @@ Ver [16-host-payto-verification.md](./16-host-payto-verification.md).
 - [x] Publish → `router.push` to `/stays/[id]`
 - [x] `resolveListingPayTo` shared by listing API + `/buy`; UI shows “Cobro automático → wallet del anfitrión”
 - [ ] Probar pago real testnet al wallet del host (CDP keys + USDC Base Sepolia)
+
+---
+
+## Host World verification
+
+Ver [17-host-world-verify.md](./17-host-world-verify.md).
+
+- [x] `REQUIRE_HUMAN_BACKED_HOST` + `getHostBookStatus` / `assertHostPayoutIsHumanBacked`
+- [x] `/api/host/register/prepare` + `complete` (AgentBook sobre payout)
+- [x] Gate `POST /api/host/listings` + `/buy` cuando payTo es host/listing
+- [x] UI `/host`: verificar con World App antes de publicar
+- [x] Docs + `.env.example`
 
 ---
 

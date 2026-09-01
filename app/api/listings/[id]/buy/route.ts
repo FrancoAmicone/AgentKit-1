@@ -9,6 +9,7 @@ import {
   validateStayRange,
 } from "@/lib/bookings";
 import { isEvmAddress } from "@/lib/host-listings";
+import { assertHostPayoutIsHumanBacked } from "@/lib/agentbook";
 import {
   BASE_SEPOLIA,
   getX402ResourceServer,
@@ -74,6 +75,22 @@ export async function POST(request: NextRequest, context: Ctx) {
       },
       { status: 500 },
     );
+  }
+
+  // Host / listing payTo must stay World-verified (marketplace fallback is exempt).
+  if (payout.source === "host" || payout.source === "listing") {
+    const gate = await assertHostPayoutIsHumanBacked(payTo);
+    if (!gate.ok) {
+      return NextResponse.json(
+        {
+          error:
+            gate.error ||
+            "La wallet de cobro del anfitrión no está verificada con World.",
+          code: gate.code || "HOST_NOT_HUMAN_BACKED",
+        },
+        { status: 403 },
+      );
+    }
   }
 
   const totalUsdc = stayTotalUsdc(listing.pricePerNight, stay.nights);

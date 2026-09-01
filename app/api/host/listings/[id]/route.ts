@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getHostId } from "@/lib/host-session";
-import { updateHostListing, type HostListingPatch } from "@/lib/host-listings";
+import {
+  isEvmAddress,
+  updateHostListing,
+  type HostListingPatch,
+} from "@/lib/host-listings";
+import { assertHostPayoutIsHumanBacked } from "@/lib/agentbook";
 
 export const runtime = "nodejs";
 
@@ -9,6 +14,8 @@ type Ctx = { params: Promise<{ id: string }> };
 /**
  * Update one of the host's properties: availability windows (the days it is
  * offered) and/or the per-property payout override.
+ * Listing-level payTo overrides must also be World-verified when the host
+ * gate is on.
  */
 export async function PATCH(request: NextRequest, context: Ctx) {
   const { id } = await context.params;
@@ -36,6 +43,21 @@ export async function PATCH(request: NextRequest, context: Ctx) {
   }
 
   try {
+    const override = patch.payoutAddress?.trim();
+    if (override && isEvmAddress(override)) {
+      const gate = await assertHostPayoutIsHumanBacked(override);
+      if (!gate.ok) {
+        return NextResponse.json(
+          {
+            ok: false,
+            code: gate.code || "HOST_NOT_HUMAN_BACKED",
+            error: gate.error,
+          },
+          { status: 403 },
+        );
+      }
+    }
+
     const listing = await updateHostListing(hostId, id, patch);
     return NextResponse.json({ ok: true, listing });
   } catch (err) {

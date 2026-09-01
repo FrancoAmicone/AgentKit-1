@@ -28,9 +28,12 @@ We use World Bridge (`@worldcoin/idkit-core` store) + our own `approvalToken`, n
 
 Listings at **$0.05** (under default tope → auto-pay) and **$0.2** (over → HITL) exist so both paths are easy to click through. Not real lodging prices.
 
-## Marketplace not AgentBook-gated
+## Marketplace wallet (platform fallback)
 
-Only the paying agent must be human-backed. Receiver/marketplace wallet is unverified by design for Phase 2A scope.
+The shared `MARKETPLACE_WALLET_ADDRESS` remains an unverified platform
+fallback. **Host and listing payTo wallets** must be AgentBook / World-backed
+when `REQUIRE_HUMAN_BACKED_HOST` is on (default). Buyer agent wallets stay
+gated by `REQUIRE_HUMAN_BACKED_AGENT`.
 
 ## Client World open
 

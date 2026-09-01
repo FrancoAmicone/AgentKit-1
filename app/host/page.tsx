@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { AvailabilityCalendar } from "@/components/AvailabilityCalendar";
+import { AgentRegisterPanel } from "@/components/AgentRegisterPanel";
 import { formatDateEs, type DateRange } from "@/lib/dates";
 
 type HostBooking = {
@@ -45,10 +46,20 @@ type HostProfile = {
   updatedAt: string;
 };
 
+type HostWorld = {
+  address: string;
+  registered: boolean;
+  humanId: string | null;
+  required: boolean;
+};
+
 type HostData = {
   ok: boolean;
   hostId: string | null;
   profile: HostProfile | null;
+  world: HostWorld | null;
+  hostWorldRequired?: boolean;
+  canPublish?: boolean;
   listings: HostListing[];
 };
 
@@ -83,7 +94,13 @@ export default function HostPage() {
       const payload = (await res.json()) as HostData;
       setData(payload);
     } catch {
-      setData({ ok: false, hostId: null, profile: null, listings: [] });
+      setData({
+        ok: false,
+        hostId: null,
+        profile: null,
+        world: null,
+        listings: [],
+      });
     }
   }, []);
 
@@ -97,8 +114,22 @@ export default function HostPage() {
     setForm((f) => ({ ...f, [name]: value }));
   }
 
+  const hostWorldRequired = data?.hostWorldRequired !== false;
+  const worldRegistered = Boolean(data?.world?.registered);
+  const canPublish =
+    data?.canPublish ??
+    (!hostWorldRequired ||
+      (Boolean(data?.profile?.payoutAddress) && worldRegistered));
+
   async function onPublish(e: FormEvent) {
     e.preventDefault();
+    if (!canPublish) {
+      setMessage({
+        ok: false,
+        text: "Verificá tu wallet de cobro con World App antes de publicar.",
+      });
+      return;
+    }
     setPublishing(true);
     setMessage(null);
     try {
@@ -164,17 +195,22 @@ export default function HostPage() {
           Publicá tu propiedad, cobrá onchain
         </h1>
         <p className="mt-3 max-w-xl text-base leading-relaxed text-[var(--muted)]">
-          Registrá tu wallet de cobro una sola vez y queda anclada a todas tus
-          propiedades. Elegí qué días ofrecés cada lugar: cuando el agente de
-          un huésped paga (x402, USDC en Base Sepolia), esas noches se
+          Registrá tu wallet de cobro, verificála con World (igual que el
+          huésped) y queda anclada a todas tus propiedades. Cuando el agente
+          de un huésped paga (x402, USDC en Base Sepolia), esas noches se
           bloquean solas y el pago va a tu wallet.
         </p>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-[400px_minmax(0,1fr)]">
-        {/* Left column: wallet + publish form */}
+        {/* Left column: wallet + World + publish form */}
         <section className="stay-rise-delay space-y-6 lg:sticky lg:top-20 lg:self-start">
-          <WalletPanel profile={data?.profile ?? null} onSaved={refresh} />
+          <WalletPanel
+            profile={data?.profile ?? null}
+            world={data?.world ?? null}
+            hostWorldRequired={hostWorldRequired}
+            onSaved={refresh}
+          />
 
           <form
             onSubmit={onPublish}
@@ -186,6 +222,13 @@ export default function HostPage() {
             >
               Nueva propiedad
             </h2>
+
+            {hostWorldRequired && !canPublish && (
+              <p className="mt-2 text-xs leading-relaxed text-[var(--clay)]">
+                Para publicar: registrá tu wallet arriba y verificála con World
+                App. Sin eso no se acepta el alta.
+              </p>
+            )}
 
             <Field label="Título">
               <input
@@ -279,10 +322,14 @@ export default function HostPage() {
 
             <button
               type="submit"
-              disabled={publishing}
+              disabled={publishing || !canPublish}
               className="mt-4 w-full bg-[var(--clay)] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
             >
-              {publishing ? "Publicando…" : "Publicar propiedad"}
+              {publishing
+                ? "Publicando…"
+                : !canPublish
+                  ? "Verificá con World para publicar"
+                  : "Publicar propiedad"}
             </button>
 
             {message && (
@@ -346,8 +393,8 @@ export default function HostPage() {
           <p className="mt-6 text-xs leading-relaxed text-[var(--muted)]">
             Nota demo: tu identidad de anfitrión vive en una cookie de este
             navegador y los datos se guardan en archivos del servidor
-            (testnet, sin dinero real). Mientras no registres wallet, cobra la
-            wallet única del marketplace.
+            (testnet, sin dinero real). Wallet de cobro + verificación World
+            son obligatorias para publicar (salvo bypass de env).
           </p>
         </section>
       </div>
@@ -355,12 +402,16 @@ export default function HostPage() {
   );
 }
 
-/** Host-level payout wallet: registered once, anchored to every property. */
+/** Host-level payout wallet + World/AgentBook verification. */
 function WalletPanel({
   profile,
+  world,
+  hostWorldRequired,
   onSaved,
 }: {
   profile: HostProfile | null;
+  world: HostWorld | null;
+  hostWorldRequired: boolean;
   onSaved: () => Promise<void>;
 }) {
   const [input, setInput] = useState("");
@@ -397,6 +448,8 @@ function WalletPanel({
     }
   }
 
+  const registered = Boolean(world?.registered);
+
   return (
     <div className="border border-[var(--line)] bg-[var(--surface)] p-5">
       <h2
@@ -410,6 +463,17 @@ function WalletPanel({
           <p className="mt-2 break-all font-mono text-xs text-[var(--ink)]">
             {profile.payoutAddress}
           </p>
+          <p
+            className={`mt-2 text-xs font-semibold ${
+              registered ? "text-[var(--pine)]" : "text-[var(--clay)]"
+            }`}
+          >
+            {registered
+              ? "World / AgentBook ✓ — podés publicar"
+              : hostWorldRequired
+                ? "Pendiente: verificá con World App para publicar"
+                : "Sin verificación World (bypass activo)"}
+          </p>
           <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">
             Anclada a todas tus propiedades (salvo que una tenga su propia
             wallet). El x402 liquida el USDC acá.
@@ -417,9 +481,9 @@ function WalletPanel({
         </>
       ) : (
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-          Todavía no registraste una wallet: por ahora tus propiedades cobran
-          en la <strong>wallet única del marketplace</strong>. Registrá la
-          tuya y queda anclada a todo lo que publiques.
+          Registrá tu wallet <strong>0x…</strong> y verificála con World —
+          simétrico al huésped. Sin eso no podés publicar (el marketplace solo
+          queda como fallback legacy).
         </p>
       )}
 
@@ -465,6 +529,34 @@ function WalletPanel({
         >
           {note.text}
         </p>
+      )}
+
+      {profile?.payoutAddress && !registered && (
+        <div className="mt-4 border-t border-[var(--line)] pt-4">
+          <p
+            className="mb-2 text-sm font-semibold text-[var(--ink)]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Verificar con World
+          </p>
+          <AgentRegisterPanel
+            prepareUrl="/api/host/register/prepare"
+            completeUrl="/api/host/register/complete"
+            actionDescriptionFallback="Register StayAgent host payout wallet in AgentBook"
+            idleLabel="Verificar wallet con World App"
+            doneLabel="Wallet verificada ✓"
+            intro={
+              <>
+                Misma prueba World ID que el huésped, pero sobre{" "}
+                <strong className="text-[var(--ink)]">tu wallet de cobro</strong>
+                . Abrí World App una sola vez o escaneá el QR.
+              </>
+            }
+            onRegistered={() => {
+              void onSaved();
+            }}
+          />
+        </div>
       )}
     </div>
   );

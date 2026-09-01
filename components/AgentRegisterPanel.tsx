@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { WorldAppVerifyPanel } from "@/components/WorldAppVerifyPanel";
 import {
   isAbortError,
@@ -40,8 +46,26 @@ type Phase =
 
 export function AgentRegisterPanel({
   onRegistered,
+  prepareUrl = "/api/agent/register/prepare",
+  completeUrl = "/api/agent/register/complete",
+  intro = (
+    <>
+      Preparamos la verificación; después abrís World App{" "}
+      <strong className="text-[var(--ink)]">una sola vez</strong> o escaneás el
+      QR.
+    </>
+  ),
+  actionDescriptionFallback = "Register StayAgent in AgentBook",
+  doneLabel = "Registrado ✓",
+  idleLabel = "Registrar con World App",
 }: {
   onRegistered: () => void;
+  prepareUrl?: string;
+  completeUrl?: string;
+  intro?: ReactNode;
+  actionDescriptionFallback?: string;
+  doneLabel?: string;
+  idleLabel?: string;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState<string | null>(null);
@@ -79,7 +103,7 @@ export function AgentRegisterPanel({
     setQrDataUrl(null);
 
     try {
-      const prepRes = await fetch("/api/agent/register/prepare", {
+      const prepRes = await fetch(prepareUrl, {
         signal: ac.signal,
       });
       const prep = (await prepRes.json()) as PrepareResponse;
@@ -89,7 +113,7 @@ export function AgentRegisterPanel({
 
       if (prep.alreadyRegistered) {
         setPhase("done");
-        setMessage("El agente ya está registrado en AgentBook.");
+        setMessage("Ya está registrado en AgentBook.");
         onRegistered();
         return;
       }
@@ -107,7 +131,7 @@ export function AgentRegisterPanel({
           signalTypes: prep.signal.types,
           signalValues: prep.signal.values,
           actionDescription:
-            prep.actionDescription || "Register StayAgent in AgentBook",
+            prep.actionDescription || actionDescriptionFallback,
         },
         {
           signal: ac.signal,
@@ -121,7 +145,7 @@ export function AgentRegisterPanel({
       setPhase("submitting");
       setMessage("World ID OK — registrando en AgentBook…");
 
-      const completeRes = await fetch("/api/agent/register/complete", {
+      const completeRes = await fetch(completeUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nonce: prep.nonce, proof }),
@@ -135,8 +159,8 @@ export function AgentRegisterPanel({
       setPhase("done");
       setMessage(
         complete.txHash
-          ? `Agente registrado. Tx: ${complete.txHash}`
-          : "Agente registrado en AgentBook.",
+          ? `Registrado en AgentBook. Tx: ${complete.txHash}`
+          : "Registrado en AgentBook.",
       );
       onRegistered();
     } catch (err) {
@@ -149,18 +173,20 @@ export function AgentRegisterPanel({
       }
       startingRef.current = false;
     }
-  }, [onRegistered, abortInFlight]);
+  }, [
+    onRegistered,
+    abortInFlight,
+    prepareUrl,
+    completeUrl,
+    actionDescriptionFallback,
+  ]);
 
   const busy =
     phase === "preparing" || phase === "waiting" || phase === "submitting";
 
   return (
     <div className="space-y-4 text-sm text-[var(--ink)]">
-      <p className="leading-relaxed text-[var(--muted)]">
-        Preparamos la verificación; después abrís World App{" "}
-        <strong className="text-[var(--ink)]">una sola vez</strong> o escaneás
-        el QR.
-      </p>
+      <p className="leading-relaxed text-[var(--muted)]">{intro}</p>
 
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -176,8 +202,8 @@ export function AgentRegisterPanel({
               : phase === "submitting"
                 ? "Registrando…"
                 : phase === "done"
-                  ? "Registrado ✓"
-                  : "Registrar con World App"}
+                  ? doneLabel
+                  : idleLabel}
         </button>
 
         {(phase === "waiting" || phase === "error") && (
