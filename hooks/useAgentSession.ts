@@ -90,7 +90,9 @@ export function useAgentSession() {
 
   const refreshMe = useCallback(async () => {
     try {
-      const res = await fetch("/api/agent/me");
+      const res = await fetch("/api/agent/me", {
+        signal: AbortSignal.timeout(15_000),
+      });
       const data = (await res.json()) as AgentMe;
       applyMe(data);
       return data;
@@ -136,7 +138,10 @@ export function useAgentSession() {
     setCreating(true);
     setCreateMessage(null);
     try {
-      const res = await fetch("/api/agent/create", { method: "POST" });
+      const res = await fetch("/api/agent/create", {
+        method: "POST",
+        signal: AbortSignal.timeout(25_000),
+      });
       const data = await res.json();
       if (!res.ok || !data.ok) {
         throw new Error(data.error || "No se pudo crear el agente");
@@ -145,8 +150,15 @@ export function useAgentSession() {
       await refreshMe();
       await refreshLimits();
     } catch (err) {
+      const timedOut =
+        err instanceof Error &&
+        (err.name === "TimeoutError" || err.name === "AbortError");
       setCreateMessage(
-        err instanceof Error ? err.message : "Error al crear agente",
+        timedOut
+          ? "Tardó demasiado (¿faltan las keys CDP?). Probá de nuevo."
+          : err instanceof Error
+            ? err.message
+            : "Error al crear agente",
       );
     } finally {
       setCreating(false);
