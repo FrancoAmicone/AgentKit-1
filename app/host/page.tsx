@@ -184,7 +184,7 @@ export default function HostPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-5 pb-10 pt-8 sm:px-8">
-      <header className="stay-rise mb-8 max-w-3xl">
+      <header className="stay-rise mb-6 max-w-3xl">
         <p className="text-xs font-semibold uppercase tracking-wide text-[var(--clay)]">
           Modo anfitrión
         </p>
@@ -195,15 +195,40 @@ export default function HostPage() {
           Publicá tu propiedad, cobrá onchain
         </h1>
         <p className="mt-3 max-w-xl text-base leading-relaxed text-[var(--muted)]">
-          Registrá tu wallet de cobro, verificála con World (igual que el
-          huésped) y queda anclada a todas tus propiedades. Cuando el agente
-          de un huésped paga (x402, USDC en Base Sepolia), esas noches se
-          bloquean solas y el pago va a tu wallet.
+          Tres pasos: wallet de cobro → World → publicar. Cuando el agente de un
+          huésped paga (x402, USDC), el dinero llega a tu wallet y esas noches
+          se bloquean solas.
         </p>
       </header>
 
+      <ol className="stay-rise-delay mb-8 grid gap-2 sm:grid-cols-3">
+        {(
+          [
+            ["1", "Wallet de cobro", "Pegá tu 0x… (una para todo, o una por propiedad)."],
+            ["2", "Verificá con World", "Igual que el huésped: AgentBook sobre esa wallet."],
+            ["3", "Publicá", "Título, precio, días. Los agentes ya pueden pagarte."],
+          ] as const
+        ).map(([n, title, body]) => (
+          <li
+            key={n}
+            className="border border-[var(--line)] bg-[var(--surface)] p-4"
+          >
+            <p className="text-xs font-semibold text-[var(--clay)]">Paso {n}</p>
+            <p
+              className="mt-1 text-base text-[var(--ink)]"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {title}
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
+              {body}
+            </p>
+          </li>
+        ))}
+      </ol>
+
       <div className="grid gap-8 lg:grid-cols-[400px_minmax(0,1fr)]">
-        {/* Left column: wallet + World + publish form */}
+        {/* Left column: wallet + World + publish form — no sticky on small screens (scroll trap) */}
         <section className="stay-rise-delay space-y-6 lg:sticky lg:top-20 lg:self-start">
           <WalletPanel
             profile={data?.profile ?? null}
@@ -311,13 +336,19 @@ export default function HostPage() {
               <WindowsEditor windows={formWindows} onChange={setFormWindows} />
             </div>
 
-            <Field label="Wallet de cobro solo para esta propiedad (opcional)">
+            <Field label="Wallet dedicada a esta propiedad (opcional)">
               <input
                 value={form.payoutAddress}
                 onChange={(e) => setField("payoutAddress", e.target.value)}
-                placeholder="0x… (si no, aplica tu wallet de anfitrión)"
+                placeholder="0x… — si la dejás vacía, usa tu wallet de anfitrión"
                 className="w-full border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2 font-mono text-xs text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
               />
+              <p className="mt-1.5 text-[11px] leading-relaxed text-[var(--muted)]">
+                Ideal si querés que <strong className="text-[var(--ink)]">esta</strong>{" "}
+                propiedad cobre en una wallet aparte. Tiene que estar verificada
+                con World igual que la del perfil. Los agentes pagan USDC
+                directo ahí.
+              </p>
             </Field>
 
             <button

@@ -4,6 +4,10 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { ListingCard, type ListingCardData } from "@/components/ListingCard";
 import { useAgent } from "@/components/AgentSessionProvider";
+import {
+  GuestProgress,
+  guestStepFromFlags,
+} from "@/components/GuestProgress";
 
 type SearchResponse = {
   explanation: string;
@@ -72,9 +76,22 @@ export default function HomePage() {
 
   const showing = search ? search.results : catalog;
   const needsSetup = !agent.canPurchase;
+  const me = agent.me;
+  const hasAgent = Boolean(me?.hasAgent && me.address);
+  const funded = Boolean(me?.balances?.funded);
+  const registered =
+    Boolean(me?.registered) || agent.agentStatus?.registered === true;
+  const worldRequired = Boolean(me?.required ?? agent.agentStatus?.required ?? true);
+  const topeSaved = Boolean(agent.limitsInfo?.limits || me?.limits);
+  const progress = guestStepFromFlags({
+    hasAgent,
+    funded,
+    registered: registered || !worldRequired,
+    topeSaved,
+  });
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-5 pb-10 pt-8 sm:px-8 sm:pt-12">
+    <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-5 pb-16 pt-8 sm:px-8 sm:pt-12">
       {/* Hero */}
       <header className="stay-rise mb-8 max-w-3xl">
         <h1
@@ -86,11 +103,52 @@ export default function HomePage() {
           Vos viajás.
         </h1>
         <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--muted)] sm:text-lg">
-          Marketplace de estadías con pago onchain: pedí un lugar en lenguaje
-          natural y tu agente lo reserva y paga en USDC. ¿Tenés una propiedad?
-          Publicala y cobrá directo en tu wallet.
+          Pedí un lugar en lenguaje natural. Tu agente paga en USDC onchain.
+          ¿Tenés una propiedad? Publicala con tu wallet y cobrá cuando los
+          agentes reservan.
         </p>
       </header>
+
+      {/* Guest journey coach */}
+      <section className="stay-rise-delay mb-8 border border-[var(--line)] bg-[var(--surface)] p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="max-w-xl">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--pine)]">
+              Empezá acá · huésped
+            </p>
+            <h2
+              className="mt-1 text-xl text-[var(--ink)]"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {progress === "ready"
+                ? "Tu agente está listo para pagar"
+                : "Configurá tu agente en 4 pasos"}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+              {progress === "create" &&
+                "Creá el agente → copiá su wallet → fondeala con USDC de prueba → verificá con World → definí el tope."}
+              {progress === "fund" &&
+                "Copiá la wallet del agente y pegala en el faucet / tu wallet. Después actualizá el saldo."}
+              {progress === "world" &&
+                "Abrí World App en este teléfono para vincular al agente con tu identidad."}
+              {progress === "tope" &&
+                "Definí cuánto puede gastar solo. Arriba de ese tope te pide aprobación."}
+              {progress === "ready" &&
+                "Buscá abajo, elegí fechas en la ficha y dejá que el agente pague."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => agent.setSetupOpen(true)}
+            className="shrink-0 bg-[var(--pine)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--pine-deep)]"
+          >
+            {progress === "ready" ? "Ver mi agente" : "Continuar setup"}
+          </button>
+        </div>
+        <div className="mt-4">
+          <GuestProgress current={progress} />
+        </div>
+      </section>
 
       {/* Two sides */}
       <section className="stay-rise-delay mb-10 grid gap-4 sm:grid-cols-2">
@@ -105,15 +163,26 @@ export default function HomePage() {
             Buscá y reservá con tu agente
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-            Elegí fechas en el calendario público, y tu agente paga la reserva
-            con su propia wallet (con tu tope y tu aprobación).
+            Elegí fechas en el calendario público. El agente paga con su wallet
+            (con tu tope y, si hace falta, tu OK en World).
           </p>
-          <a
-            href="#buscar"
-            className="mt-4 inline-block bg-[var(--pine)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--pine-deep)]"
-          >
-            Buscar estadía
-          </a>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <a
+              href="#buscar"
+              className="inline-block bg-[var(--pine)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--pine-deep)]"
+            >
+              Buscar estadía
+            </a>
+            {needsSetup && (
+              <button
+                type="button"
+                onClick={() => agent.setSetupOpen(true)}
+                className="inline-block border border-[var(--pine)] px-4 py-2 text-sm font-semibold text-[var(--pine)]"
+              >
+                Primero: crear agente
+              </button>
+            )}
+          </div>
         </div>
         <div className="border border-[var(--line)] bg-[var(--surface)] p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--clay)]">
@@ -123,15 +192,16 @@ export default function HomePage() {
             className="mt-1 text-xl text-[var(--ink)]"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Publicá tu propiedad y cobrá onchain
+            Publicá y cobrá en tu wallet
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-            Cargá tu casa o depto, definí el precio por noche y mirá cómo se
-            bloquean las fechas cuando un agente paga la reserva.
+            Registrá una wallet de cobro (podés dedicársela a una propiedad),
+            verificála con World y publicá. Cuando un agente paga, el USDC llega
+            ahí.
           </p>
           <Link
             href="/host"
-            className="mt-4 inline-block border border-[var(--clay)] px-4 py-2 text-sm font-semibold text-[var(--clay)] transition hover:bg-[var(--clay)] hover:text-white"
+            className="mt-4 inline-block border border-[var(--clay)] px-4 py-2 text-sm font-semibold text-[var(--clay)] transition hover:bg-[var(--clay)] hover:text-[var(--paper)]"
           >
             Ir al modo anfitrión
           </Link>

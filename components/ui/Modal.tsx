@@ -61,10 +61,10 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className={`relative isolate max-h-[min(92vh,720px)] w-full overflow-y-auto rounded-t-2xl border border-[var(--line)] bg-[var(--sand)] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-xl ${
+        className={`relative isolate max-h-[min(92dvh,720px)] w-full overflow-y-auto overscroll-contain rounded-t-2xl border border-[var(--line)] bg-[var(--sand)] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-xl ${
           size === "lg" ? "max-w-lg p-5 sm:p-6" : "max-w-md"
         }`}
-        style={{ zIndex: 10001 }}
+        style={{ zIndex: 10001, WebkitOverflowScrolling: "touch" }}
         onClick={(event) => event.stopPropagation()}
       >
         {children}

@@ -3,6 +3,10 @@
 import { FormEvent, useId } from "react";
 import { AgentFundPanel } from "@/components/AgentFundPanel";
 import { AgentRegisterPanel } from "@/components/AgentRegisterPanel";
+import {
+  GuestProgress,
+  guestStepFromFlags,
+} from "@/components/GuestProgress";
 import { Modal } from "@/components/ui/Modal";
 import type { AgentMe } from "@/hooks/useAgentSession";
 
@@ -83,15 +87,15 @@ export function AgentSetupModal({
   const needsRegister =
     hasAgent && Boolean(me?.required ?? agentStatus?.required) && !registered;
   const topeSaved = Boolean(limitsInfo?.limits || me?.limits);
+  const worldRequired = Boolean(me?.required ?? agentStatus?.required ?? true);
 
-  const step: StepId = !hasAgent
-    ? "create"
-    : !funded
-      ? "fund"
-      : needsRegister
-        ? "world"
-        : "tope";
-
+  const progress = guestStepFromFlags({
+    hasAgent,
+    funded,
+    registered: registered || !worldRequired,
+    topeSaved,
+  });
+  const step: StepId = progress === "ready" ? "tope" : progress;
   const copy = STEP_COPY[step];
 
   return (
@@ -99,7 +103,7 @@ export function AgentSetupModal({
       <div className="mb-5 flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--pine)]">
-            StayAgent · setup
+            StayAgent · tu agente
           </p>
           <h2
             id={titleId}
@@ -121,31 +125,7 @@ export function AgentSetupModal({
         </button>
       </div>
 
-      <ol className="mb-6 grid grid-cols-4 gap-1.5">
-        {(
-          [
-            ["create", "Crear", hasAgent],
-            ["fund", "Fondos", funded],
-            ["world", "World", registered],
-            ["tope", "Tope", topeSaved && registered],
-          ] as const
-        ).map(([id, label, done]) => (
-          <li key={id}>
-            <div
-              className={`border px-2 py-2 text-center text-[11px] font-semibold tracking-wide ${
-                step === id
-                  ? "border-[var(--pine)] bg-[var(--pine)] text-white"
-                  : done
-                    ? "border-[var(--pine)]/25 bg-[var(--pine)]/10 text-[var(--pine)]"
-                    : "border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]"
-              }`}
-            >
-              {done && step !== id ? "✓ " : ""}
-              {label}
-            </div>
-          </li>
-        ))}
-      </ol>
+      <GuestProgress current={progress} />
 
       {hasAgent && me?.address && step !== "create" && (
         <p className="mb-4 break-all font-mono text-[11px] text-[var(--muted)]">
@@ -155,21 +135,29 @@ export function AgentSetupModal({
       )}
 
       {step === "create" && (
-        <section className="stay-fade">
+        <section className="stay-fade space-y-4">
           <p className="text-sm leading-relaxed text-[var(--muted)]">
-            Creamos una wallet CDP solo para este navegador. Vos la fondeás; el
-            agente firma los pagos automáticos.
+            En un click creamos una{" "}
+            <strong className="text-[var(--ink)]">wallet CDP</strong> solo para
+            este navegador. Después vas a{" "}
+            <strong className="text-[var(--ink)]">copiar esa address</strong>,
+            mandarle USDC de prueba, verificarla con World y poner un tope.
           </p>
+          <ul className="space-y-1.5 text-xs text-[var(--muted)]">
+            <li>· Cada persona tiene su propio agente (no se comparte).</li>
+            <li>· Es Base Sepolia: testnet, sin dinero real.</li>
+            <li>· Vos controlás el tope; el agente firma los pagos.</li>
+          </ul>
           <button
             type="button"
             onClick={onCreateAgent}
             disabled={creating}
-            className="mt-5 w-full bg-[var(--pine)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
+            className="w-full bg-[var(--pine)] px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
           >
-            {creating ? "Creando…" : "Crear mi agente"}
+            {creating ? "Creando…" : "1 · Crear mi agente"}
           </button>
           {createMessage && (
-            <p className="mt-3 text-xs text-[var(--pine)]">{createMessage}</p>
+            <p className="text-xs text-[var(--pine)]">{createMessage}</p>
           )}
         </section>
       )}
@@ -187,7 +175,12 @@ export function AgentSetupModal({
       )}
 
       {step === "world" && (
-        <section className="stay-fade">
+        <section className="stay-fade space-y-3">
+          <p className="text-sm leading-relaxed text-[var(--muted)]">
+            Vinculamos la wallet del agente a tu{" "}
+            <strong className="text-[var(--ink)]">World ID</strong>. En el
+            teléfono abrimos World App directo (sin QR).
+          </p>
           <AgentRegisterPanel onRegistered={onRefresh} />
         </section>
       )}
@@ -196,13 +189,14 @@ export function AgentSetupModal({
         <section className="stay-fade">
           {registered && (
             <p className="mb-4 text-sm text-[var(--pine)]">
-              Human-backed ✓ — definí hasta cuánto puede pagar solo.
+              Human-backed ✓ — último paso: el tope automático.
             </p>
           )}
           <form onSubmit={onSaveLimit} className="space-y-4">
             <p className="text-sm leading-relaxed text-[var(--muted)]">
-              ≤ este monto paga solo. Arriba pide aprobación en World App. Mín. $
-              {minLimit}.
+              Hasta este monto el agente{" "}
+              <strong className="text-[var(--ink)]">paga solo</strong>. Si la
+              reserva es más cara, te pide OK en World App. Mín. ${minLimit}.
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm text-[var(--muted)]">$</span>
@@ -218,14 +212,17 @@ export function AgentSetupModal({
               <span className="text-sm text-[var(--muted)]">USDC</span>
               <button
                 type="submit"
-                disabled={savingLimit || (needsRegister && !limitsInfo?.canEdit)}
+                disabled={
+                  savingLimit || (needsRegister && !limitsInfo?.canEdit)
+                }
                 className="bg-[var(--pine)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--pine-deep)] disabled:opacity-60"
               >
                 {savingLimit ? "Guardando…" : "Guardar tope"}
               </button>
             </div>
             <p className="text-xs text-[var(--muted)]">
-              Actual: {autoLimit != null ? `$${autoLimit} USDC` : "…"}
+              Actual: {autoLimit != null ? `$${autoLimit} USDC` : "…"} · tip
+              demo: $0.1 deja pasar $0.05 y pide World en $0.2
             </p>
             {limitMessage && (
               <p className="text-xs font-medium text-[var(--pine)]">
@@ -236,9 +233,9 @@ export function AgentSetupModal({
           <button
             type="button"
             onClick={onClose}
-            className="mt-6 w-full bg-[var(--ink)] px-5 py-3 text-sm font-semibold text-[var(--paper)]"
+            className="mt-6 w-full bg-[var(--ink)] px-5 py-3.5 text-sm font-semibold text-[var(--paper)]"
           >
-            Listo — ir a buscar
+            Listo — ir a buscar estadías
           </button>
         </section>
       )}
@@ -248,20 +245,23 @@ export function AgentSetupModal({
 
 const STEP_COPY: Record<StepId, { title: string; subtitle: string }> = {
   create: {
-    title: "Creá tu agente",
-    subtitle: "Una wallet propia para que StayAgent pague por vos.",
+    title: "Paso 1 · Creá tu agente",
+    subtitle:
+      "Una wallet propia para que StayAgent pague las reservas por vos.",
   },
   fund: {
-    title: "Cargá fondos",
-    subtitle: "Enviá USDC de prueba (Base Sepolia) a la address del agente.",
+    title: "Paso 2 · Fondeá con copy-paste",
+    subtitle:
+      "Copiá la wallet, pegala en el faucet o tu wallet, mandá USDC de prueba.",
   },
   world: {
-    title: "Verificá con World",
-    subtitle: "Vinculá el agente a tu World ID (AgentBook).",
+    title: "Paso 3 · Verificá con World",
+    subtitle:
+      "Un humano detrás del agente. En el teléfono abrimos World App directo.",
   },
   tope: {
-    title: "Definí el tope",
-    subtitle: "Límite de pago automático. Arriba de eso: aprobación humana.",
+    title: "Paso 4 · Definí el tope",
+    subtitle: "Límite de pago automático. Arriba de eso: tu OK en World.",
   },
 };
 
@@ -270,6 +270,7 @@ function shortAddress(address: string) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+/** Exported for SiteHeader chip. */
 export function StatusBadge({
   status,
   className = "",
