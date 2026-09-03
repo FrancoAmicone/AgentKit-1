@@ -1,4 +1,5 @@
 import type { DateRange } from "./dates";
+import { LISTING_PHOTOS } from "./listing-images";
 
 export type Listing = {
   id: string;
@@ -27,7 +28,8 @@ export type Listing = {
 /**
  * Mock catalog for the demo. Seed listings pay to MARKETPLACE_WALLET_ADDRESS
  * at runtime (see lib/listings.ts); host-published listings can pay directly
- * to the host's wallet.
+ * to the host's wallet. Photos are local Wikimedia Commons files under
+ * /public/listings/ (see lib/listing-images.ts).
  *
  * Pricing for testnet demos:
  * - $0.05/noche → 1 noche queda bajo el tope default ($0.1)
@@ -43,7 +45,7 @@ export const LISTINGS_SEED: Listing[] = [
     pricePerNight: 0.05,
     amenities: ["pileta", "wifi", "cochera", "parrilla"],
     rating: 4.7,
-    imageUrl: "https://images.unsplash.com/photo-1518780664697-55e0ad1cb9a4?w=800&q=80",
+    imageUrl: LISTING_PHOTOS["bariloche-cabin"],
     maxGuests: 6,
     ownerWalletAddress: "0x0000000000000000000000000000000000000001",
     source: "seed",
@@ -57,7 +59,7 @@ export const LISTINGS_SEED: Listing[] = [
     pricePerNight: 0.2,
     amenities: ["wifi", "pileta", "lago", "cochera"],
     rating: 4.6,
-    imageUrl: "https://images.unsplash.com/photo-1449844908441-8829872d2607?w=800&q=80",
+    imageUrl: LISTING_PHOTOS["bariloche-lakehouse"],
     maxGuests: 8,
     ownerWalletAddress: "0x0000000000000000000000000000000000000001",
     source: "seed",
@@ -71,7 +73,7 @@ export const LISTINGS_SEED: Listing[] = [
     pricePerNight: 0.2,
     amenities: ["wifi", "estacionamiento", "desayuno"],
     rating: 4.8,
-    imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
+    imageUrl: LISTING_PHOTOS["mendoza-vineyard"],
     maxGuests: 5,
     ownerWalletAddress: "0x0000000000000000000000000000000000000001",
     source: "seed",
@@ -85,7 +87,7 @@ export const LISTINGS_SEED: Listing[] = [
     pricePerNight: 0.05,
     amenities: ["wifi", "calefaccion", "vista"],
     rating: 4.5,
-    imageUrl: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+    imageUrl: LISTING_PHOTOS["ushuaia-loft"],
     maxGuests: 3,
     ownerWalletAddress: "0x0000000000000000000000000000000000000001",
     source: "seed",
@@ -99,7 +101,7 @@ export const LISTINGS_SEED: Listing[] = [
     pricePerNight: 0.2,
     amenities: ["wifi", "patio", "cochera"],
     rating: 4.4,
-    imageUrl: "https://images.unsplash.com/photo-1499793983690-e8df2e7a1a55?w=800&q=80",
+    imageUrl: LISTING_PHOTOS["salta-adobe"],
     maxGuests: 4,
     ownerWalletAddress: "0x0000000000000000000000000000000000000001",
     source: "seed",
@@ -113,7 +115,7 @@ export const LISTINGS_SEED: Listing[] = [
     pricePerNight: 0.2,
     amenities: ["wifi", "pileta", "aire"],
     rating: 4.6,
-    imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
+    imageUrl: LISTING_PHOTOS["pinamar-beach"],
     maxGuests: 4,
     ownerWalletAddress: "0x0000000000000000000000000000000000000001",
     source: "seed",
@@ -127,7 +129,7 @@ export const LISTINGS_SEED: Listing[] = [
     pricePerNight: 0.2,
     amenities: ["wifi", "parrilla", "chimenea"],
     rating: 4.3,
-    imageUrl: "https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?w=800&q=80",
+    imageUrl: LISTING_PHOTOS["cordoba-sierra"],
     maxGuests: 5,
     ownerWalletAddress: "0x0000000000000000000000000000000000000001",
     source: "seed",
@@ -141,7 +143,7 @@ export const LISTINGS_SEED: Listing[] = [
     pricePerNight: 0.05,
     amenities: ["wifi", "aire", "cocina"],
     rating: 4.2,
-    imageUrl: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    imageUrl: LISTING_PHOTOS["palermo-studio"],
     maxGuests: 2,
     ownerWalletAddress: "0x0000000000000000000000000000000000000001",
     source: "seed",
@@ -155,7 +157,7 @@ export const LISTINGS_SEED: Listing[] = [
     pricePerNight: 0.2,
     amenities: ["wifi", "pileta", "jardin"],
     rating: 4.9,
-    imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80",
+    imageUrl: LISTING_PHOTOS["iguazu-house"],
     maxGuests: 6,
     ownerWalletAddress: "0x0000000000000000000000000000000000000001",
     source: "seed",
@@ -169,7 +171,7 @@ export const LISTINGS_SEED: Listing[] = [
     pricePerNight: 0.2,
     amenities: ["wifi", "calefaccion", "vista"],
     rating: 4.7,
-    imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80",
+    imageUrl: LISTING_PHOTOS["elcalafate-view"],
     maxGuests: 5,
     ownerWalletAddress: "0x0000000000000000000000000000000000000001",
     source: "seed",
@@ -183,7 +185,7 @@ export const LISTINGS_SEED: Listing[] = [
     pricePerNight: 0.2,
     amenities: ["wifi", "balcon", "aire"],
     rating: 4.1,
-    imageUrl: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80",
+    imageUrl: LISTING_PHOTOS["mardelplata-balcon"],
     maxGuests: 4,
     ownerWalletAddress: "0x0000000000000000000000000000000000000001",
     source: "seed",
@@ -197,7 +199,7 @@ export const LISTINGS_SEED: Listing[] = [
     pricePerNight: 0.2,
     amenities: ["wifi", "cocina", "vista"],
     rating: 4.3,
-    imageUrl: "https://images.unsplash.com/photo-1502672023489-198f66b3d4e5?w=800&q=80",
+    imageUrl: LISTING_PHOTOS["rosario-river"],
     maxGuests: 3,
     ownerWalletAddress: "0x0000000000000000000000000000000000000001",
     source: "seed",

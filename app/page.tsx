@@ -179,13 +179,12 @@ export default function HomePage() {
       {needsSetup && (
         <p className="stay-fade mb-6 text-sm text-[var(--muted)]">
           Para pagar reservas, primero{" "}
-          <button
-            type="button"
-            onClick={() => agent.setSetupOpen(true)}
+          <Link
+            href="/agent"
             className="font-semibold text-[var(--pine)] underline underline-offset-2"
           >
             configurá tu agente
-          </button>{" "}
+          </Link>{" "}
           (crear · fondear · World · tope). Mirar disponibilidad es libre.
         </p>
       )}

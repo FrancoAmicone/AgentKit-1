@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { AvailabilityCalendar } from "@/components/AvailabilityCalendar";
 import { AgentRegisterPanel } from "@/components/AgentRegisterPanel";
+import { ListingImage } from "@/components/ListingImage";
 import { formatDateEs, type DateRange } from "@/lib/dates";
+import { HOST_FALLBACK_PHOTOS } from "@/lib/listing-images";
 
 type HostBooking = {
   id: string;
@@ -295,11 +297,32 @@ export default function HostPage() {
               />
             </Field>
 
-            <Field label="Foto (URL https, opcional)">
+            <Field label="Foto (elegí una de referencia o pegá una URL https)">
+              <div className="mb-2 grid grid-cols-3 gap-1.5">
+                {HOST_FALLBACK_PHOTOS.map((src) => (
+                  <button
+                    key={src}
+                    type="button"
+                    onClick={() => setField("imageUrl", src)}
+                    className={`overflow-hidden border ${
+                      form.imageUrl === src
+                        ? "border-[var(--pine)]"
+                        : "border-[var(--line)]"
+                    }`}
+                    aria-label="Usar esta foto de referencia"
+                  >
+                    <ListingImage
+                      src={src}
+                      alt=""
+                      className="h-14 w-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
               <input
                 value={form.imageUrl}
                 onChange={(e) => setField("imageUrl", e.target.value)}
-                placeholder="https://…"
+                placeholder="https://… o dejala vacía"
                 className="w-full border border-[var(--line)] bg-[var(--surface-strong)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--pine)]/50"
               />
             </Field>
@@ -693,8 +716,7 @@ function PropertyCard({
   return (
     <article className="overflow-hidden border border-[var(--line)] bg-[var(--surface)]">
       <div className="flex flex-col gap-0 sm:flex-row">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <ListingImage
           src={listing.imageUrl}
           alt={listing.title}
           className="h-40 w-full object-cover sm:h-auto sm:w-48"

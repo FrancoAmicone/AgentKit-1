@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import type {
   AgentStatus,
   LimitsResponse,
-} from "@/components/AgentSetupModal";
+} from "@/components/AgentStatusBadge";
 
 export type AgentMe = {
   ok: boolean;

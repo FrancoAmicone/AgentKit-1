@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ListingImage } from "@/components/ListingImage";
+import { mapsSearchUrl } from "@/lib/listing-images";
 import {
   AvailabilityCalendar,
   type StaySelection,
@@ -51,6 +54,8 @@ export function StayDetail({
   initialBookedRanges,
 }: Props) {
   const agent = useAgent();
+  const router = useRouter();
+  const agentHref = `/agent?next=/stays/${listingId}`;
   const [listing, setListing] = useState<Listing | null>(initialListing);
   const [payout, setPayout] = useState<PayoutInfo | null>(null);
   const [loadState, setLoadState] = useState<"ready" | "loading" | "missing">(
@@ -143,7 +148,7 @@ export function StayDetail({
       return;
     }
     if (!agent.canPurchase) {
-      agent.setSetupOpen(true);
+      router.push(agentHref);
       return;
     }
 
@@ -174,7 +179,7 @@ export function StayDetail({
       const data = (await res.json()) as PurchaseResponse;
       if (!res.ok || !data.ok) {
         if (data.code === "AGENT_NOT_HUMAN_BACKED" || data.code === "AGENT_NOT_CREATED") {
-          agent.setSetupOpen(true);
+          router.push(agentHref);
         }
         if (data.code === "NEEDS_HUMAN_APPROVAL") {
           setApprovalStay(stay);
@@ -277,8 +282,7 @@ export function StayDetail({
       <div className="mt-4 grid gap-8 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section className="stay-rise">
           <div className="relative overflow-hidden border border-[var(--line)]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <ListingImage
               src={listing.imageUrl}
               alt={listing.title}
               className="h-72 w-full object-cover sm:h-96"
@@ -299,6 +303,15 @@ export function StayDetail({
           <p className="mt-2 text-sm text-[var(--muted)]">
             {listing.location} · ★ {listing.rating} · hasta {listing.maxGuests}{" "}
             huéspedes
+            {" · "}
+            <a
+              href={mapsSearchUrl(listing.location)}
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-[var(--pine)] underline underline-offset-2"
+            >
+              Ver en Maps
+            </a>
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -431,13 +444,12 @@ export function StayDetail({
             {!agent.canPurchase && (
               <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
                 Ver la disponibilidad es libre. Para pagar,{" "}
-                <button
-                  type="button"
-                  onClick={() => agent.setSetupOpen(true)}
+                <Link
+                  href={agentHref}
                   className="font-semibold text-[var(--pine)] underline underline-offset-2"
                 >
                   configurá tu agente
-                </button>{" "}
+                </Link>{" "}
                 (crear · fondear · World · tope).
               </p>
             )}

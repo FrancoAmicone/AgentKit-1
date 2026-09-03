@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { StatusBadge } from "@/components/AgentSetupModal";
+import { StatusBadge } from "@/components/AgentStatusBadge";
 import { useAgent } from "@/components/AgentSessionProvider";
 
 const NAV = [
   { href: "/", label: "Explorar" },
   { href: "/host", label: "Modo anfitrión" },
+  { href: "/agent", label: "Mi agente" },
   { href: "/como-funciona", label: "Cómo funciona" },
 ];
 
@@ -17,7 +18,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--paper)]/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3 sm:px-8">
+      <div className="mx-auto flex max-w-6xl items-center gap-x-6 px-5 py-3 sm:px-8">
         <Link
           href="/"
           className="text-xl tracking-tight text-[var(--ink)]"
@@ -26,7 +27,7 @@ export function SiteHeader() {
           StayAgent
         </Link>
 
-        <nav className="order-3 flex w-full items-center gap-1 sm:order-none sm:w-auto sm:gap-2">
+        <nav className="hidden items-center gap-1 md:flex">
           {NAV.map((item) => {
             const active =
               item.href === "/"
@@ -48,16 +49,15 @@ export function SiteHeader() {
           })}
         </nav>
 
-        <button
-          type="button"
-          onClick={() => agent.setSetupOpen(true)}
+        <Link
+          href="/agent"
           className="ml-auto inline-flex items-center gap-2 border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 transition hover:border-[var(--pine)]/35 hover:bg-[var(--surface-strong)]"
         >
           <StatusBadge status={agent.agentStatus} />
           <span className="text-xs font-semibold text-[var(--pine)]">
             Mi agente
           </span>
-        </button>
+        </Link>
       </div>
     </header>
   );

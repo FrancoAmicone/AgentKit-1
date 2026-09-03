@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ListingImage } from "@/components/ListingImage";
 
 export type ListingCardData = {
   id: string;
@@ -31,8 +32,7 @@ export function ListingCard({ listing, index = 0 }: Props) {
       style={{ animationDelay: `${Math.min(index, 6) * 0.05}s` }}
     >
       <div className="relative overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <ListingImage
           src={listing.imageUrl}
           alt={listing.title}
           className="h-48 w-full object-cover transition duration-500 group-hover:scale-[1.03]"

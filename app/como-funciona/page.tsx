@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 const BUYER_STEPS = [
   {
     title: "1 · Creás tu agente",
-    body: "Un click en “Mi agente” crea una wallet CDP propia para tu navegador. Nadie comparte wallet: cada persona tiene su agente con su dirección en Base Sepolia.",
+    body: "En “Mi agente” ves el dashboard: creás una wallet CDP propia para tu navegador, el saldo USDC/ETH, World y el tope. Nadie comparte wallet.",
   },
   {
     title: "2 · Lo fondeás",

@@ -11,7 +11,7 @@ disponibilidad **público** por alojamiento.
 
 | Antes | Ahora |
 | --- | --- |
-| Una sola página (search + tarjetas + compra) | 4 superficies: `/` (explorar), `/stays/[id]` (ficha pública), `/host` (panel anfitrión), `/como-funciona` |
+| Una sola página (search + tarjetas + compra) | 5 superficies: `/` (explorar), `/stays/[id]` (ficha), `/agent` (dashboard del agente), `/host` (panel anfitrión), `/como-funciona` |
 | Reservar = `available: false` para siempre (in-memory) | Booking con `checkIn/checkOut` (checkout exclusivo) persistido en file store; el listing sigue publicado y solo se bloquean esas noches |
 | Precio = 1 noche fija | Total = `noches × pricePerNight` (micros exactos); el 402 de x402 cobra el total |
 | Tope/HITL sobre `pricePerNight` | Tope/HITL sobre el **total del stay**; la aprobación World queda atada a listing + monto total |
@@ -35,6 +35,14 @@ disponibilidad **público** por alojamiento.
   reserva con el agente: auto-pay bajo tope o modal HITL World sobre tope.
 - Recibo (Basescan + 0G) con fechas del stay.
 
+### `/agent` — Dashboard del agente
+
+- Página propia (no un modal): saldo USDC/ETH, address, World, tope.
+- El chip **Mi agente** del header y la tab bar del teléfono navegan acá.
+- Si venís de una ficha (`?next=/stays/…`) hay “Volver a la reserva”.
+- Fotos del catálogo: archivos locales en `/public/listings/` (Wikimedia),
+  con fallback si una URL remota falla. Link “Ver en Maps” en la ficha.
+
 ### `/host` — Modo anfitrión
 
 - Form “Nueva propiedad”: título, ubicación, descripción, precio/noche USDC,
@@ -51,10 +59,11 @@ tope+HITL, 0G).
 
 ### Shell global
 
-`AgentSessionProvider` (contexto React) + `SiteHeader` en el layout: el estado
-del agente y el wizard Configurar están disponibles en todas las páginas. Se
-quitó el auto-open del wizard; ahora hay chip en el header + nudges
-contextuales.
+`AgentSessionProvider` + `SiteHeader` + tab bar móvil (`Explorar` /
+`Anfitrión` / `Mi agente`). El estado del agente vive en contexto; **Mi
+agente** abre `/agent` (el modal de setup queda como fallback y muestra el
+mismo dashboard). En el teléfono el header no envuelve el nav (eso rompía
+taps y scroll); `NavigationReset` limpia overflow/scroll al cambiar de ruta.
 
 ## Modelo de datos
 
