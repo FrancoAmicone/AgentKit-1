@@ -20,6 +20,7 @@ Al cerrar cualquier tarea o PR: actualizar **checklist** + doc de la fase afecta
 | [14-two-sided-ui.md](./14-two-sided-ui.md) | UI dos lados: huésped + anfitrión, fechas y disponibilidad pública |
 | [15-host-payouts-and-availability.md](./15-host-payouts-and-availability.md) | Wallet de cobro del anfitrión (anclada a sus propiedades) + días disponibles |
 | [16-host-payto-verification.md](./16-host-payto-verification.md) | Fix 404 post-publish (Runtime Cache) + cómo corroborar pago automático al host |
+| [17-host-world-verify.md](./17-host-world-verify.md) | Anfitrión World/AgentBook sobre wallet de cobro (gate al publicar) |
 | [08-phase2-agentbook.md](./08-phase2-agentbook.md) | Phase 2A: gate AgentBook (payer only) |
 | [09-phase2b-autopay-limit.md](./09-phase2b-autopay-limit.md) | Phase 2B: owner auto-pay limit |
 | [10-phase2c-hitl.md](./10-phase2c-hitl.md) | Phase 2C: human approval over tope |
@@ -46,4 +47,5 @@ Al cerrar cualquier tarea o PR: actualizar **checklist** + doc de la fase afecta
 | — | UI dos lados (huésped + anfitrión, fechas) | **Hecha** → [14](./14-two-sided-ui.md) |
 | — | Wallet de cobro por anfitrión + días disponibles | **Hecha** → [15](./15-host-payouts-and-availability.md) |
 | — | Fix 404 post-publish + verificación payTo al host | **Hecha** → [16](./16-host-payto-verification.md) |
+| — | Anfitrión World-verified (AgentBook payout) | **Hecha** → [17](./17-host-world-verify.md) |
 | 4 | Discovery | Opcional |

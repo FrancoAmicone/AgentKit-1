@@ -28,10 +28,17 @@ We use World Bridge (`@worldcoin/idkit-core` store) + our own `approvalToken`, n
 
 Listings at **$0.05** (under default tope → auto-pay) and **$0.2** (over → HITL) exist so both paths are easy to click through. Not real lodging prices.
 
-## Marketplace not AgentBook-gated
+## Marketplace wallet (platform fallback)
 
-Only the paying agent must be human-backed. Receiver/marketplace wallet is unverified by design for Phase 2A scope.
+The shared `MARKETPLACE_WALLET_ADDRESS` remains an unverified platform
+fallback. **Host and listing payTo wallets** must be AgentBook / World-backed
+when `REQUIRE_HUMAN_BACKED_HOST` is on (default). Buyer agent wallets stay
+gated by `REQUIRE_HUMAN_BACKED_AGENT`.
 
 ## Client World open
 
-Never `location.href` (kills poll). Never auto-`window.open` after `await` (popup spam). User must tap a real `<a target="_blank">` or scan QR — see `lib/world-bridge.ts` + `WorldAppVerifyPanel`.
+Never `location.href` on the StayAgent tab (kills poll). On **desktop**, don’t
+auto-`window.open` after `await` (popup spam) — user taps `<a>` or scans QR.
+On **mobile**, reserve a window in the tap handler and navigate it to the
+verify URI (no QR); if the app isn’t installed, surface App Store / Play Store
+links. See `lib/world-app-link.ts` + `WorldAppVerifyPanel`.

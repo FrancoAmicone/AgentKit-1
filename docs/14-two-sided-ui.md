@@ -99,7 +99,7 @@ type HostListing = Listing & { hostId; createdAt; payoutAddress? };
 
 - Bookings y host listings en file store (`/tmp` en Vercel — no durable).
 - `agent` query param en `/buy` es informativo (no verificado onchain).
-- Sin verificación World del anfitrión; sin cancelaciones ni reembolsos.
+- Sin cancelaciones ni reembolsos; SIWE de ownership de wallet todavía no.
 - Carrera 402→pay→retry: si el rango se ocupa en el medio, el handler devuelve
   409 después de liquidado el pago (igual que el caso “already reserved” previo).
 

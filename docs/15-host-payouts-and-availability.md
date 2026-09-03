@@ -52,18 +52,20 @@ semánticas que los bookings). Sin ventanas = se ofrece todo el año.
 
 | Ruta | Qué hace |
 | --- | --- |
-| `GET/POST /api/host/profile` | Leer / registrar / borrar (string vacío) la wallet del anfitrión |
-| `PATCH /api/host/listings/[id]` | Actualizar `availabilityWindows` y/o `payoutAddress` (solo el dueño de la cookie) |
-| `GET /api/host/listings` | Ahora incluye `profile` y, por propiedad, `payout: { address, source: "listing" \| "host" \| "marketplace" }` |
-| `POST /api/host/listings` | Acepta `availabilityWindows` al publicar |
+| `GET/POST /api/host/profile` | Leer / registrar / borrar (string vacío) la wallet del anfitrión (+ `world` AgentBook) |
+| `PATCH /api/host/listings/[id]` | Actualizar `availabilityWindows` y/o `payoutAddress` (solo el dueño de la cookie; override también World-gated) |
+| `GET /api/host/listings` | Incluye `profile`, `world`, `canPublish` y, por propiedad, `payout: { address, source }` |
+| `POST /api/host/listings` | Acepta `availabilityWindows`; exige wallet World-verified si `REQUIRE_HUMAN_BACKED_HOST` |
+| `GET/POST /api/host/register/*` | Prepare / complete AgentBook para la wallet de cobro |
 
 ## Roadmap (después de esta etapa)
 
 1. **Verificar propiedad de la wallet** — hoy el anfitrión pega una dirección
    y se le cree (demo). Siguiente paso: challenge de firma (SIWE / personal
    sign) para probar que controla la wallet antes de anclarla.
-2. **Anfitrión verificado con World** — simétrico al comprador: AgentBook /
-   World ID también del lado que cobra.
+2. ~~**Anfitrión verificado con World**~~ — **hecho**: AgentBook sobre la
+   wallet de cobro (`REQUIRE_HUMAN_BACKED_HOST`, prepare/complete en
+   `/api/host/register/*`, gate al publicar y en `/buy` si payTo es host/listing).
 3. **Splits / fee de marketplace** — hoy 100% va al `payTo`; a futuro, split
    onchain (p. ej. 97/3) o settlement en dos patas.
 4. **Persistencia real** — mover perfiles/propiedades/bookings de file store
@@ -73,14 +75,15 @@ semánticas que los bookings). Sin ventanas = se ofrece todo el año.
 
 ## Cómo probar
 
-1. `/host` → panel **“Tu wallet de cobro”** → registrar `0x…` → todas tus
-   propiedades pasan a “(tu wallet de anfitrión)”.
+1. `/host` → panel **“Tu wallet de cobro”** → registrar `0x…` → **Verificar
+   con World App** → badge World/AgentBook ✓ → recién ahí podés publicar.
 2. Publicar una propiedad con ventana (p. ej. 15 dic → 28 feb) → en la ficha
    pública los días fuera de la ventana quedan grises (“No ofrecido”) y el
    server rechaza reservas fuera de ella (409).
-3. Overridear la wallet en una propiedad puntual → esa cobra en su wallet,
-   el resto sigue con la del perfil.
-4. Borrar la wallet del perfil → vuelve al default del marketplace.
+3. Overridear la wallet en una propiedad puntual → esa cobra en su wallet
+   (también debe estar en AgentBook), el resto sigue con la del perfil.
+4. Borrar la wallet del perfil → vuelve al default del marketplace (y bloquea
+   publicar de nuevo si el gate de host está activo).
 
 Relación: [14-two-sided-ui.md](./14-two-sided-ui.md) (base de dos lados) ·
 checklist [06](./06-checklist.md) · índice [README.md](./README.md)

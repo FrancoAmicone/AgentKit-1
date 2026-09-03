@@ -24,6 +24,7 @@ We use **0G Storage only** (receipts). **Not** 0G Compute.
 | `MARKETPLACE_WALLET_ADDRESS` | Sí | `npm run setup:wallets` (receiver) |
 | `CDP_X402_CLIENT_ENVIRONMENT` | Recomendada | `development` (= Base Sepolia) |
 | `REQUIRE_HUMAN_BACKED_AGENT` | Recomendada | `true` |
+| `REQUIRE_HUMAN_BACKED_HOST` | Recomendada | `true` |
 
 Opcionales:
 
@@ -142,6 +143,7 @@ CDP_WALLET_SECRET=…
 MARKETPLACE_WALLET_ADDRESS=0x…
 CDP_X402_CLIENT_ENVIRONMENT=development
 REQUIRE_HUMAN_BACKED_AGENT=true
+REQUIRE_HUMAN_BACKED_HOST=true
 
 OG_PRIVATE_KEY=0x…
 OG_NETWORK=testnet
