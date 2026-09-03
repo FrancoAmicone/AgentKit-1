@@ -1,15 +1,29 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { FormEvent } from "react";
-import { AgentFundPanel } from "@/components/AgentFundPanel";
-import { AgentRegisterPanel } from "@/components/AgentRegisterPanel";
 import {
   StatusBadge,
   type AgentStatus,
   type LimitsResponse,
 } from "@/components/AgentStatusBadge";
 import type { AgentMe } from "@/hooks/useAgentSession";
+
+const AgentFundPanel = dynamic(
+  () =>
+    import("@/components/AgentFundPanel").then((m) => m.AgentFundPanel),
+  { ssr: false, loading: () => <PanelSkeleton /> },
+);
+const AgentRegisterPanel = dynamic(
+  () =>
+    import("@/components/AgentRegisterPanel").then((m) => m.AgentRegisterPanel),
+  { ssr: false, loading: () => <PanelSkeleton /> },
+);
+
+function PanelSkeleton() {
+  return <p className="text-sm text-[var(--muted)]">Cargando…</p>;
+}
 
 type Props = {
   me: AgentMe | null;

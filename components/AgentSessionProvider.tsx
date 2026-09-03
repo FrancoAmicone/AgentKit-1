@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { AgentSetupModal } from "@/components/AgentSetupModal";
 import { useAgentSession } from "@/hooks/useAgentSession";
 
@@ -10,10 +11,16 @@ const AgentSessionContext = createContext<AgentSession | null>(null);
 
 /**
  * One agent session for the whole app: any page can read the buyer agent's
- * state and open the setup wizard (crear · fondear · World · tope).
+ * state. Setup lives on /agent; the modal is a fallback sheet.
  */
 export function AgentSessionProvider({ children }: { children: ReactNode }) {
   const agent = useAgentSession();
+  const pathname = usePathname();
+  const closeSetup = agent.setSetupOpen;
+
+  useEffect(() => {
+    closeSetup(false);
+  }, [pathname, closeSetup]);
 
   return (
     <AgentSessionContext.Provider value={agent}>
@@ -30,10 +37,14 @@ export function AgentSessionProvider({ children }: { children: ReactNode }) {
         limitMessage={agent.limitMessage}
         onSaveLimit={agent.onSaveLimit}
         onRefresh={agent.refreshAll}
-        onCreateAgent={() => void agent.createAgent()}
+        onCreateAgent={() => {
+          void agent.createAgent();
+        }}
         creating={agent.creating}
         createMessage={agent.createMessage}
-        onRefreshBalances={() => void agent.refreshBalances()}
+        onRefreshBalances={() => {
+          void agent.refreshBalances();
+        }}
         refreshingBalances={agent.refreshingBalances}
       />
     </AgentSessionContext.Provider>

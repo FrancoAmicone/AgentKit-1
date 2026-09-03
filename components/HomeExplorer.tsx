@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useTransition } from "react";
 import { ListingCard, type ListingCardData } from "@/components/ListingCard";
 import { useAgent } from "@/components/AgentSessionProvider";
 
@@ -26,28 +26,27 @@ export function HomeExplorer({
 }) {
   const agent = useAgent();
   const [query, setQuery] = useState("");
-  const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState<SearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  async function runSearch(text: string) {
-    setSearching(true);
+  function runSearch(text: string) {
     setError(null);
-    try {
-      const res = await fetch("/api/agent/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: text }),
-        signal: AbortSignal.timeout(20_000),
-      });
-      const data = (await res.json()) as SearchResponse & { error?: string };
-      if (!res.ok) throw new Error(data.error || "Search failed");
-      setSearch(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error de búsqueda");
-    } finally {
-      setSearching(false);
-    }
+    startTransition(async () => {
+      try {
+        const res = await fetch("/api/agent/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: text }),
+          signal: AbortSignal.timeout(20_000),
+        });
+        const data = (await res.json()) as SearchResponse & { error?: string };
+        if (!res.ok) throw new Error(data.error || "Search failed");
+        setSearch(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error de búsqueda");
+      }
+    });
   }
 
   function onSearch(e: FormEvent) {
@@ -136,10 +135,10 @@ export function HomeExplorer({
         />
         <button
           type="submit"
-          disabled={searching}
+          disabled={isPending}
           className="bg-[var(--pine)] px-6 py-3 font-semibold text-white transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
         >
-          {searching ? "Buscando…" : "Buscar"}
+          {isPending ? "Buscando…" : "Buscar"}
         </button>
       </form>
 

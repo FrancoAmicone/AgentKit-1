@@ -121,20 +121,19 @@ export function useAgentSession() {
   }, []);
 
   const refreshAll = useCallback(() => {
-    void refreshMe().then(() => void refreshLimits());
+    void Promise.all([refreshMe(), refreshLimits()]);
   }, [refreshMe, refreshLimits]);
 
-  // No auto-open: the header chip and contextual nudges point to Configurar.
+  // Bootstrap session once. Parallel so me + limits don't waterfall.
   useEffect(() => {
     void (async () => {
-      await refreshMe();
-      await refreshLimits();
+      await Promise.all([refreshMe(), refreshLimits()]);
     })();
     // intentionally once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function createAgent() {
+  const createAgent = useCallback(async () => {
     setCreating(true);
     setCreateMessage(null);
     try {
@@ -147,8 +146,7 @@ export function useAgentSession() {
         throw new Error(data.error || "No se pudo crear el agente");
       }
       setCreateMessage(data.message || "Agente creado");
-      await refreshMe();
-      await refreshLimits();
+      await Promise.all([refreshMe(), refreshLimits()]);
     } catch (err) {
       const timedOut =
         err instanceof Error &&
@@ -163,53 +161,56 @@ export function useAgentSession() {
     } finally {
       setCreating(false);
     }
-  }
+  }, [refreshMe, refreshLimits]);
 
-  async function refreshBalances() {
+  const refreshBalances = useCallback(async () => {
     setRefreshingBalances(true);
     try {
       await refreshMe();
     } finally {
       setRefreshingBalances(false);
     }
-  }
+  }, [refreshMe]);
 
-  async function onSaveLimit(e: FormEvent) {
-    e.preventDefault();
-    setSavingLimit(true);
-    setLimitMessage(null);
-    try {
-      const res = await fetch("/api/agent/limits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ autoPayLimitUsdc: Number(limitInput) }),
-      });
-      const data = (await res.json()) as LimitsResponse & {
-        registerHint?: string;
-        error?: string;
-      };
-      if (!res.ok || !data.ok) {
-        throw new Error(
-          [data.error, data.registerHint].filter(Boolean).join(" — ") ||
-            "No se pudo guardar el límite",
+  const onSaveLimit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      setSavingLimit(true);
+      setLimitMessage(null);
+      try {
+        const res = await fetch("/api/agent/limits", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ autoPayLimitUsdc: Number(limitInput) }),
+        });
+        const data = (await res.json()) as LimitsResponse & {
+          registerHint?: string;
+          error?: string;
+        };
+        if (!res.ok || !data.ok) {
+          throw new Error(
+            [data.error, data.registerHint].filter(Boolean).join(" — ") ||
+              "No se pudo guardar el límite",
+          );
+        }
+        setLimitsInfo(data);
+        if (data.limits?.autoPayLimitUsdc != null) {
+          setLimitInput(String(data.limits.autoPayLimitUsdc));
+        }
+        setLimitMessage(
+          `Límite guardado: pago automático hasta $${data.limits?.autoPayLimitUsdc} USDC`,
         );
+        await refreshMe();
+      } catch (err) {
+        setLimitMessage(
+          err instanceof Error ? err.message : "Error al guardar límite",
+        );
+      } finally {
+        setSavingLimit(false);
       }
-      setLimitsInfo(data);
-      if (data.limits?.autoPayLimitUsdc != null) {
-        setLimitInput(String(data.limits.autoPayLimitUsdc));
-      }
-      setLimitMessage(
-        `Límite guardado: pago automático hasta $${data.limits?.autoPayLimitUsdc} USDC`,
-      );
-      await refreshMe();
-    } catch (err) {
-      setLimitMessage(
-        err instanceof Error ? err.message : "Error al guardar límite",
-      );
-    } finally {
-      setSavingLimit(false);
-    }
-  }
+    },
+    [limitInput, refreshMe],
+  );
 
   const canPurchase =
     Boolean(me?.hasAgent) &&

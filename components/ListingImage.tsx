@@ -23,7 +23,7 @@ export function ListingImage({ src, alt, className }: Props) {
       className={className}
       onError={() => {
         if (src && src !== FALLBACK_LISTING_PHOTO) {
-          setFailedSrc(src);
+          setFailedSrc((prev) => (prev === src ? prev : src));
         }
       }}
     />
