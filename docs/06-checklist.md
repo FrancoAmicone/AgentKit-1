@@ -149,6 +149,7 @@ Ver [15-host-payouts-and-availability.md](./15-host-payouts-and-availability.md)
 - [x] Perfil anfitrión: wallet de cobro registrada una vez, anclada a todas sus propiedades (`lib/host-profile.ts` + `GET/POST /api/host/profile`)
 - [x] Resolución payTo: override por propiedad → wallet del anfitrión → wallet única del marketplace (default actual)
 - [x] Días disponibles por propiedad (`availabilityWindows`, semiabiertas, máx 12) al publicar y editables después (`PATCH /api/host/listings/[id]`)
+- [x] Catálogo semilla: ventanas aleatorias determinísticas por listing (`lib/seed-availability.ts`) al leer `getAllListings`
 - [x] Validación server en `/buy` + `/purchase` + `/approve/prepare` (409 fuera de ventana)
 - [x] Calendario 3 estados: reservado / no ofrecido / libre (ficha pública + panel anfitrión)
 - [x] Panel `/host`: “Tu wallet de cobro” + editor de ventanas + fuente de cobro por propiedad

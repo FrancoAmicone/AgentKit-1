@@ -47,6 +47,11 @@ semánticas que los bookings). Sin ventanas = se ofrece todo el año.
   ventana **y** no pisar bookings. UI y API rechazan lo mismo.
 - **Gestión:** al publicar (form) o después (panel anfitrión, editor con
   agregar/quitar). Máximo 12 ventanas por propiedad.
+- **Catálogo semilla:** las propiedades de `LISTINGS_SEED` no tienen ventanas
+  fijas en el JSON. Al leer el catálogo, `seedAvailabilityWindows` genera 2–4
+  rangos determinísticos por `listingId` (relativos a hoy) y fusiona las
+  reservas de demo para que las noches ya ocupadas sigan ofrecidas. Las
+  propiedades publicadas por anfitriones no se tocan.
 
 ## APIs
 
