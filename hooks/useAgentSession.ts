@@ -52,6 +52,7 @@ export function useAgentSession() {
   const [creating, setCreating] = useState(false);
   const [createMessage, setCreateMessage] = useState<string | null>(null);
   const [refreshingBalances, setRefreshingBalances] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
 
   const applyMe = useCallback((data: AgentMe) => {
     setMe(data);
@@ -235,5 +236,7 @@ export function useAgentSession() {
     createMessage,
     refreshBalances,
     refreshingBalances,
+    setupOpen,
+    setSetupOpen,
   };
 }

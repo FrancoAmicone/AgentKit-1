@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { AgentModal } from "@/components/AgentModal";
 import { AgentSessionProvider } from "@/components/AgentSessionProvider";
 import { MobileTabBar } from "@/components/MobileTabBar";
 import { NavigationReset } from "@/components/NavigationReset";
@@ -37,6 +38,7 @@ export default function RootLayout({
             </footer>
             <MobileTabBar />
           </div>
+          <AgentModal />
         </AgentSessionProvider>
       </body>
     </html>

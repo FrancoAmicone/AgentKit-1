@@ -1,48 +1,42 @@
-# Dashboard del agente + mobile shell
+# Dashboard del agente (modal)
 
-**Status: implemented.** El chip “Mi agente” ya no abre un wizard que
-rompía la página en el teléfono: hay una superficie `/agent` con saldo,
-wallet, World y tope, y la navegación móvil usa tabs fijos.
+**Status: implemented.** El chip y la tab **Mi agente** abren un sheet/modal
+en el lugar: el catálogo (o la ficha) **sigue montado** detrás. Cerrar
+vuelve exactamente a donde estabas, sin recargar.
 
 ## Por qué
 
-En el teléfono:
+Navegar a `/agent` desmontaba la página actual. En el teléfono eso se
+veía como una pantalla vacía y había que recargar para volver. El
+pedido es ver el agente **ahí mismo**, en teléfono y escritorio.
 
-- **Mi agente** era un modal portal. `body > * { position: relative }` le
-  sacaba el `position: fixed`, el overlay se metía en el flujo del
-  documento y “rompía” la página (y el scroll quedaba lockeado al navegar).
-- El wizard solo mostraba el paso actual: no se veía cuánta plata tiene el
-  agente ni el resto de las funciones.
-- Las fotos del catálogo venían de Unsplash (hotlink / 404) y fallaban.
-- El nav del header se wrapeaba a full-width y, al ir y volver entre
-  páginas, el overflow del body se quedaba `hidden`.
+El sheet:
 
-## Superficie `/agent`
+- Portal a `document.body` (fuera de `.app-root`, para que `position:fixed` valga).
+- Muestra el dashboard completo (crear, saldo, World, tope) — no un
+  wizard de un paso que parece “Cargando…”.
+- Lock de scroll solo con `overflow: hidden` (nunca `position: fixed` en `body`).
+- Error boundary: si el panel falla, la página de atrás no se cae.
 
-Muestra todo junto (no un paso a la vez):
+`/agent` sigue existiendo por si alguien entra directo a la URL.
 
-| Bloque | Qué ves |
+## Qué ves en el modal
+
+| Bloque | Contenido |
 | --- | --- |
-| Checklist | Crear · Fondos · World · Tope |
+| Checklist | Crear · Fondos · World · Tope · Listo |
 | Cards | USDC, ETH, tope automático |
 | Wallet | address, QR, copy, faucets, Basescan |
-| World | registro AgentBook (mismo panel que el anfitrión) |
+| World | registro AgentBook |
 | Tope | editar el auto-pay |
-| Acciones | explorar, modo anfitrión, volver a la reserva (`?next=`) |
-
-Header y tab bar apuntan a `/agent`. Si falta setup al reservar, la ficha
-manda a `/agent?next=/stays/[id]`.
 
 ## Shell móvil
 
 - Header compacto (logo + chip). Nav de texto solo desde `md`.
-- Tab bar fija abajo: Explorar · Anfitrión · Mi agente.
-- `NavigationReset` al cambiar de ruta: restaura overflow y scrollea al tope.
-- El único modal que queda es HITL de compra. El lock de scroll usa
-  `overflow: hidden` — **nunca** `position: fixed` en `body` (eso dejaba
-  el teléfono trabado si el sheet no terminaba de cargar).
+- Tab bar: Explorar · Anfitrión · **Mi agente** (botón, abre el modal).
+- `NavigationReset` no toca el overflow si el modal está abierto.
 - Sin `background-attachment: fixed` ni animaciones `transform` en
-  viewport chico (evita el “bugueo” al navegar).
+  viewport chico.
 
 ## Fotos
 

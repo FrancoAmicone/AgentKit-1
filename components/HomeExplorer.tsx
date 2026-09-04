@@ -122,12 +122,13 @@ export function HomeExplorer({
                 "Buscá abajo, elegí fechas en la ficha y dejá que el agente pague."}
             </p>
           </div>
-          <Link
-            href="/agent"
+          <button
+            type="button"
+            onClick={() => agent.setSetupOpen(true)}
             className="shrink-0 bg-[var(--pine)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--pine-deep)]"
           >
             {progress === "ready" ? "Ver mi agente" : "Continuar setup"}
-          </Link>
+          </button>
         </div>
         <div className="mt-4">
           <GuestProgress current={progress} />
@@ -157,12 +158,13 @@ export function HomeExplorer({
               Buscar estadía
             </a>
             {needsSetup && (
-              <Link
-                href="/agent"
+              <button
+                type="button"
+                onClick={() => agent.setSetupOpen(true)}
                 className="inline-block border border-[var(--pine)] px-4 py-2 text-sm font-semibold text-[var(--pine)]"
               >
                 Primero: crear agente
-              </Link>
+              </button>
             )}
           </div>
         </div>
@@ -230,12 +232,13 @@ export function HomeExplorer({
       {needsSetup && (
         <p className="stay-fade mb-6 text-sm text-[var(--muted)]">
           Para pagar reservas, primero{" "}
-          <Link
-            href="/agent"
+          <button
+            type="button"
+            onClick={() => agent.setSetupOpen(true)}
             className="font-semibold text-[var(--pine)] underline underline-offset-2"
           >
             configurá tu agente
-          </Link>{" "}
+          </button>{" "}
           (crear · fondear · World · tope). Mirar disponibilidad es libre.
         </p>
       )}

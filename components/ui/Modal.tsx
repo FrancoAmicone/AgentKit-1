@@ -3,21 +3,26 @@
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
-import { useMounted } from "@/hooks/useMounted";
 
 type ModalProps = {
   open: boolean;
   onClose: () => void;
   labelledBy: string;
   children: ReactNode;
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "xl";
   closeOnScrim?: boolean;
   closeOnEscape?: boolean;
 };
 
+const SIZE_CLASS = {
+  md: "max-w-md",
+  lg: "max-w-lg p-5 sm:p-6",
+  xl: "max-w-2xl p-4 sm:p-6",
+} as const;
+
 /**
- * Portal on document.body. Used only for HITL purchase approval — never
- * for “Mi agente” (that is a real page at /agent).
+ * Overlay for HITL + “Mi agente”. Client-only when `open`.
+ * No mounted-flag wait (that left the sheet invisible after tap).
  */
 export function Modal({
   open,
@@ -28,8 +33,8 @@ export function Modal({
   closeOnScrim = true,
   closeOnEscape = true,
 }: ModalProps) {
-  const mounted = useMounted();
-  useBodyScrollLock(open);
+  const canPortal = typeof document !== "undefined";
+  useBodyScrollLock(open && canPortal);
 
   useEffect(() => {
     if (!open || !closeOnEscape) return;
@@ -40,12 +45,13 @@ export function Modal({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, closeOnEscape, onClose]);
 
-  if (!mounted || !open) return null;
+  if (!open || !canPortal) return null;
 
   return createPortal(
     <div
       className="stay-modal-root fixed inset-0 flex items-end justify-center sm:items-center sm:p-4"
       role="presentation"
+      data-agent-modal-root=""
     >
       <button
         type="button"
@@ -59,9 +65,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className={`relative isolate max-h-[min(92dvh,720px)] w-full overflow-y-auto overscroll-contain rounded-t-2xl border border-[var(--line)] bg-[var(--sand)] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-xl ${
-          size === "lg" ? "max-w-lg p-5 sm:p-6" : "max-w-md"
-        }`}
+        className={`relative isolate max-h-[min(92dvh,840px)] w-full overflow-y-auto overscroll-contain rounded-t-2xl border border-[var(--line)] bg-[var(--sand)] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-xl ${SIZE_CLASS[size]}`}
         style={{ WebkitOverflowScrolling: "touch" }}
         onClick={(event) => event.stopPropagation()}
       >

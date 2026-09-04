@@ -8,8 +8,8 @@ type AgentSession = ReturnType<typeof useAgentSession>;
 const AgentSessionContext = createContext<AgentSession | null>(null);
 
 /**
- * Buyer agent session for the whole app. “Mi agente” is the /agent page —
- * there is no setup modal (it broke scroll on phones).
+ * Buyer agent session for the whole app. “Mi agente” opens AgentModal
+ * in place (the current page stays mounted).
  */
 export function AgentSessionProvider({ children }: { children: ReactNode }) {
   const agent = useAgentSession();

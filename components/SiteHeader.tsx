@@ -8,7 +8,6 @@ import { useAgent } from "@/components/AgentSessionProvider";
 const NAV = [
   { href: "/", label: "Explorar" },
   { href: "/host", label: "Modo anfitrión" },
-  { href: "/agent", label: "Mi agente" },
   { href: "/como-funciona", label: "Cómo funciona" },
 ];
 
@@ -49,15 +48,18 @@ export function SiteHeader() {
           })}
         </nav>
 
-        <Link
-          href="/agent"
+        <button
+          type="button"
+          onClick={() => agent.setSetupOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={agent.setupOpen}
           className="ml-auto inline-flex items-center gap-2 border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 transition hover:border-[var(--pine)]/35 hover:bg-[var(--surface-strong)]"
         >
           <StatusBadge status={agent.agentStatus} />
           <span className="text-xs font-semibold text-[var(--pine)]">
             Mi agente
           </span>
-        </Link>
+        </button>
       </div>
     </header>
   );

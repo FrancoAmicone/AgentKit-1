@@ -30,8 +30,9 @@ type Props = {
   createMessage: string | null;
   onRefreshBalances: () => void;
   refreshingBalances: boolean;
-  /** Optional back-link after setup (e.g. return to a stay). */
-  nextHref?: string | null;
+  /** Close the sheet (modal). When set, explore/host actions dismiss instead of routing away blindly. */
+  onDismiss?: () => void;
+  compact?: boolean;
 };
 
 function shortAddress(address: string) {
@@ -54,7 +55,8 @@ export function AgentDashboard({
   createMessage,
   onRefreshBalances,
   refreshingBalances,
-  nextHref,
+  onDismiss,
+  compact = false,
 }: Props) {
   const minLimit = limitsInfo?.minAutoPayLimitUsdc ?? 0.01;
   const autoLimit =
@@ -86,14 +88,18 @@ export function AgentDashboard({
           <StatusBadge status={agentStatus} />
         </div>
         <h1
-          className="mt-2 text-[clamp(1.9rem,5vw,3rem)] leading-tight text-[var(--ink)]"
+          className={`mt-2 leading-tight text-[var(--ink)] ${
+            compact
+              ? "text-2xl sm:text-3xl"
+              : "text-[clamp(1.9rem,5vw,3rem)]"
+          }`}
           style={{ fontFamily: "var(--font-display)" }}
         >
           {hasAgent ? "Todo lo que tiene tu agente" : "Creá tu agente"}
         </h1>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--muted)] sm:text-base">
           {hasAgent
-            ? "Acá ves el saldo, la wallet, World y el tope. Todo vive en esta página — no hay modal."
+            ? "Saldo, wallet, World y tope — todo acá, sin salir de la página."
             : "Un click crea una wallet CDP solo para este navegador. Después la fondeás, la verificás con World y definís hasta cuánto puede pagar solo."}
         </p>
       </header>
@@ -259,13 +265,14 @@ export function AgentDashboard({
           </li>
         </ul>
         <div className="mt-5 flex flex-wrap gap-3">
-          {nextHref ? (
-            <Link
-              href={nextHref}
+          {onDismiss ? (
+            <button
+              type="button"
+              onClick={onDismiss}
               className="bg-[var(--pine)] px-4 py-2.5 text-sm font-semibold text-white"
             >
-              Volver a la reserva
-            </Link>
+              Listo — seguir acá
+            </button>
           ) : (
             <Link
               href="/"
@@ -276,12 +283,14 @@ export function AgentDashboard({
           )}
           <Link
             href="/host"
+            onClick={() => onDismiss?.()}
             className="border border-[var(--clay)] px-4 py-2.5 text-sm font-semibold text-[var(--clay)]"
           >
             Modo anfitrión
           </Link>
           <Link
             href="/como-funciona"
+            onClick={() => onDismiss?.()}
             className="px-4 py-2.5 text-sm font-semibold text-[var(--pine)] underline underline-offset-2"
           >
             Cómo funciona

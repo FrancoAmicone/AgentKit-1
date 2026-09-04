@@ -37,9 +37,9 @@ disponibilidad **público** por alojamiento.
 
 ### `/agent` — Dashboard del agente
 
-- Página propia (no un modal): saldo USDC/ETH, address, World, tope.
-- El chip **Mi agente** del header y la tab bar del teléfono navegan acá.
-- Si venís de una ficha (`?next=/stays/…`) hay “Volver a la reserva”.
+- El chip **Mi agente** (header y tab) abre un modal con saldo USDC/ETH,
+  wallet, World y tope, sin salir de la página.
+- `/agent` sigue disponible como URL directa.
 - Fotos del catálogo: archivos locales en `/public/listings/` (Wikimedia),
   con fallback si una URL remota falla. Link “Ver en Maps” en la ficha.
 
@@ -61,9 +61,9 @@ tope+HITL, 0G).
 
 `AgentSessionProvider` + `SiteHeader` + tab bar móvil (`Explorar` /
 `Anfitrión` / `Mi agente`). El estado del agente vive en contexto; **Mi
-agente** es siempre un `Link` a `/agent` (no hay modal de setup: el wizard
-rompía el scroll en el teléfono). En el teléfono el header no envuelve el
-nav; `NavigationReset` limpia overflow/scroll al cambiar de ruta.
+agente** abre un modal in-place (la página actual no se desmonta). En el
+teléfono el header no envuelve el nav; `NavigationReset` no pisa el lock
+del modal.
 
 ## Modelo de datos
 
