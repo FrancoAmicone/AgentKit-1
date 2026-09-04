@@ -64,14 +64,14 @@ export function AgentModal() {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative isolate max-h-[min(92dvh,840px)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-t-2xl border border-[var(--line)] bg-[var(--sand)] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-xl sm:p-6"
+        className="relative isolate max-h-[min(94dvh,840px)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-t-2xl border border-[var(--line)] bg-[var(--sand)] px-3 pt-0 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-xl sm:px-6 sm:pb-6"
         style={{ WebkitOverflowScrolling: "touch" }}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 -mx-4 mb-4 flex items-center justify-between border-b border-[var(--line)] bg-[var(--sand)] px-4 py-3 sm:-mx-6 sm:px-6">
+        <div className="sticky top-0 z-10 -mx-3 mb-3 flex items-center justify-between border-b border-[var(--line)] bg-[var(--sand)] px-3 py-2.5 sm:-mx-6 sm:mb-4 sm:px-6 sm:py-3">
           <h2
             id={titleId}
-            className="text-base font-semibold text-[var(--ink)] sm:text-lg"
+            className="text-[15px] font-semibold text-[var(--ink)] sm:text-lg"
             style={{ fontFamily: "var(--font-display)" }}
           >
             Mi agente

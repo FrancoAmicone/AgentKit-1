@@ -24,6 +24,7 @@ type Props = {
   fundHint?: FundHint | null;
   onRefresh: () => void;
   refreshing?: boolean;
+  compact?: boolean;
 };
 
 /**
@@ -35,14 +36,18 @@ export function AgentFundPanel({
   fundHint,
   onRefresh,
   refreshing,
+  compact = false,
 }: Props) {
   const [qr, setQr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const funded = Boolean(balances?.funded);
+  const hideTutorial = compact && funded;
 
   useEffect(() => {
+    if (hideTutorial) return;
     let cancelled = false;
     void QRCode.toDataURL(address, {
-      width: 168,
+      width: compact ? 120 : 168,
       margin: 1,
       color: { dark: "#0a101a", light: "#e8eef7" },
     }).then((url) => {
@@ -51,7 +56,7 @@ export function AgentFundPanel({
     return () => {
       cancelled = true;
     };
-  }, [address]);
+  }, [address, compact, hideTutorial]);
 
   const copy = useCallback(async () => {
     try {
@@ -68,8 +73,9 @@ export function AgentFundPanel({
   const asset = fundHint?.asset || "USDC";
 
   return (
-    <div className="space-y-5">
-      <ol className="space-y-3 text-sm leading-relaxed text-[var(--muted)]">
+    <div className={compact ? "space-y-3" : "space-y-5"}>
+      {!hideTutorial && (
+      <ol className={`space-y-3 leading-relaxed text-[var(--muted)] ${compact ? "text-xs" : "text-sm"}`}>
         <li className="flex gap-3">
           <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center bg-[var(--pine)] text-xs font-bold text-[var(--paper)]">
             1
@@ -102,6 +108,7 @@ export function AgentFundPanel({
           </span>
         </li>
       </ol>
+      )}
 
       <div className="border border-[var(--line)] bg-[var(--surface-strong)] p-3">
         <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
@@ -120,9 +127,17 @@ export function AgentFundPanel({
       <button
         type="button"
         onClick={() => void copy()}
-        className="w-full bg-[var(--pine)] px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-[var(--pine-deep)]"
+        className={`w-full bg-[var(--pine)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--pine-deep)] ${
+          compact ? "py-2.5" : "py-3.5"
+        }`}
       >
-        {copied ? "✓ Copiada — ahora pegala en el faucet" : "Copiar wallet del agente"}
+        {copied
+          ? hideTutorial
+            ? "✓ Copiada"
+            : "✓ Copiada — ahora pegala en el faucet"
+          : hideTutorial
+            ? "Copiar wallet"
+            : "Copiar wallet del agente"}
       </button>
 
       <div className="flex flex-wrap gap-2">
@@ -134,7 +149,7 @@ export function AgentFundPanel({
         >
           {refreshing ? "Actualizando…" : "Actualizar saldo"}
         </button>
-        {fundHint?.faucetUsdc && (
+        {fundHint?.faucetUsdc && !hideTutorial && (
           <a
             href={fundHint.faucetUsdc}
             target="_blank"
@@ -144,7 +159,7 @@ export function AgentFundPanel({
             Abrir faucet USDC
           </a>
         )}
-        {fundHint?.faucetEth && (
+        {fundHint?.faucetEth && !hideTutorial && (
           <a
             href={fundHint.faucetEth}
             target="_blank"
@@ -166,15 +181,16 @@ export function AgentFundPanel({
         )}
       </div>
 
-      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-        {qr && (
+      {!hideTutorial && (
+      <div className={`flex items-start gap-3 ${compact ? "flex-row" : "flex-col sm:flex-row sm:items-center sm:gap-4"}`}>
+        {qr && !hideTutorial && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={qr}
             alt="QR de la wallet del agente"
-            width={140}
-            height={140}
-            className="border border-[var(--line)] bg-[var(--surface-strong)] p-2"
+            width={compact ? 96 : 140}
+            height={compact ? 96 : 140}
+            className="shrink-0 border border-[var(--line)] bg-[var(--surface-strong)] p-1.5"
           />
         )}
         <div>
@@ -205,6 +221,7 @@ export function AgentFundPanel({
           </p>
         </div>
       </div>
+      )}
     </div>
   );
 }
