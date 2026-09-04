@@ -47,23 +47,25 @@ async function writeStore(store: StoreFile): Promise<void> {
 
 /**
  * Demo occupancy so public calendars show locked dates from day one.
- * Computed relative to "today" — never persisted.
+ * Offsets are nights from today (half-open). Seed availability windows
+ * (`lib/seed-availability.ts`) merge these so booked nights stay offered.
  */
+export const DEMO_BOOKING_OFFSETS: Record<string, Array<[number, number]>> = {
+  "bariloche-cabin": [
+    [2, 5],
+    [10, 13],
+  ],
+  "bariloche-lakehouse": [[4, 9]],
+  "palermo-studio": [
+    [1, 3],
+    [7, 8],
+  ],
+  "pinamar-beach": [[3, 7]],
+  "mendoza-vineyard": [[6, 10]],
+};
+
 function demoSeedBookings(listingId: string): Booking[] {
-  const offsets: Record<string, Array<[number, number]>> = {
-    "bariloche-cabin": [
-      [2, 5],
-      [10, 13],
-    ],
-    "bariloche-lakehouse": [[4, 9]],
-    "palermo-studio": [
-      [1, 3],
-      [7, 8],
-    ],
-    "pinamar-beach": [[3, 7]],
-    "mendoza-vineyard": [[6, 10]],
-  };
-  const ranges = offsets[listingId];
+  const ranges = DEMO_BOOKING_OFFSETS[listingId];
   if (!ranges) return [];
   const today = todayStr();
   return ranges.map(([from, to], i) => {

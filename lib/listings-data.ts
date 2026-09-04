@@ -34,6 +34,11 @@ export type Listing = {
  * Pricing for testnet demos:
  * - $0.05/noche → 1 noche queda bajo el tope default ($0.1)
  * - $0.20/noche → supera el tope → NEEDS_HUMAN_APPROVAL
+ *
+ * Seed listings omit `availabilityWindows` here. `getAllListings` attaches
+ * deterministic random windows per id (`lib/seed-availability.ts`) so the
+ * public calendar shows offered vs. gray “no ofrecido” days. Host-published
+ * listings keep the windows stored in `data/host-listings.json`.
  */
 export const LISTINGS_SEED: Listing[] = [
   {

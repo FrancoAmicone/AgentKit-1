@@ -12,6 +12,56 @@ export const WORLD_APP_STORE = {
   android: "https://play.google.com/store/apps/details?id=com.worldcoin",
 } as const;
 
+/** Android package for World App (not World ID `org.world.id`). */
+const WORLD_APP_ANDROID_PACKAGE = "com.worldcoin";
+
+const VERIFY_HOSTS = new Set([
+  "world.org",
+  "www.world.org",
+  "worldcoin.org",
+  "www.worldcoin.org",
+  "id.worldcoin.org",
+]);
+
+/**
+ * IDKit's connectorURI is `https://world.org/verify?t=wld&…`.
+ * That path is a Universal Link for **World ID** (`org.world.id`), so iOS/Android
+ * open the World ID app. StayAgent needs **World App** (`org.worldcoin.insight`
+ * / `com.worldcoin`). Rewrite only the URL we *open*; QR stays on https so the
+ * World App camera scanner still works.
+ */
+export function worldAppOpenUrl(
+  connectorURI: string,
+  platform: MobilePlatform | null = getMobilePlatform(),
+): string {
+  if (!connectorURI) return connectorURI;
+  let url: URL;
+  try {
+    url = new URL(connectorURI);
+  } catch {
+    return connectorURI;
+  }
+
+  const path = url.pathname.replace(/\/+$/, "") || "/";
+  const isVerify = VERIFY_HOSTS.has(url.hostname) && path === "/verify";
+  if (!isVerify) return connectorURI;
+
+  const query = url.search;
+  const worldAppUri = `worldapp://verify${query}`;
+
+  if (platform === "android") {
+    const fallback = encodeURIComponent(WORLD_APP_STORE.android);
+    const hostPath = `world.org/verify${query}`;
+    return `intent://${hostPath}#Intent;scheme=https;package=${WORLD_APP_ANDROID_PACKAGE};S.browser_fallback_url=${fallback};end`;
+  }
+
+  if (platform === "ios" || platform === "other") {
+    return worldAppUri;
+  }
+
+  return connectorURI;
+}
+
 export function isMobileDevice() {
   if (typeof navigator === "undefined") return false;
   return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -34,7 +84,8 @@ export function getWorldAppStoreUrl(): string {
 
 export function openWorldAppLink(uri: string) {
   if (typeof window === "undefined" || !uri) return false;
-  const win = window.open(uri, "_blank", "noopener,noreferrer");
+  const target = worldAppOpenUrl(uri);
+  const win = window.open(target, "_blank", "noopener,noreferrer");
   return Boolean(win);
 }
 
@@ -58,9 +109,10 @@ export function navigateWorldAppWindow(
   uri: string,
 ): boolean {
   if (!uri) return false;
+  const target = worldAppOpenUrl(uri);
   if (reserved && !reserved.closed) {
     try {
-      reserved.location.href = uri;
+      reserved.location.href = target;
       return true;
     } catch {
       // fall through

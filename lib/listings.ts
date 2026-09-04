@@ -5,6 +5,7 @@ import {
   type HostListing,
 } from "./host-listings";
 import { getAllHostProfiles } from "./host-profile";
+import { seedAvailabilityWindows } from "./seed-availability";
 
 function marketplaceAddress(): string {
   return (
@@ -77,6 +78,10 @@ export async function getAllListings(): Promise<Listing[]> {
   const seed = LISTINGS_SEED.map((l) => ({
     ...l,
     ownerWalletAddress: fallbackPayTo,
+    availabilityWindows:
+      l.availabilityWindows && l.availabilityWindows.length > 0
+        ? l.availabilityWindows
+        : seedAvailabilityWindows(l.id),
   }));
   return [...host, ...seed];
 }

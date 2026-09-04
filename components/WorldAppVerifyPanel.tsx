@@ -6,6 +6,7 @@ import {
   getWorldAppStoreUrl,
   isMobileDevice,
   openWorldAppLink,
+  worldAppOpenUrl,
 } from "@/lib/world-app-link";
 
 type WorldAppVerifyPanelProps = {
@@ -35,6 +36,7 @@ export function WorldAppVerifyPanel({
   const platform = getMobilePlatform();
   const storeUrl = getWorldAppStoreUrl();
   const shouldAutoOpen = autoOpen ?? mobile;
+  const openHref = worldAppOpenUrl(deepLink);
   const openedRef = useRef(false);
   const [suggestStore, setSuggestStore] = useState(false);
 
@@ -78,7 +80,7 @@ export function WorldAppVerifyPanel({
           usá el link de la tienda.
         </p>
         <a
-          href={deepLink}
+          href={openHref}
           target="_blank"
           rel="noopener noreferrer"
           className="flex w-full items-center justify-center bg-[var(--pine)] px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-[var(--pine-deep)]"
@@ -110,7 +112,7 @@ export function WorldAppVerifyPanel({
   return (
     <div className="mt-4 space-y-3">
       <a
-        href={deepLink}
+        href={openHref}
         target="_blank"
         rel="noopener noreferrer"
         className="flex w-full items-center justify-center bg-[var(--pine)] px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-[var(--pine-deep)]"
