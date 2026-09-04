@@ -29,6 +29,10 @@ Under-limit purchases skip HITL entirely.
    `window.open` after `await`.  
 5. If World isn’t installed: after ~1.8s still visible → highlight **App Store
    (iOS)** or **Play Store (Android)** (`lib/world-app-link.ts`).  
+   The Bridge URL `https://world.org/verify` is a Universal Link for **World ID**.
+   On the phone we rewrite it to `worldapp://verify…` (iOS) or an Android
+   intent targeting `com.worldcoin` so **World App** opens instead. The QR
+   stays on the https URL so World App’s camera scanner still works.  
 6. Modal is portaled to `document.body` with opaque scrim so listing images
    don’t bleed through.
 
