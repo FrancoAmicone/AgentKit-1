@@ -56,7 +56,6 @@ body {
   min-height: 100%;
   min-height: 100dvh;
   overflow-x: hidden;
-  /* Momentum scrolling on iOS when body is the scroller */
   -webkit-overflow-scrolling: touch;
 }
 
@@ -80,9 +79,30 @@ body::before {
   mask-image: radial-gradient(ellipse 80% 70% at 50% 20%, #000 20%, transparent 75%);
 }
 
-body > * {
+/* Never `body > * { position: relative }` — that kills portal `position:fixed`. */
+.app-root {
   position: relative;
   z-index: 1;
+  min-height: 100%;
+  min-height: 100dvh;
+}
+
+@media (max-width: 639px) {
+  .app-root {
+    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .stay-rise,
+  .stay-rise-delay,
+  .stay-fade {
+    animation: none;
+  }
+}
+
+.stay-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
 }
 
 ::selection {

@@ -128,6 +128,8 @@ Detalle 0G: [03-0g.md](./03-0g.md).
 Ver [14-two-sided-ui.md](./14-two-sided-ui.md).
 
 - [x] Shell global: `AgentSessionProvider` + `SiteHeader` (nav + chip agente en todas las páginas)
+- [x] `/agent` dashboard (saldo, wallet, World, tope) + tab bar móvil + fotos locales
+- [x] Fix modal/scroll en teléfono (`body > *` ya no pisa `position:fixed`; lock iOS)
 - [x] Home dos lados: hero huésped/anfitrión + catálogo completo + chips de búsqueda
 - [x] Ficha pública `/stays/[id]`: descripción + calendario de disponibilidad público
 - [x] Bookings por rango de fechas (`lib/bookings.ts`, checkout exclusivo, máx 30 noches)

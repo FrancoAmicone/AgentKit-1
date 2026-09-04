@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { isDateStr, type DateRange } from "./dates";
 import { readDemoStore, writeDemoStore } from "./demo-store";
 import type { Listing } from "./listings-data";
+import { HOST_FALLBACK_PHOTOS, isAllowedImageUrl } from "./listing-images";
 
 /** A listing published from the host side, owned by an anonymous host session. */
 export type HostListing = Listing & {
@@ -54,12 +55,7 @@ export function normalizeAvailabilityWindows(
   return windows.sort((a, b) => a.checkIn.localeCompare(b.checkIn));
 }
 
-const FALLBACK_IMAGES = [
-  "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80",
-  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
-  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
-];
+const FALLBACK_IMAGES = HOST_FALLBACK_PHOTOS;
 
 export const MIN_PRICE_PER_NIGHT_USDC = 0.01;
 export const MAX_PRICE_PER_NIGHT_USDC = 10_000;
@@ -133,8 +129,8 @@ export async function createHostListing(
     throw new Error("La wallet de cobro debe ser una dirección EVM válida (0x…).");
   }
   const imageUrl = input.imageUrl?.trim();
-  if (imageUrl && !/^https:\/\//.test(imageUrl)) {
-    throw new Error("La imagen debe ser una URL https.");
+  if (imageUrl && !isAllowedImageUrl(imageUrl)) {
+    throw new Error("La imagen debe ser una URL https o una foto local de /listings/.");
   }
 
   const amenities = input.amenities

@@ -10,15 +10,14 @@ type ModalProps = {
   onClose: () => void;
   labelledBy: string;
   children: ReactNode;
-  /** Wider dialog for setup / forms. */
   size?: "md" | "lg";
   closeOnScrim?: boolean;
   closeOnEscape?: boolean;
 };
 
 /**
- * Full-viewport portal modal on document.body so ancestor transforms /
- * stacking cannot trap it under listing images or other content.
+ * Portal on document.body. Used only for HITL purchase approval — never
+ * for “Mi agente” (that is a real page at /agent).
  */
 export function Modal({
   open,
@@ -45,8 +44,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 flex items-end justify-center sm:items-center sm:p-4"
-      style={{ zIndex: 10000 }}
+      className="stay-modal-root fixed inset-0 flex items-end justify-center sm:items-center sm:p-4"
       role="presentation"
     >
       <button
@@ -64,7 +62,7 @@ export function Modal({
         className={`relative isolate max-h-[min(92dvh,720px)] w-full overflow-y-auto overscroll-contain rounded-t-2xl border border-[var(--line)] bg-[var(--sand)] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-xl ${
           size === "lg" ? "max-w-lg p-5 sm:p-6" : "max-w-md"
         }`}
-        style={{ zIndex: 10001, WebkitOverflowScrolling: "touch" }}
+        style={{ WebkitOverflowScrolling: "touch" }}
         onClick={(event) => event.stopPropagation()}
       >
         {children}

@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import type {
   AgentStatus,
   LimitsResponse,
-} from "@/components/AgentSetupModal";
+} from "@/components/AgentStatusBadge";
 
 export type AgentMe = {
   ok: boolean;
@@ -49,7 +49,6 @@ export function useAgentSession() {
   const [limitInput, setLimitInput] = useState("0.1");
   const [savingLimit, setSavingLimit] = useState(false);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
-  const [setupOpen, setSetupOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createMessage, setCreateMessage] = useState<string | null>(null);
   const [refreshingBalances, setRefreshingBalances] = useState(false);
@@ -90,7 +89,9 @@ export function useAgentSession() {
 
   const refreshMe = useCallback(async () => {
     try {
-      const res = await fetch("/api/agent/me");
+      const res = await fetch("/api/agent/me", {
+        signal: AbortSignal.timeout(15_000),
+      });
       const data = (await res.json()) as AgentMe;
       applyMe(data);
       return data;
@@ -119,85 +120,96 @@ export function useAgentSession() {
   }, []);
 
   const refreshAll = useCallback(() => {
-    void refreshMe().then(() => void refreshLimits());
+    void Promise.all([refreshMe(), refreshLimits()]);
   }, [refreshMe, refreshLimits]);
 
-  // No auto-open: the header chip and contextual nudges point to Configurar.
+  // Bootstrap session once. Parallel so me + limits don't waterfall.
   useEffect(() => {
     void (async () => {
-      await refreshMe();
-      await refreshLimits();
+      await Promise.all([refreshMe(), refreshLimits()]);
     })();
     // intentionally once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function createAgent() {
+  const createAgent = useCallback(async () => {
     setCreating(true);
     setCreateMessage(null);
     try {
-      const res = await fetch("/api/agent/create", { method: "POST" });
+      const res = await fetch("/api/agent/create", {
+        method: "POST",
+        signal: AbortSignal.timeout(25_000),
+      });
       const data = await res.json();
       if (!res.ok || !data.ok) {
         throw new Error(data.error || "No se pudo crear el agente");
       }
       setCreateMessage(data.message || "Agente creado");
-      await refreshMe();
-      await refreshLimits();
+      await Promise.all([refreshMe(), refreshLimits()]);
     } catch (err) {
+      const timedOut =
+        err instanceof Error &&
+        (err.name === "TimeoutError" || err.name === "AbortError");
       setCreateMessage(
-        err instanceof Error ? err.message : "Error al crear agente",
+        timedOut
+          ? "Tardó demasiado (¿faltan las keys CDP?). Probá de nuevo."
+          : err instanceof Error
+            ? err.message
+            : "Error al crear agente",
       );
     } finally {
       setCreating(false);
     }
-  }
+  }, [refreshMe, refreshLimits]);
 
-  async function refreshBalances() {
+  const refreshBalances = useCallback(async () => {
     setRefreshingBalances(true);
     try {
       await refreshMe();
     } finally {
       setRefreshingBalances(false);
     }
-  }
+  }, [refreshMe]);
 
-  async function onSaveLimit(e: FormEvent) {
-    e.preventDefault();
-    setSavingLimit(true);
-    setLimitMessage(null);
-    try {
-      const res = await fetch("/api/agent/limits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ autoPayLimitUsdc: Number(limitInput) }),
-      });
-      const data = (await res.json()) as LimitsResponse & {
-        registerHint?: string;
-        error?: string;
-      };
-      if (!res.ok || !data.ok) {
-        throw new Error(
-          [data.error, data.registerHint].filter(Boolean).join(" — ") ||
-            "No se pudo guardar el límite",
+  const onSaveLimit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      setSavingLimit(true);
+      setLimitMessage(null);
+      try {
+        const res = await fetch("/api/agent/limits", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ autoPayLimitUsdc: Number(limitInput) }),
+        });
+        const data = (await res.json()) as LimitsResponse & {
+          registerHint?: string;
+          error?: string;
+        };
+        if (!res.ok || !data.ok) {
+          throw new Error(
+            [data.error, data.registerHint].filter(Boolean).join(" — ") ||
+              "No se pudo guardar el límite",
+          );
+        }
+        setLimitsInfo(data);
+        if (data.limits?.autoPayLimitUsdc != null) {
+          setLimitInput(String(data.limits.autoPayLimitUsdc));
+        }
+        setLimitMessage(
+          `Límite guardado: pago automático hasta $${data.limits?.autoPayLimitUsdc} USDC`,
         );
+        await refreshMe();
+      } catch (err) {
+        setLimitMessage(
+          err instanceof Error ? err.message : "Error al guardar límite",
+        );
+      } finally {
+        setSavingLimit(false);
       }
-      setLimitsInfo(data);
-      if (data.limits?.autoPayLimitUsdc != null) {
-        setLimitInput(String(data.limits.autoPayLimitUsdc));
-      }
-      setLimitMessage(
-        `Límite guardado: pago automático hasta $${data.limits?.autoPayLimitUsdc} USDC`,
-      );
-      await refreshMe();
-    } catch (err) {
-      setLimitMessage(
-        err instanceof Error ? err.message : "Error al guardar límite",
-      );
-    } finally {
-      setSavingLimit(false);
-    }
-  }
+    },
+    [limitInput, refreshMe],
+  );
 
   const canPurchase =
     Boolean(me?.hasAgent) &&
@@ -213,8 +225,6 @@ export function useAgentSession() {
     setLimitInput,
     savingLimit,
     limitMessage,
-    setupOpen,
-    setSetupOpen,
     refreshAll,
     onSaveLimit,
     canPurchase,
