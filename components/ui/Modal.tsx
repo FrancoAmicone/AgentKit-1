@@ -49,7 +49,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="stay-modal-root fixed inset-0 flex items-end justify-center sm:items-center sm:p-4"
+      className="stay-modal-root flex flex-col justify-end sm:items-center sm:justify-center sm:p-4"
       role="presentation"
       data-agent-modal-root=""
     >
@@ -65,11 +65,12 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className={`relative isolate max-h-[min(92dvh,840px)] w-full overflow-y-auto overscroll-contain rounded-t-2xl border border-[var(--line)] bg-[var(--sand)] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-xl ${SIZE_CLASS[size]}`}
-        style={{ WebkitOverflowScrolling: "touch" }}
+        className={`stay-sheet relative isolate w-full rounded-t-2xl border border-[var(--line)] bg-[var(--sand)] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:max-h-[min(92svh,840px)] sm:rounded-xl ${SIZE_CLASS[size]}`}
         onClick={(event) => event.stopPropagation()}
       >
-        {children}
+        <div className="stay-sheet-body">
+          {children}
+        </div>
       </div>
     </div>,
     document.body,

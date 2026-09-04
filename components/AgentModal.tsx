@@ -21,6 +21,9 @@ const AgentDashboardLazy = dynamic(
  * In-place sheet for “Mi agente”. Sibling of `.app-root` so position:fixed
  * works. The chrome (title + Cerrar) is always in the small layout bundle;
  * the dashboard chunk loads only after the sheet is open.
+ *
+ * Overlay height follows the visual viewport (--stay-vvh) so iOS Safari
+ * chrome does not clip the sheet. Header stays put; only the body scrolls.
  */
 export function AgentModal() {
   const titleId = useId();
@@ -28,6 +31,7 @@ export function AgentModal() {
   const agent = useAgent();
   const { setupOpen, setSetupOpen } = agent;
   const pathRef = useRef(pathname);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   useBodyScrollLock(setupOpen);
 
@@ -46,11 +50,15 @@ export function AgentModal() {
     return () => window.removeEventListener("keydown", onKey);
   }, [setupOpen, setSetupOpen]);
 
+  useEffect(() => {
+    if (setupOpen) bodyRef.current?.scrollTo({ top: 0 });
+  }, [setupOpen]);
+
   if (!setupOpen) return null;
 
   return (
     <div
-      className="stay-modal-root fixed inset-0 z-[10000] flex items-end justify-center sm:items-center sm:p-4"
+      className="stay-modal-root flex flex-col justify-end sm:items-center sm:justify-center sm:p-4"
       role="presentation"
       data-agent-modal=""
     >
@@ -64,11 +72,10 @@ export function AgentModal() {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative isolate max-h-[min(94dvh,840px)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-t-2xl border border-[var(--line)] bg-[var(--sand)] px-3 pt-0 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-xl sm:px-6 sm:pb-6"
-        style={{ WebkitOverflowScrolling: "touch" }}
+        className="stay-sheet relative isolate w-full max-w-2xl rounded-t-2xl border border-[var(--line)] bg-[var(--sand)] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:max-h-[min(92svh,840px)] sm:rounded-xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 -mx-3 mb-3 flex items-center justify-between border-b border-[var(--line)] bg-[var(--sand)] px-3 py-2.5 sm:-mx-6 sm:mb-4 sm:px-6 sm:py-3">
+        <div className="flex shrink-0 items-center justify-between border-b border-[var(--line)] px-3 py-2.5 sm:px-6 sm:py-3">
           <h2
             id={titleId}
             className="text-[15px] font-semibold text-[var(--ink)] sm:text-lg"
@@ -84,26 +91,31 @@ export function AgentModal() {
             Cerrar
           </button>
         </div>
-        <AgentErrorBoundary>
-          <AgentDashboardLazy
-            compact
-            me={agent.me}
-            agentStatus={agent.agentStatus}
-            limitsInfo={agent.limitsInfo}
-            limitInput={agent.limitInput}
-            onLimitInputChange={agent.setLimitInput}
-            savingLimit={agent.savingLimit}
-            limitMessage={agent.limitMessage}
-            onSaveLimit={agent.onSaveLimit}
-            onRefresh={agent.refreshAll}
-            onCreateAgent={() => void agent.createAgent()}
-            creating={agent.creating}
-            createMessage={agent.createMessage}
-            onRefreshBalances={() => void agent.refreshBalances()}
-            refreshingBalances={agent.refreshingBalances}
-            onDismiss={() => setSetupOpen(false)}
-          />
-        </AgentErrorBoundary>
+        <div
+          ref={bodyRef}
+          className="stay-sheet-body px-3 pt-3 pb-[max(2.5rem,calc(env(safe-area-inset-bottom,0px)+1.5rem))] sm:px-6 sm:pt-4 sm:pb-6"
+        >
+          <AgentErrorBoundary>
+            <AgentDashboardLazy
+              compact
+              me={agent.me}
+              agentStatus={agent.agentStatus}
+              limitsInfo={agent.limitsInfo}
+              limitInput={agent.limitInput}
+              onLimitInputChange={agent.setLimitInput}
+              savingLimit={agent.savingLimit}
+              limitMessage={agent.limitMessage}
+              onSaveLimit={agent.onSaveLimit}
+              onRefresh={agent.refreshAll}
+              onCreateAgent={() => void agent.createAgent()}
+              creating={agent.creating}
+              createMessage={agent.createMessage}
+              onRefreshBalances={() => void agent.refreshBalances()}
+              refreshingBalances={agent.refreshingBalances}
+              onDismiss={() => setSetupOpen(false)}
+            />
+          </AgentErrorBoundary>
+        </div>
       </div>
     </div>
   );
