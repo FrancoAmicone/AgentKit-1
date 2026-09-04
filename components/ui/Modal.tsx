@@ -3,7 +3,6 @@
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
-import { useMounted } from "@/hooks/useMounted";
 
 type ModalProps = {
   open: boolean;
@@ -22,8 +21,8 @@ const SIZE_CLASS = {
 } as const;
 
 /**
- * Portal on document.body so `position:fixed` is not trapped by `.app-root`.
- * Used for HITL approval and the “Mi agente” sheet.
+ * Overlay for HITL + “Mi agente”. Client-only when `open`.
+ * No mounted-flag wait (that left the sheet invisible after tap).
  */
 export function Modal({
   open,
@@ -34,8 +33,8 @@ export function Modal({
   closeOnScrim = true,
   closeOnEscape = true,
 }: ModalProps) {
-  const mounted = useMounted();
-  useBodyScrollLock(mounted && open);
+  const canPortal = typeof document !== "undefined";
+  useBodyScrollLock(open && canPortal);
 
   useEffect(() => {
     if (!open || !closeOnEscape) return;
@@ -46,12 +45,13 @@ export function Modal({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, closeOnEscape, onClose]);
 
-  if (!mounted || !open) return null;
+  if (!open || !canPortal) return null;
 
   return createPortal(
     <div
       className="stay-modal-root fixed inset-0 flex items-end justify-center sm:items-center sm:p-4"
       role="presentation"
+      data-agent-modal-root=""
     >
       <button
         type="button"
