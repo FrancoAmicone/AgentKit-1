@@ -10,15 +10,14 @@ type ModalProps = {
   onClose: () => void;
   labelledBy: string;
   children: ReactNode;
-  /** Wider dialog for setup / forms. */
   size?: "md" | "lg";
   closeOnScrim?: boolean;
   closeOnEscape?: boolean;
 };
 
 /**
- * Full-viewport portal modal on document.body. Lives outside `.app-root`
- * so page CSS cannot override `position: fixed`.
+ * Portal on document.body. Used only for HITL purchase approval — never
+ * for “Mi agente” (that is a real page at /agent).
  */
 export function Modal({
   open,
@@ -63,6 +62,7 @@ export function Modal({
         className={`relative isolate max-h-[min(92dvh,720px)] w-full overflow-y-auto overscroll-contain rounded-t-2xl border border-[var(--line)] bg-[var(--sand)] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-xl ${
           size === "lg" ? "max-w-lg p-5 sm:p-6" : "max-w-md"
         }`}
+        style={{ WebkitOverflowScrolling: "touch" }}
         onClick={(event) => event.stopPropagation()}
       >
         {children}

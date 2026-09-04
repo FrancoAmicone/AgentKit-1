@@ -61,9 +61,9 @@ tope+HITL, 0G).
 
 `AgentSessionProvider` + `SiteHeader` + tab bar móvil (`Explorar` /
 `Anfitrión` / `Mi agente`). El estado del agente vive en contexto; **Mi
-agente** abre `/agent` (el modal de setup queda como fallback y muestra el
-mismo dashboard). En el teléfono el header no envuelve el nav (eso rompía
-taps y scroll); `NavigationReset` limpia overflow/scroll al cambiar de ruta.
+agente** es siempre un `Link` a `/agent` (no hay modal de setup: el wizard
+rompía el scroll en el teléfono). En el teléfono el header no envuelve el
+nav; `NavigationReset` limpia overflow/scroll al cambiar de ruta.
 
 ## Modelo de datos
 

@@ -49,7 +49,6 @@ export function useAgentSession() {
   const [limitInput, setLimitInput] = useState("0.1");
   const [savingLimit, setSavingLimit] = useState(false);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
-  const [setupOpen, setSetupOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createMessage, setCreateMessage] = useState<string | null>(null);
   const [refreshingBalances, setRefreshingBalances] = useState(false);
@@ -226,8 +225,6 @@ export function useAgentSession() {
     setLimitInput,
     savingLimit,
     limitMessage,
-    setupOpen,
-    setSetupOpen,
     refreshAll,
     onSaveLimit,
     canPurchase,

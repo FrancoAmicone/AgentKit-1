@@ -1,29 +1,19 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { FormEvent } from "react";
+import { AgentFundPanel } from "@/components/AgentFundPanel";
+import { AgentRegisterPanel } from "@/components/AgentRegisterPanel";
 import {
   StatusBadge,
   type AgentStatus,
   type LimitsResponse,
 } from "@/components/AgentStatusBadge";
+import {
+  GuestProgress,
+  guestStepFromFlags,
+} from "@/components/GuestProgress";
 import type { AgentMe } from "@/hooks/useAgentSession";
-
-const AgentFundPanel = dynamic(
-  () =>
-    import("@/components/AgentFundPanel").then((m) => m.AgentFundPanel),
-  { ssr: false, loading: () => <PanelSkeleton /> },
-);
-const AgentRegisterPanel = dynamic(
-  () =>
-    import("@/components/AgentRegisterPanel").then((m) => m.AgentRegisterPanel),
-  { ssr: false, loading: () => <PanelSkeleton /> },
-);
-
-function PanelSkeleton() {
-  return <p className="text-sm text-[var(--muted)]">Cargando…</p>;
-}
 
 type Props = {
   me: AgentMe | null;
@@ -79,6 +69,12 @@ export function AgentDashboard({
   const ready = hasAgent && funded && (!needsRegister || registered);
   const usdc = me?.balances?.usdc;
   const eth = me?.balances?.eth;
+  const progress = guestStepFromFlags({
+    hasAgent,
+    funded,
+    registered: registered || !needsRegister,
+    topeSaved,
+  });
 
   return (
     <div className="space-y-6">
@@ -97,34 +93,12 @@ export function AgentDashboard({
         </h1>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--muted)] sm:text-base">
           {hasAgent
-            ? "Acá ves el saldo, la wallet, World y el tope. No hace falta un modal: todo vive en esta pantalla."
+            ? "Acá ves el saldo, la wallet, World y el tope. Todo vive en esta página — no hay modal."
             : "Un click crea una wallet CDP solo para este navegador. Después la fondeás, la verificás con World y definís hasta cuánto puede pagar solo."}
         </p>
       </header>
 
-      <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {(
-          [
-            ["1", "Crear", hasAgent],
-            ["2", "Fondos", funded],
-            ["3", "World", registered],
-            ["4", "Tope", topeSaved && registered],
-          ] as const
-        ).map(([n, label, done]) => (
-          <li
-            key={label}
-            className={`border px-3 py-2.5 text-sm font-semibold ${
-              done
-                ? "border-[var(--pine)]/25 bg-[var(--pine)]/10 text-[var(--pine)]"
-                : "border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]"
-            }`}
-          >
-            <span className="mr-1 text-[11px] opacity-70">{n}</span>
-            {done ? "✓ " : ""}
-            {label}
-          </li>
-        ))}
-      </ol>
+      <GuestProgress current={progress} />
 
       {hasAgent && (
         <section className="grid gap-3 sm:grid-cols-3">

@@ -37,9 +37,10 @@ manda a `/agent?next=/stays/[id]`.
 
 - Header compacto (logo + chip). Nav de texto solo desde `md`.
 - Tab bar fija abajo: Explorar · Anfitrión · Mi agente.
-- `NavigationReset` al cambiar de ruta: cierra el sheet, restaura overflow
-  y scrollea al tope.
-- Scroll lock de modals con `position: fixed` en `body` (iOS).
+- `NavigationReset` al cambiar de ruta: restaura overflow y scrollea al tope.
+- El único modal que queda es HITL de compra. El lock de scroll usa
+  `overflow: hidden` — **nunca** `position: fixed` en `body` (eso dejaba
+  el teléfono trabado si el sheet no terminaba de cargar).
 - Sin `background-attachment: fixed` ni animaciones `transform` en
   viewport chico (evita el “bugueo” al navegar).
 

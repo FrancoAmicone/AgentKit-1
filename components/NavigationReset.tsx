@@ -15,10 +15,13 @@ export function NavigationReset() {
     const html = document.documentElement;
     const body = document.body;
     html.style.overflow = "";
+    html.style.position = "";
     html.style.overscrollBehavior = "";
     body.style.overflow = "";
     body.style.position = "";
     body.style.top = "";
+    body.style.left = "";
+    body.style.right = "";
     body.style.width = "";
     body.style.paddingRight = "";
 

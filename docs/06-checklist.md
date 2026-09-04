@@ -117,6 +117,9 @@ Detalle 0G: [03-0g.md](./03-0g.md).
 - [x] Home: brand StayAgent hero + search CTA + receipt confirmation
 - [x] Configurar: one-step wizard (crear → fondos → World → tope)
 - [x] Listings / motion polish
+- [x] Mobile scroll fix (`background-attachment` + body scroll lock iOS)
+- [x] Guided guest journey (progress strip + copy-first fund)
+- [x] Guided host publish (3 pasos + wallet dedicada explicada)
 
 ---
 
