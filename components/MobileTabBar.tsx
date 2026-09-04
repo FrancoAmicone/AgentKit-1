@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const TABS = [
-  { href: "/", label: "Explorar", match: (p: string) => p === "/" || p.startsWith("/stays") },
-  { href: "/host", label: "Anfitrión", match: (p: string) => p.startsWith("/host") },
-  { href: "/agent", label: "Mi agente", match: (p: string) => p.startsWith("/agent") },
-] as const;
+import { useAgent } from "@/components/AgentSessionProvider";
 
 export function MobileTabBar() {
   const pathname = usePathname();
+  const agent = useAgent();
+  const exploreActive =
+    !agent.setupOpen && (pathname === "/" || pathname.startsWith("/stays"));
+  const hostActive = !agent.setupOpen && pathname.startsWith("/host");
+  const agentActive = agent.setupOpen || pathname.startsWith("/agent");
 
   return (
     <nav
@@ -19,23 +19,39 @@ export function MobileTabBar() {
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <ul className="mx-auto grid max-w-lg grid-cols-3">
-        {TABS.map((tab) => {
-          const active = tab.match(pathname);
-          return (
-            <li key={tab.href}>
-              <Link
-                href={tab.href}
-                className={`flex min-h-12 items-center justify-center px-2 text-sm font-semibold ${
-                  active
-                    ? "text-[var(--pine)]"
-                    : "text-[var(--muted)]"
-                }`}
-              >
-                {tab.label}
-              </Link>
-            </li>
-          );
-        })}
+        <li>
+          <Link
+            href="/"
+            className={`flex min-h-12 items-center justify-center px-2 text-sm font-semibold ${
+              exploreActive ? "text-[var(--pine)]" : "text-[var(--muted)]"
+            }`}
+          >
+            Explorar
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/host"
+            className={`flex min-h-12 items-center justify-center px-2 text-sm font-semibold ${
+              hostActive ? "text-[var(--pine)]" : "text-[var(--muted)]"
+            }`}
+          >
+            Anfitrión
+          </Link>
+        </li>
+        <li>
+          <button
+            type="button"
+            onClick={() => agent.setSetupOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={agent.setupOpen}
+            className={`flex min-h-12 w-full items-center justify-center px-2 text-sm font-semibold ${
+              agentActive ? "text-[var(--pine)]" : "text-[var(--muted)]"
+            }`}
+          >
+            Mi agente
+          </button>
+        </li>
       </ul>
     </nav>
   );

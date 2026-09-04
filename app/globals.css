@@ -105,6 +105,12 @@ body::before {
   z-index: 10000;
 }
 
+html[data-stay-modal="open"],
+html[data-stay-modal="open"] body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
 ::selection {
   background: rgba(46, 196, 182, 0.28);
   color: #fff;

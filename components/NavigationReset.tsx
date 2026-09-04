@@ -12,6 +12,8 @@ export function NavigationReset() {
   const pathname = usePathname();
 
   useEffect(() => {
+    if (document.documentElement.dataset.stayModal === "open") return;
+
     const html = document.documentElement;
     const body = document.body;
     html.style.overflow = "";

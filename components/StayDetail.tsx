@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ListingImage } from "@/components/ListingImage";
 import { mapsSearchUrl } from "@/lib/listing-images";
@@ -54,8 +53,6 @@ export function StayDetail({
   initialBookedRanges,
 }: Props) {
   const agent = useAgent();
-  const router = useRouter();
-  const agentHref = `/agent?next=/stays/${listingId}`;
   const [listing, setListing] = useState<Listing | null>(initialListing);
   const [payout, setPayout] = useState<PayoutInfo | null>(null);
   const [loadState, setLoadState] = useState<"ready" | "loading" | "missing">(
@@ -148,7 +145,7 @@ export function StayDetail({
       return;
     }
     if (!agent.canPurchase) {
-      router.push(agentHref);
+      agent.setSetupOpen(true);
       return;
     }
 
@@ -179,7 +176,7 @@ export function StayDetail({
       const data = (await res.json()) as PurchaseResponse;
       if (!res.ok || !data.ok) {
         if (data.code === "AGENT_NOT_HUMAN_BACKED" || data.code === "AGENT_NOT_CREATED") {
-          router.push(agentHref);
+          agent.setSetupOpen(true);
         }
         if (data.code === "NEEDS_HUMAN_APPROVAL") {
           setApprovalStay(stay);
@@ -444,12 +441,13 @@ export function StayDetail({
             {!agent.canPurchase && (
               <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
                 Ver la disponibilidad es libre. Para pagar,{" "}
-                <Link
-                  href={agentHref}
+                <button
+                  type="button"
+                  onClick={() => agent.setSetupOpen(true)}
                   className="font-semibold text-[var(--pine)] underline underline-offset-2"
                 >
                   configurá tu agente
-                </Link>{" "}
+                </button>{" "}
                 (crear · fondear · World · tope).
               </p>
             )}

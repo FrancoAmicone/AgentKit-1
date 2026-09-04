@@ -32,13 +32,13 @@ npm run setup:wallets
 npm run dev
 ```
 
-Abrí [http://localhost:3000](http://localhost:3000) → **Mi agente** (`/agent`: saldo, wallet, World, tope).
+Abrí [http://localhost:3000](http://localhost:3000) → **Mi agente** (modal: saldo, wallet, World, tope).
 
 ## Superficies
 
 - `/` — explorar + búsqueda NLP (huésped)  
 - `/stays/[id]` — ficha pública con calendario de disponibilidad  
-- `/agent` — dashboard del agente (saldo, wallet, World, tope)  
+- `/agent` — misma vista del agente (URL directa; en la app se abre como modal)  
 - `/host` — publicar propiedad + reservas recibidas (anfitrión)  
 - `/como-funciona` — explicación de ambos lados  
 
