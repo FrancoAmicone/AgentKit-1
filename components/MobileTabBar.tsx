@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAgent } from "@/components/AgentSessionProvider";
+import { preloadAgentDashboard } from "@/lib/agent-dashboard-load";
 
 export function MobileTabBar() {
   const pathname = usePathname();
@@ -43,6 +44,9 @@ export function MobileTabBar() {
           <button
             type="button"
             onClick={() => agent.setSetupOpen(true)}
+            onPointerEnter={preloadAgentDashboard}
+            onPointerDown={preloadAgentDashboard}
+            onFocus={preloadAgentDashboard}
             aria-haspopup="dialog"
             aria-expanded={agent.setupOpen}
             className={`flex min-h-12 w-full items-center justify-center px-2 text-sm font-semibold ${

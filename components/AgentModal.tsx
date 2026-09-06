@@ -5,15 +5,17 @@ import { Component, useEffect, useId, useRef, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useAgent } from "@/components/AgentSessionProvider";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { loadAgentDashboard } from "@/lib/agent-dashboard-load";
+
+const DASHBOARD_LOADING = (
+  <p className="text-sm text-[var(--muted)]">Cargando el panel…</p>
+);
 
 const AgentDashboardLazy = dynamic(
-  () =>
-    import("@/components/AgentDashboard").then((m) => m.AgentDashboard),
+  () => loadAgentDashboard().then((m) => m.AgentDashboard),
   {
     ssr: false,
-    loading: () => (
-      <p className="text-sm text-[var(--muted)]">Cargando el panel…</p>
-    ),
+    loading: () => DASHBOARD_LOADING,
   },
 );
 

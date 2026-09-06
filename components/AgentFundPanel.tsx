@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import QRCode from "qrcode";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Balances = {
   usdc: number;
@@ -40,18 +39,26 @@ export function AgentFundPanel({
 }: Props) {
   const [qr, setQr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const copyTimerRef = useRef(0);
   const funded = Boolean(balances?.funded);
   const hideTutorial = compact && funded;
 
   useEffect(() => {
+    return () => window.clearTimeout(copyTimerRef.current);
+  }, []);
+
+  useEffect(() => {
     if (hideTutorial) return;
     let cancelled = false;
-    void QRCode.toDataURL(address, {
-      width: compact ? 120 : 168,
-      margin: 1,
-      color: { dark: "#0a101a", light: "#e8eef7" },
-    }).then((url) => {
-      if (!cancelled) setQr(url);
+    void import("qrcode").then((mod) => {
+      if (cancelled) return;
+      return mod.default.toDataURL(address, {
+        width: compact ? 120 : 168,
+        margin: 1,
+        color: { dark: "#0a101a", light: "#e8eef7" },
+      }).then((url) => {
+        if (!cancelled) setQr(url);
+      });
     });
     return () => {
       cancelled = true;
@@ -62,7 +69,8 @@ export function AgentFundPanel({
     try {
       await navigator.clipboard.writeText(address);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 2200);
+      window.clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = window.setTimeout(() => setCopied(false), 2200);
     } catch {
       // ignore — user can still select the address
     }
