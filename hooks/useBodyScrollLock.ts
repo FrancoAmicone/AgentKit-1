@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-const PASSIVE = { passive: true } as const;
+const PASSIVE: AddEventListenerOptions = { passive: true };
 
 type SavedOverflow = {
   htmlOverflow: string;
@@ -35,9 +35,9 @@ function attachViewportListeners() {
 
 function detachViewportListeners() {
   const vv = window.visualViewport;
-  vv?.removeEventListener("resize", syncVisualViewport, PASSIVE);
-  vv?.removeEventListener("scroll", syncVisualViewport, PASSIVE);
-  window.removeEventListener("resize", syncVisualViewport, PASSIVE);
+  vv?.removeEventListener("resize", syncVisualViewport);
+  vv?.removeEventListener("scroll", syncVisualViewport);
+  window.removeEventListener("resize", syncVisualViewport);
 }
 
 function acquireLock() {
