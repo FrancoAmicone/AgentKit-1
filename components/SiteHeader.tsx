@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { StatusBadge } from "@/components/AgentStatusBadge";
 import { useAgent } from "@/components/AgentSessionProvider";
+import { preloadAgentDashboard } from "@/lib/agent-dashboard-load";
 
 const NAV = [
   { href: "/", label: "Explorar" },
@@ -51,6 +52,9 @@ export function SiteHeader() {
         <button
           type="button"
           onClick={() => agent.setSetupOpen(true)}
+          onPointerEnter={preloadAgentDashboard}
+          onPointerDown={preloadAgentDashboard}
+          onFocus={preloadAgentDashboard}
           aria-haspopup="dialog"
           aria-expanded={agent.setupOpen}
           className="ml-auto inline-flex items-center gap-2 border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 transition hover:border-[var(--pine)]/35 hover:bg-[var(--surface-strong)]"

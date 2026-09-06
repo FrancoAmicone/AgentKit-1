@@ -208,9 +208,9 @@ export function AgentDashboard({
           >
             {creating ? "Creando…" : "Crear mi agente"}
           </button>
-          {createMessage && (
+          {createMessage ? (
             <p className="mt-3 text-xs text-[var(--pine)]">{createMessage}</p>
-          )}
+          ) : null}
         </section>
       )}
 
@@ -268,11 +268,11 @@ export function AgentDashboard({
                 {savingLimit ? "Guardando…" : "Guardar tope"}
               </button>
             </div>
-            {limitMessage && (
+            {limitMessage ? (
               <p className="text-xs font-medium text-[var(--pine)]">
                 {limitMessage}
               </p>
-            )}
+            ) : null}
           </form>
         </section>
       )}
@@ -366,7 +366,7 @@ function StatCard({
       >
         {value}
       </p>
-      {hint && (
+      {hint ? (
         <p
           className={`mt-0.5 truncate ${
             compact ? "text-[10px]" : "text-xs"
@@ -374,7 +374,7 @@ function StatCard({
         >
           {hint}
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

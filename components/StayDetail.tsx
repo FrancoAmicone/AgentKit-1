@@ -14,6 +14,7 @@ import {
   type ReservationReceiptData,
 } from "@/components/ReservationReceipt";
 import { useAgent } from "@/components/AgentSessionProvider";
+import { preloadAgentDashboard } from "@/lib/agent-dashboard-load";
 import { diffDays, formatDateEs, type DateRange } from "@/lib/dates";
 import type { Listing } from "@/lib/listings-data";
 
@@ -444,6 +445,9 @@ export function StayDetail({
                 <button
                   type="button"
                   onClick={() => agent.setSetupOpen(true)}
+                  onPointerEnter={preloadAgentDashboard}
+                  onPointerDown={preloadAgentDashboard}
+                  onFocus={preloadAgentDashboard}
                   className="font-semibold text-[var(--pine)] underline underline-offset-2"
                 >
                   configurá tu agente

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState, useTransition } from "react";
 import { ListingCard, type ListingCardData } from "@/components/ListingCard";
 import { useAgent } from "@/components/AgentSessionProvider";
+import { preloadAgentDashboard } from "@/lib/agent-dashboard-load";
 import {
   GuestProgress,
   guestStepFromFlags,
@@ -125,6 +126,9 @@ export function HomeExplorer({
           <button
             type="button"
             onClick={() => agent.setSetupOpen(true)}
+            onPointerEnter={preloadAgentDashboard}
+            onPointerDown={preloadAgentDashboard}
+            onFocus={preloadAgentDashboard}
             className="shrink-0 bg-[var(--pine)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--pine-deep)]"
           >
             {progress === "ready" ? "Ver mi agente" : "Continuar setup"}
@@ -161,6 +165,9 @@ export function HomeExplorer({
               <button
                 type="button"
                 onClick={() => agent.setSetupOpen(true)}
+                onPointerEnter={preloadAgentDashboard}
+                onPointerDown={preloadAgentDashboard}
+                onFocus={preloadAgentDashboard}
                 className="inline-block border border-[var(--pine)] px-4 py-2 text-sm font-semibold text-[var(--pine)]"
               >
                 Primero: crear agente
@@ -235,6 +242,9 @@ export function HomeExplorer({
           <button
             type="button"
             onClick={() => agent.setSetupOpen(true)}
+            onPointerEnter={preloadAgentDashboard}
+            onPointerDown={preloadAgentDashboard}
+            onFocus={preloadAgentDashboard}
             className="font-semibold text-[var(--pine)] underline underline-offset-2"
           >
             configurá tu agente
