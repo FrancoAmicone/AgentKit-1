@@ -6,6 +6,11 @@ import {
 } from "./host-listings";
 import { getAllHostProfiles } from "./host-profile";
 import { seedAvailabilityWindows } from "./seed-availability";
+import {
+  isRangeFree,
+  stayWithinAvailability,
+  validateStayRange,
+} from "./bookings";
 
 function marketplaceAddress(): string {
   return (
@@ -92,15 +97,15 @@ export async function getListing(id: string): Promise<Listing | undefined> {
 }
 
 /**
- * Availability is date-based now (see lib/bookings.ts) — a listing always
- * appears in search; specific nights get locked by bookings.
+ * Text/price/amenity filters first. If checkIn+checkOut are valid, keep only
+ * listings that offer every night of the stay and have those nights free.
  */
 export async function filterListings(filters: ListingFilters): Promise<Listing[]> {
   const destino = filters.destino?.toLowerCase().trim();
   const amenities = (filters.amenities || []).map((a) => a.toLowerCase());
   const listings = await getAllListings();
 
-  return listings.filter((l) => {
+  const textMatched = listings.filter((l) => {
     if (destino) {
       const haystack = `${l.title} ${l.location}`.toLowerCase();
       const tokens = destino.split(/\s+/).filter(Boolean);
@@ -120,4 +125,16 @@ export async function filterListings(filters: ListingFilters): Promise<Listing[]
 
     return true;
   });
+
+  const stay = validateStayRange(filters.checkIn, filters.checkOut);
+  if (!stay.ok) return textMatched;
+
+  const range = { checkIn: stay.checkIn, checkOut: stay.checkOut };
+  const fits = await Promise.all(
+    textMatched.map(async (listing) => {
+      if (!stayWithinAvailability(listing.availabilityWindows, range)) return null;
+      return (await isRangeFree(listing.id, range)) ? listing : null;
+    }),
+  );
+  return fits.filter((listing): listing is Listing => listing != null);
 }

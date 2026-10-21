@@ -133,6 +133,7 @@ Ver [14-two-sided-ui.md](./14-two-sided-ui.md).
 - [x] Home dos lados: hero huésped/anfitrión + catálogo completo + chips de búsqueda
 - [x] Ficha pública `/stays/[id]`: descripción + calendario de disponibilidad público
 - [x] Bookings por rango de fechas (`lib/bookings.ts`, checkout exclusivo, máx 30 noches)
+- [x] Búsqueda por fechas: NLP + inputs en home; el catálogo oculta lo no ofrecido / ya reservado; la ficha abre con esas noches
 - [x] Precio total = noches × precio/noche (402 x402 cobra el total; tope/HITL sobre el total)
 - [x] Modo anfitrión `/host`: publicar propiedad + wallet de cobro + reservas recibidas (tx Basescan)
 - [x] `payTo` por listing: wallet del anfitrión si la cargó (seed → marketplace)

@@ -23,6 +23,9 @@ disponibilidad **público** por alojamiento.
 ### `/` — Explorar (huésped)
 
 - Hero de dos lados (Soy huésped / Soy anfitrión) + búsqueda NLP con chips.
+- Fechas opcionales (inputs o “del 24 al 28” / “el finde”): el catálogo
+  deja solo listings que ofrecen y tienen libres esas noches. Las tarjetas
+  abren la ficha con el rango preseleccionado (`?checkIn=&checkOut=`).
 - Catálogo completo por default (seed + publicados por anfitriones).
 - Las tarjetas navegan a la ficha pública; **la compra ya no vive en la home**.
 

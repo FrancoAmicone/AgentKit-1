@@ -35,6 +35,7 @@ type Props = {
   listingId: string;
   listing: Listing | null;
   initialBookedRanges: DateRange[];
+  initialStay?: StaySelection;
 };
 
 function stayTotal(pricePerNight: number, nights: number): number {
@@ -51,6 +52,7 @@ export function StayDetail({
   listingId,
   listing: initialListing,
   initialBookedRanges,
+  initialStay,
 }: Props) {
   const agent = useAgent();
   const [listing, setListing] = useState<Listing | null>(initialListing);
@@ -59,7 +61,7 @@ export function StayDetail({
     initialListing ? "ready" : "loading",
   );
   const [bookedRanges, setBookedRanges] = useState<DateRange[]>(initialBookedRanges);
-  const [selection, setSelection] = useState<StaySelection>({});
+  const [selection, setSelection] = useState<StaySelection>(initialStay ?? {});
   const [buying, setBuying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [purchase, setPurchase] = useState<PurchaseResponse | null>(null);
