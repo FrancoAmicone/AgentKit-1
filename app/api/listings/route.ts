@@ -8,15 +8,19 @@ export async function GET(request: NextRequest) {
   const destino = searchParams.get("destino") || undefined;
   const precioMaxRaw = searchParams.get("precioMax");
   const amenitiesRaw = searchParams.get("amenities");
+  const checkIn = searchParams.get("checkIn") || undefined;
+  const checkOut = searchParams.get("checkOut") || undefined;
 
   const precioMax = precioMaxRaw ? Number(precioMaxRaw) : undefined;
   const amenities = amenitiesRaw
     ? amenitiesRaw.split(",").map((a) => a.trim()).filter(Boolean)
     : undefined;
 
-  const hasFilters = Boolean(destino || precioMax || amenities?.length);
+  const hasFilters = Boolean(
+    destino || precioMax || amenities?.length || (checkIn && checkOut),
+  );
   const listings = hasFilters
-    ? await filterListings({ destino, precioMax, amenities })
+    ? await filterListings({ destino, precioMax, amenities, checkIn, checkOut })
     : await getAllListings();
 
   return NextResponse.json({ listings, count: listings.length });

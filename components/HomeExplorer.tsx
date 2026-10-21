@@ -8,17 +8,19 @@ import {
   GuestProgress,
   guestStepFromFlags,
 } from "@/components/GuestProgress";
+import { todayStr } from "@/lib/dates";
 
 type SearchResponse = {
   explanation: string;
   parser: string;
   results: ListingCardData[];
   count: number;
+  filters?: { checkIn?: string; checkOut?: string };
 };
 
 const SUGGESTIONS = [
-  "Casa en Bariloche con pileta, menos de 150 USD",
-  "Loft en Ushuaia con wifi",
+  "Casa en Bariloche del 10 al 13 de noviembre",
+  "Loft en Ushuaia el finde",
   "Algo cerca del mar para las vacaciones",
   "Cabaña con parrilla en Córdoba",
 ];
@@ -30,9 +32,16 @@ export function HomeExplorer({
 }) {
   const agent = useAgent();
   const [query, setQuery] = useState("");
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
   const [search, setSearch] = useState<SearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const minDay = todayStr();
+  const stayQuery =
+    checkIn && checkOut && checkIn < checkOut
+      ? { checkIn, checkOut }
+      : undefined;
 
   function runSearch(text: string) {
     setError(null);
@@ -41,7 +50,11 @@ export function HomeExplorer({
         const res = await fetch("/api/agent/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: text }),
+          body: JSON.stringify({
+            query: text,
+            checkIn: stayQuery?.checkIn,
+            checkOut: stayQuery?.checkOut,
+          }),
           signal: AbortSignal.timeout(20_000),
         });
         const data = (await res.json()) as SearchResponse & { error?: string };
@@ -55,7 +68,7 @@ export function HomeExplorer({
 
   function onSearch(e: FormEvent) {
     e.preventDefault();
-    if (!query.trim()) return;
+    if (!query.trim() && !stayQuery) return;
     void runSearch(query);
   }
 
@@ -195,22 +208,59 @@ export function HomeExplorer({
       <form
         id="buscar"
         onSubmit={onSearch}
-        className="stay-rise-delay mb-3 flex scroll-mt-24 flex-col gap-3 border border-[var(--line)] bg-[var(--surface)] p-2 backdrop-blur-sm sm:flex-row sm:items-stretch"
+        className="stay-rise-delay mb-3 flex scroll-mt-24 flex-col gap-2 border border-[var(--line)] bg-[var(--surface)] p-2 backdrop-blur-sm"
       >
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ej: loft en Ushuaia con wifi, menos de 80"
-          className="min-w-0 flex-1 bg-transparent px-4 py-3 text-[var(--ink)] outline-none placeholder:text-[var(--muted)]/70"
-          aria-label="Qué lugar buscás"
-        />
-        <button
-          type="submit"
-          disabled={isPending}
-          className="bg-[var(--pine)] px-6 py-3 font-semibold text-white transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
-        >
-          {isPending ? "Buscando…" : "Buscar"}
-        </button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Ej: loft en Ushuaia el finde, o del 24 al 28"
+            className="min-w-0 flex-1 bg-transparent px-4 py-3 text-[var(--ink)] outline-none placeholder:text-[var(--muted)]/70"
+            aria-label="Qué lugar buscás"
+          />
+          <button
+            type="submit"
+            disabled={isPending}
+            className="bg-[var(--pine)] px-6 py-3 font-semibold text-white transition hover:bg-[var(--pine-deep)] disabled:opacity-60"
+          >
+            {isPending ? "Buscando…" : "Buscar"}
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 px-2 pb-1">
+          <label className="flex items-center gap-2 text-xs text-[var(--muted)]">
+            Entrada
+            <input
+              type="date"
+              min={minDay}
+              value={checkIn}
+              onChange={(e) => {
+                const next = e.target.value;
+                setCheckIn(next);
+                if (checkOut && next && checkOut <= next) setCheckOut("");
+              }}
+              className="border border-[var(--line)] bg-[var(--surface-strong)] px-2 py-1.5 text-sm text-[var(--ink)]"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-xs text-[var(--muted)]">
+            Salida
+            <input
+              type="date"
+              min={checkIn || minDay}
+              value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+              className="border border-[var(--line)] bg-[var(--surface-strong)] px-2 py-1.5 text-sm text-[var(--ink)]"
+            />
+          </label>
+          {stayQuery ? (
+            <p className="text-[11px] text-[var(--pine)]">
+              Solo lugares libres en esas noches
+            </p>
+          ) : (
+            <p className="text-[11px] text-[var(--muted)]">
+              Fechas opcionales — también las podés escribir en el pedido
+            </p>
+          )}
+        </div>
       </form>
 
       <div className="mb-8 flex flex-wrap gap-2">
@@ -270,6 +320,8 @@ export function HomeExplorer({
               onClick={() => {
                 setSearch(null);
                 setQuery("");
+                setCheckIn("");
+                setCheckOut("");
               }}
               className="text-xs font-semibold text-[var(--pine)] underline underline-offset-2"
             >
@@ -284,7 +336,20 @@ export function HomeExplorer({
 
       <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {showing.map((listing, index) => (
-          <ListingCard key={listing.id} listing={listing} index={index} />
+          <ListingCard
+            key={listing.id}
+            listing={listing}
+            index={index}
+            stayQuery={
+              stayQuery ??
+              (search?.filters?.checkIn && search.filters.checkOut
+                ? {
+                    checkIn: search.filters.checkIn,
+                    checkOut: search.filters.checkOut,
+                  }
+                : undefined)
+            }
+          />
         ))}
       </section>
 

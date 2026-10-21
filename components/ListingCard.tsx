@@ -18,16 +18,20 @@ export type ListingCardData = {
 type Props = {
   listing: ListingCardData;
   index?: number;
+  stayQuery?: { checkIn: string; checkOut: string };
 };
 
 /**
  * Catalog card: leads to the public listing page (/stays/[id]) where the
  * availability calendar and the agent-powered booking live.
  */
-export function ListingCard({ listing, index = 0 }: Props) {
+export function ListingCard({ listing, index = 0, stayQuery }: Props) {
+  const href = stayQuery
+    ? `/stays/${listing.id}?checkIn=${stayQuery.checkIn}&checkOut=${stayQuery.checkOut}`
+    : `/stays/${listing.id}`;
   return (
     <Link
-      href={`/stays/${listing.id}`}
+      href={href}
       className="stay-rise group block overflow-hidden border border-[var(--line)] bg-[var(--surface)] transition duration-300 hover:border-[var(--pine)]/30 hover:bg-[var(--surface-strong)]"
       style={{ animationDelay: `${Math.min(index, 6) * 0.05}s` }}
     >

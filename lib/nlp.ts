@@ -1,4 +1,6 @@
 import type { ListingFilters } from "./listings-data";
+import { parseStayDates } from "./search-dates";
+import { formatDateEs } from "./dates";
 
 /**
  * Parses natural language into listing filters.
@@ -86,10 +88,21 @@ function parseWithRules(query: string): {
     .map(([, value]) => value);
   if (amenities.length) filters.amenities = [...new Set(amenities)];
 
+  const stay = parseStayDates(query);
+  if (stay) {
+    filters.checkIn = stay.checkIn;
+    filters.checkOut = stay.checkOut;
+  }
+
   const parts: string[] = [];
   if (filters.destino) parts.push(`destino “${filters.destino}”`);
   if (filters.precioMax) parts.push(`hasta $${filters.precioMax}/noche`);
   if (filters.amenities?.length) parts.push(`con ${filters.amenities.join(", ")}`);
+  if (filters.checkIn && filters.checkOut) {
+    parts.push(
+      `libre ${formatDateEs(filters.checkIn)} → ${formatDateEs(filters.checkOut)}`,
+    );
+  }
 
   return {
     filters,
@@ -104,8 +117,9 @@ async function parseWithLlm(query: string): Promise<{
   explanation: string;
 } | null> {
   const system = `Convertí el pedido de alojamiento a JSON con esta forma exacta:
-{"destino": string|null, "precioMax": number|null, "amenities": string[], "explanation": string}
+{"destino": string|null, "precioMax": number|null, "amenities": string[], "checkIn": string|null, "checkOut": string|null, "explanation": string}
 amenities posibles: pileta, wifi, cochera, estacionamiento, parrilla, aire, cocina, jardin, vista, chimenea, desayuno.
+checkIn/checkOut en YYYY-MM-DD (checkout exclusivo). Si no hay fechas, null.
 Respondé SOLO JSON válido.`;
 
   if (process.env.OPENAI_API_KEY) {
@@ -168,12 +182,18 @@ function normalizeLlmJson(content?: string): {
       destino?: string | null;
       precioMax?: number | null;
       amenities?: string[];
+      checkIn?: string | null;
+      checkOut?: string | null;
       explanation?: string;
     };
     const filters: ListingFilters = {};
     if (parsed.destino) filters.destino = parsed.destino;
     if (typeof parsed.precioMax === "number") filters.precioMax = parsed.precioMax;
     if (parsed.amenities?.length) filters.amenities = parsed.amenities;
+    if (parsed.checkIn && parsed.checkOut) {
+      filters.checkIn = parsed.checkIn;
+      filters.checkOut = parsed.checkOut;
+    }
     return {
       filters,
       explanation: parsed.explanation || "Filtros interpretados por el agente.",

@@ -81,13 +81,14 @@ Query params opcionales:
 - `destino` — texto (ej. `Bariloche`)
 - `precioMax` — número USDC/noche
 - `amenities` — lista separada por comas (`pileta,wifi`)
+- `checkIn` / `checkOut` — YYYY-MM-DD (checkout exclusivo); solo listings que ofrecen y tienen libres esas noches
 
 ### `POST /api/agent/search`
 
 Body:
 
 ```json
-{ "query": "casa en Bariloche con pileta, menos de 150 USD por día" }
+{ "query": "casa en Bariloche del 24 al 28", "checkIn": "2026-10-24", "checkOut": "2026-10-28" }
 ```
 
 Respuesta: `filters`, `explanation`, `parser` (`rules` \| `llm`), `results[]` con `matchReason`.

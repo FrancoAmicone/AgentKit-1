@@ -215,4 +215,8 @@ export type ListingFilters = {
   destino?: string;
   precioMax?: number;
   amenities?: string[];
+  /** Inclusive first night (YYYY-MM-DD). Used with checkOut to hide listings that cannot host the stay. */
+  checkIn?: string;
+  /** Exclusive checkout day (YYYY-MM-DD). */
+  checkOut?: string;
 };
